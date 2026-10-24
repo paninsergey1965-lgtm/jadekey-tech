@@ -1,0 +1,1143 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#0a1310">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>JadeKey</title>
+<style>
+:root{--bg:#0a1310;--panel:#112019;--panel2:#16291f;--line:#223a2e;--fg:#e9f3ee;--mute:#86a396;--jade:#3fd8a2;--gold:#d8b45c;--bad:#ff7a66;--warn:#e8c25a;
+  --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;--nav:62px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.view{position:fixed;left:0;right:0;top:0;bottom:calc(var(--nav) + env(safe-area-inset-bottom));display:none;flex-direction:column;overflow:hidden}
+.view.on{display:flex}
+nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(3,1fr);background:#0d1914f2;border-top:1px solid var(--line);backdrop-filter:blur(12px);z-index:20}
+nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mute);font-size:11px;letter-spacing:.04em}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--jade)}
+
+/* top bar */
+.top{position:absolute;left:0;right:0;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 12px) 16px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(#000b,#0000)}
+.word{font-family:var(--serif);font-size:18px;letter-spacing:.32em;text-transform:uppercase}
+.word i{font-style:normal;color:var(--jade)}
+.chip{font-size:12px;padding:5px 10px;border-radius:999px;background:#ffffff14;color:var(--warn);max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.ok{color:var(--jade)} .chip.err{color:var(--bad)}
+
+/* scan view */
+.stage{position:relative;flex:1;background:#000;overflow:hidden}
+.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.stage canvas.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:0 40px;color:var(--mute);background:radial-gradient(circle at 50% 42%,#14281f,#0a1310 70%)}
+.idle .gem{width:92px;height:92px;opacity:.9}
+.idle h2{margin:0;font-family:var(--serif);font-weight:400;font-size:26px;color:var(--fg)}
+.idle p{margin:0;font-size:14px;max-width:280px}
+.hud{position:absolute;left:0;right:0;bottom:0;padding:14px 16px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;background:linear-gradient(#0000,#000c)}
+.msg{font-size:14px;padding:7px 14px;border-radius:999px;background:#000a;color:var(--fg);min-height:32px;text-align:center}
+.sharp{width:120px;height:4px;border-radius:2px;background:#ffffff26;overflow:hidden}
+.sharp i{display:block;height:100%;width:0;background:var(--bad);transition:width .15s,background .15s}
+.shutter{width:76px;height:76px;border-radius:50%;border:3px solid var(--jade);display:flex;align-items:center;justify-content:center}
+.shutter b{display:block;width:58px;height:58px;border-radius:50%;background:var(--jade);transition:.2s}
+.shutter.busy b{width:26px;height:26px;border-radius:7px;background:var(--bad)}
+.shutter:active b{transform:scale(.92)}
+
+/* sheet */
+.sheet{position:fixed;left:0;right:0;bottom:calc(var(--nav) + env(safe-area-inset-bottom));max-height:78vh;overflow-y:auto;background:var(--panel);border-radius:22px 22px 0 0;border-top:1px solid var(--line);padding:10px 20px 24px;transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:15;box-shadow:0 -20px 50px #0009}
+.sheet.on{transform:none}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sh-head{display:flex;gap:14px;align-items:center}
+.sh-thumb{width:84px;height:84px;border-radius:14px;object-fit:cover;background:#0006;flex:none;border:1px solid var(--line)}
+.sh-state{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--jade)}
+.sh-state.bad{color:var(--bad)} .sh-state.warn{color:var(--warn)}
+.sh-name{font-family:var(--serif);font-size:25px;line-height:1.15;margin:3px 0}
+.sh-jk{display:inline-block;font:600 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--gold);border:1px solid #d8b45c55;border-radius:6px;padding:2px 7px}
+.sh-meta{margin:14px 0 4px;font-size:13px;color:var(--mute)}
+.sh-note{margin:12px 0 0;font-size:14px;color:var(--mute)}
+.rows{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel2);border-radius:14px;text-align:left;width:100%}
+.row small{display:block;color:var(--mute);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.row span{flex:1;min-width:0}
+.row b{font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btns{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:14px;border-radius:14px;background:var(--panel2);font-weight:600;text-align:center;display:block}
+.btn.main{background:var(--jade);color:#04150e}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.4}
+
+/* pages */
+.page{flex:1;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 18px) 16px 28px}
+.page h1{font-family:var(--serif);font-weight:400;font-size:32px;margin:6px 0 2px}
+.sub{color:var(--mute);font-size:14px;margin-bottom:16px}
+.search{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit;margin-bottom:14px;outline:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;display:block;width:100%}
+.card img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#0006}
+.card div{padding:10px 12px 12px}
+.card b{display:block;font-family:var(--serif);font-weight:400;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card span{font:600 11px ui-monospace,Menlo,monospace;color:var(--gold);letter-spacing:.06em}
+.h2{margin:26px 0 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.legacy{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.legacy img,.legacy .ph{width:46px;height:46px;border-radius:10px;object-fit:cover;background:#0006;flex:none}
+.legacy span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legacy button{color:var(--jade);font-size:14px;padding:6px 4px}
+.empty{padding:50px 20px;text-align:center;color:var(--mute)}
+
+/* add */
+.cambox{position:relative;border-radius:20px;overflow:hidden;background:#000;aspect-ratio:4/5;max-height:46vh;width:100%;margin:0 auto}
+.cambox video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cambox canvas.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cambox .hud{padding:10px}
+.shot{display:flex;gap:14px;align-items:center;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.shot img{width:96px;height:96px;border-radius:12px;object-fit:cover;flex:none}
+.shot b{display:block;font-family:var(--serif);font-weight:400;font-size:20px}
+.shot span{color:var(--mute);font-size:13px}
+.lbl{display:block;margin:14px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.fld{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit;outline:none}
+.fld:focus{border-color:var(--jade)}
+.pick{position:relative;overflow:hidden}
+.pick input{position:absolute;inset:0;opacity:0;width:100%}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translate(-50%,-20px);background:#000d;color:var(--fg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:88vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.veil{position:fixed;inset:0;background:#000b;z-index:60;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--jade);font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+.veil.on{display:flex}
+.ring{width:40px;height:40px;border:3px solid #3fd8a233;border-top-color:var(--jade);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ============ SCAN ============ -->
+<section class="view on" id="vScan">
+  <div class="top"><div class="word">Jade<i>Key</i></div><div class="chip" id="chip">Загружаю модель…</div></div>
+  <div class="stage">
+    <video id="vidS" playsinline muted autoplay></video>
+    <canvas class="ov" id="ovS"></canvas>
+    <div class="idle" id="idleS">
+      <svg class="gem" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg>
+      <h2>Покажи камень</h2>
+      <p>Положи брелок на ровную поверхность при хорошем свете и нажми кнопку. Сканер сам найдёт камень и узнает его.</p>
+    </div>
+    <div class="hud">
+      <div class="msg" id="msgS">Готов</div>
+      <div class="sharp"><i id="barS"></i></div>
+      <button class="shutter" id="shutter" aria-label="Сканировать"><b></b></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COLLECTION ============ -->
+<section class="view" id="vColl">
+  <div class="page">
+    <h1>Коллекция</h1>
+    <div class="sub" id="collSub">Загружаю…</div>
+    <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- ============ ADD ============ -->
+<section class="view" id="vAdd">
+  <div class="page">
+    <h1 id="addTitle">Новый камень</h1>
+    <div class="sub">Одного снимка достаточно: сканер сам разворачивает камень.</div>
+    <div id="camPart">
+      <div class="cambox">
+        <video id="vidA" playsinline muted autoplay></video>
+        <canvas class="ov" id="ovA"></canvas>
+        <div class="idle" id="idleA" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Нажми «Снять камень»</p></div>
+        <div class="hud"><div class="msg" id="msgA">Готов</div><div class="sharp"><i id="barA"></i></div></div>
+      </div>
+      <div class="btns">
+        <button class="btn main" id="btnShoot">Снять камень</button>
+        <label class="btn pick">Из фото<input type="file" id="fileAdd" accept="image/*"></label>
+      </div>
+    </div>
+    <div id="shotPart" style="display:none">
+      <div class="shot"><img id="shotImg" alt=""><div><b id="shotTitle">Камень найден</b><span id="shotInfo"></span><br><button id="btnRetake" style="color:var(--jade);font-size:14px;padding:6px 0">Переснять</button></div></div>
+    </div>
+    <div id="formPart" style="display:none">
+      <label class="lbl">Название</label>
+      <input class="fld" id="fName" placeholder="Например, Агат розовый №3" autocomplete="off">
+      <label class="lbl">JK-номер</label>
+      <input class="fld" id="fJk" placeholder="JK-000009" autocomplete="off" autocapitalize="characters">
+      <label class="lbl">Контакты владельца</label>
+      <input class="fld" id="fPhone" placeholder="Телефон" inputmode="tel" style="margin-bottom:8px">
+      <input class="fld" id="fTg" placeholder="Telegram @username" autocapitalize="none" style="margin-bottom:8px">
+      <input class="fld" id="fMail" placeholder="Email" inputmode="email" autocapitalize="none" style="margin-bottom:8px">
+      <input class="fld" id="fSite" placeholder="Сайт https://…" autocapitalize="none">
+      <div class="btns"><button class="btn" id="btnCancel">Отмена</button><button class="btn main" id="btnSave">Сохранить в коллекцию</button></div>
+    </div>
+  </div>
+</section>
+
+<nav>
+  <button id="nScan" class="on"><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 12h8"/></svg>Сканер</button>
+  <button id="nColl"><svg viewBox="0 0 24 24"><path d="M12 3 20 9l-3 11H7L4 9z"/><path d="M4 9h16"/></svg>Коллекция</button>
+  <button id="nAdd"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Добавить</button>
+</nav>
+
+<div class="sheet" id="sheet"></div>
+<div id="toast"></div>
+<div class="veil" id="veil"><div class="ring"></div><div id="veilTxt"></div></div>
+
+<script type="module">
+import { pipeline, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1';
+
+// model files live in our own Cloudflare R2 bucket, not on Hugging Face
+env.allowLocalModels = false;
+env.remoteHost = 'https://pub-fb06a4548f2c4db89da61c0ed32064c7.r2.dev/';
+env.remotePathTemplate = '{model}/';
+
+// the two small config files are built in, so only model.onnx is fetched from R2
+const BUILTIN = {
+  'config.json': {"_name_or_path": "facebook/dinov2-small", "apply_layernorm": true, "architectures": ["Dinov2Model"], "attention_probs_dropout_prob": 0.0, "drop_path_rate": 0.0, "hidden_act": "gelu", "hidden_dropout_prob": 0.0, "hidden_size": 384, "image_size": 518, "initializer_range": 0.02, "layer_norm_eps": 1e-06, "layerscale_value": 1.0, "mlp_ratio": 4, "model_type": "dinov2", "num_attention_heads": 6, "num_channels": 3, "num_hidden_layers": 12, "out_features": ["stage12"], "out_indices": [12], "patch_size": 14, "qkv_bias": true, "reshape_hidden_states": true, "stage_names": ["stem", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "stage9", "stage10", "stage11", "stage12"], "transformers_version": "4.45.0.dev0", "use_swiglu_ffn": false},
+  'preprocessor_config.json': {"crop_size": {"height": 224, "width": 224}, "do_center_crop": true, "do_convert_rgb": true, "do_normalize": true, "do_rescale": true, "do_resize": true, "image_mean": [0.485, 0.456, 0.406], "image_processor_type": "BitImageProcessor", "image_std": [0.229, 0.224, 0.225], "resample": 3, "rescale_factor": 0.00392156862745098, "size": {"shortest_edge": 256}},
+};
+const _fetch = window.fetch.bind(window);
+window.fetch = (input, init) => {
+  const url = typeof input === 'string' ? input : input.url;
+  for (const [name, obj] of Object.entries(BUILTIN))
+    if (url.endsWith('/dinov2/' + name)) return Promise.resolve(new Response(JSON.stringify(obj), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+  return _fetch(input, init);
+};
+if ('fetch' in env) env.fetch = window.fetch;
+// v8.0 cached the empty config files from R2 in the browser — throw those copies away
+try {
+  const c = await caches.open('transformers-cache');
+  for (const k of await c.keys()) if (/\/dinov2\/[^/]+\.json$/.test(k.url)) await c.delete(k);
+} catch (e) {}
+
+// ---- decision thresholds (provisional, calibrate on real stones) ----
+const MIN_INLIERS = 60;
+const MIN_RATIO = 0.12;
+
+let RES = 448;              // model input side; 448 / 14 = 32x32 patch grid
+const C = 224;              // preview size
+const ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
+// average colour of the photo's outer border, used to fill corners after rotation
+function borderColor(img) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  const g = cv.getContext('2d');
+  g.drawImage(img, 0, 0, 64, 64);
+  const d = g.getImageData(0, 0, 64, 64).data;
+  let r = 0, gg = 0, b = 0, n = 0;
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+    if (x > 3 && x < 60 && y > 3 && y < 60) continue;
+    const i = (y * 64 + x) * 4; r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++;
+  }
+  return `rgb(${r / n | 0},${gg / n | 0},${b / n | 0})`;
+}
+
+// Render a square region of the photo (centre cx,cy and side in photo pixels), rotated, into RES x RES.
+function render(p, cx, cy, side, angleDeg) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = RES;
+  const g = cv.getContext('2d');
+  g.fillStyle = p.bg; g.fillRect(0, 0, RES, RES);
+  g.translate(RES / 2, RES / 2);
+  g.rotate(angleDeg * Math.PI / 180);
+  const k = RES / side;
+  g.drawImage(p.img, -cx * k, -cy * k, p.img.width * k, p.img.height * k);
+  return cv;
+}
+
+// whole photo, centre-cropped to a square
+function full(p) {
+  const s = Math.min(p.img.width, p.img.height);
+  return { cx: p.img.width / 2, cy: p.img.height / 2, side: s };
+}
+
+// ---- colour-based stone finder ----
+// Stones are saturated; plate, frame, keys, cloth and table are not.
+const SAT_MIN = 0.30, VAL_MIN = 0.15;
+function saturatedCells(data, w, h, cell) {
+  const gw = Math.floor(w / cell), gh = Math.floor(h / cell);
+  const m = new Array(gw * gh).fill(false), hue = new Float32Array(gw * gh), val = new Float32Array(gw * gh);
+  for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+    let sat = 0, n = 0, hc = 0, hs = 0, vs = 0;
+    for (let y = Math.floor(gy * cell); y < Math.floor((gy + 1) * cell); y++) for (let x = Math.floor(gx * cell); x < Math.floor((gx + 1) * cell); x++) {
+      const i = (y * w + x) * 4, r = data[i], g = data[i + 1], b = data[i + 2];
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      vs += mx / 255;
+      if (mx / 255 > VAL_MIN && (mx - mn) / (mx || 1) > SAT_MIN) {
+        sat++;
+        const d = mx - mn;
+        let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+        h *= Math.PI / 3; hc += Math.cos(h); hs += Math.sin(h);
+      }
+      n++;
+    }
+    m[gy * gw + gx] = sat / n > 0.4;
+    hue[gy * gw + gx] = Math.atan2(hs, hc);
+    val[gy * gw + gx] = vs / n;
+  }
+  return { m, gw, gh, hue, val };
+}
+
+// connected blobs on a grid; returns array of index lists
+const HUE_JOIN = 40 * Math.PI / 180;   // neighbours join one stone only if their hue is close
+function hueDiff(a, b) { const d = Math.abs(a - b) % (2 * Math.PI); return d > Math.PI ? 2 * Math.PI - d : d; }
+const VAL_JOIN = 0.16;   // ...and brightness: blue stone vs dark blue table
+function blobs(m, gw, gh, hue = null, val = null) {
+  const lab = new Int32Array(m.length).fill(-1), out = [];
+  for (let s = 0; s < m.length; s++) {
+    if (!m[s] || lab[s] >= 0) continue;
+    const st = [s], list = []; lab[s] = out.length;
+    while (st.length) {
+      const i = st.pop(); list.push(i);
+      const x = i % gw, y = (i / gw) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) continue;
+        const j = ny * gw + nx;
+        if (m[j] && lab[j] < 0 && (!hue || hueDiff(hue[i], hue[j]) < HUE_JOIN)) { lab[j] = out.length; st.push(j); }
+      }
+    }
+    out.push(list);
+  }
+  return out;
+}
+
+// fill holes (white veins inside the stone): everything not reachable from the border is inside
+function fillHoles(m, gw, gh) {
+  const out = new Array(m.length).fill(true), seen = new Uint8Array(m.length), st = [];
+  for (let x = 0; x < gw; x++) { st.push(x, (gh - 1) * gw + x); }
+  for (let y = 0; y < gh; y++) { st.push(y * gw, y * gw + gw - 1); }
+  while (st.length) {
+    const i = st.pop();
+    if (seen[i] || m[i]) continue;
+    seen[i] = 1; out[i] = false;
+    const x = i % gw, y = (i / gw) | 0;
+    if (x > 0) st.push(i - 1); if (x < gw - 1) st.push(i + 1);
+    if (y > 0) st.push(i - gw); if (y < gh - 1) st.push(i + gw);
+  }
+  return out;
+}
+
+function blobHue(b, hue) { let c = 0, s = 0; for (const i of b) { c += Math.cos(hue[i]); s += Math.sin(hue[i]); } return Math.atan2(s, c); }
+function mergeFragments(bl, gw, hue, gap = 2) {
+  const n = bl.length, par = [...Array(n).keys()], f = i => par[i] === i ? i : (par[i] = f(par[i]));
+  const info = bl.map(b => { let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1; for (const i of b) { const x = i % gw, y = (i / gw) | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } return { x0, y0, x1, y1, h: blobHue(b, hue) }; });
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const a = info[i], b = info[j];
+    const dx = Math.max(0, a.x0 - b.x1, b.x0 - a.x1), dy = Math.max(0, a.y0 - b.y1, b.y0 - a.y1);
+    if (dx <= gap && dy <= gap && hueDiff(a.h, b.h) < HUE_JOIN * 1.5) par[f(i)] = f(j);
+  }
+  const groups = {};
+  bl.forEach((b, i) => { (groups[f(i)] ||= []).push(...b); });
+  return Object.values(groups);
+}
+
+// find the stone in the whole photo; returns square box in photo pixels or null
+function findStoneByColour(p, targetHue = null) {
+  const W = 400, sc = W / Math.max(p.img.width, p.img.height);
+  const w = Math.round(p.img.width * sc), h = Math.round(p.img.height * sc);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d'); g.drawImage(p.img, 0, 0, w, h);
+  const cell = 4, { m, gw, gh, hue, val } = saturatedCells(g.getImageData(0, 0, w, h).data, w, h, cell);
+  const touches = b => b.some(i => { const x = i % gw, y = (i / gw) | 0; return x === 0 || y === 0 || x === gw - 1 || y === gh - 1; });
+  let bl = blobs(m, gw, gh, hue, val).filter(b => b.length >= gw * gh * 0.0015);
+  const inner = bl.filter(b => !touches(b));      // table / cloth runs off the frame, a stone does not
+  if (inner.length && !p.tap) bl = inner;
+  bl = mergeFragments(bl, gw, hue).filter(b => b.length >= gw * gh * 0.003);
+  // when we know the reference stone's colour, ignore blobs of another colour (tags, cloth, skin)
+  if (targetHue !== null && !p.tap) {
+    const same = bl.filter(b => hueDiff(blobHue(b, hue), targetHue) < 50 * Math.PI / 180);
+    if (same.length) bl = same;
+  }
+  if (!bl.length) return null;
+  let pick;
+  if (p.tap) {
+    const tx = p.tap.x * sc / cell, ty = p.tap.y * sc / cell;
+    const dist = b => Math.min(...b.map(i => Math.hypot(i % gw + .5 - tx, ((i / gw) | 0) + .5 - ty)));
+    pick = bl.reduce((a, b) => dist(b) < dist(a) ? b : a);
+    if (dist(pick) > Math.max(gw, gh) * 0.08) return null;
+  } else {
+    // prefer big AND solid blobs: a stone is filled, a key tag or ring has a hole in the middle
+    // a stone in hand is near the centre of the frame, or where we already follow it: this keeps the lock from jumping to other objects
+    const cx0 = p.near ? p.near.x * sc / cell : gw / 2, cy0 = p.near ? p.near.y * sc / cell : gh / 2, R = Math.max(gw, gh) * (p.near ? 0.25 : 0.5);
+    const score = b => {
+      const info = rectInfo(b.map(i => [i % gw + .5, ((i / gw) | 0) + .5])); const fill = b.length / Math.max(1, info.hullArea);
+      let sx = 0, sy = 0; for (const i of b) { sx += i % gw + .5; sy += ((i / gw) | 0) + .5; }
+      const d = Math.hypot(sx / b.length - cx0, sy / b.length - cy0) / R;
+      return b.length * fill * fill / (1 + d * d);
+    };
+    pick = bl.reduce((a, b) => score(b) > score(a) ? b : a);
+  }
+  let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+  for (const i of pick) { const x = i % gw, y = (i / gw) | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x + 1); y1 = Math.max(y1, y + 1); }
+  const k = cell / sc;
+  return { cx: (x0 + x1) / 2 * k, cy: (y0 + y1) / 2 * k, side: Math.max(x1 - x0, y1 - y0) * k * 1.12,
+           hue: blobHue(pick, hue), ...rectInfo(pick.map(i => [i % gw + .5, ((i / gw) | 0) + .5])) };
+}
+
+// angle (deg, -45..45) of the minimum-area rectangle around the points: the stone's edge direction
+// angle + "rectness" (hull area / min rectangle area: square ≈ 1, circle ≈ 0.79)
+function rectInfo(pts) {
+  pts = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], hi = [];
+  for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of pts.slice().reverse()) { while (hi.length >= 2 && cross(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+  const H = lo.slice(0, -1).concat(hi.slice(0, -1));
+  if (H.length < 3) return { angle: 0, rect: 0, hullArea: pts.length };
+  let best = 0, bestArea = Infinity;
+  for (let i = 0; i < H.length; i++) {
+    const a = H[i], b = H[(i + 1) % H.length];
+    const t = Math.atan2(b[1] - a[1], b[0] - a[0]), c = Math.cos(t), s = Math.sin(t);
+    let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+    for (const p of H) { const u = p[0] * c + p[1] * s, v = -p[0] * s + p[1] * c; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
+    const area = (u1 - u0) * (v1 - v0);
+    if (area < bestArea) { bestArea = area; best = t; }
+  }
+  let hullArea = 0;
+  for (let i = 0; i < H.length; i++) { const a = H[i], b = H[(i + 1) % H.length]; hullArea += a[0] * b[1] - b[0] * a[1]; }
+  hullArea = Math.abs(hullArea) / 2;
+  let d = best * 180 / Math.PI;
+  d = ((d % 90) + 90) % 90; if (d > 45) d -= 90;
+  return { angle: d, rect: bestArea > 0 ? hullArea / bestArea : 0, hullArea };
+}
+
+// patch mask from colour on the rendered crop (works after rotation too)
+function colourMask(cv, G) {
+  const g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data;
+  const { m, hue, val } = saturatedCells(d, cv.width, cv.height, cv.width / G);
+  const c = G / 2;
+  const cen = b => { let sx = 0, sy = 0; for (const i of b) { sx += i % G + .5; sy += ((i / G) | 0) + .5; } return Math.hypot(sx / b.length - c, sy / b.length - c); };
+  let raw = blobs(m, G, G, hue, val).filter(b => b.length >= G * G * 0.005);
+  const central = raw.filter(b => cen(b) < G * 0.35), outer = raw.filter(b => cen(b) >= G * 0.35);
+  const bl = mergeFragments(central, G, hue, 1).concat(outer).filter(b => b.length >= G * G * 0.02);
+  if (!bl.length) return null;
+  const score = b => { let sx = 0, sy = 0; for (const i of b) { sx += i % G + .5; sy += ((i / G) | 0) + .5; } return b.length / (1 + Math.hypot(sx / b.length - c, sy / b.length - c) / (G / 6)); };
+  const big = bl.reduce((a, b) => score(b) > score(a) ? b : a);
+  return hullMask(big, G);
+}
+
+// convex hull of the stone blob: dark/grey parts of the stone inside the outline count as stone
+function hullMask(cells, G) {
+  const pts = cells.map(i => [i % G + .5, ((i / G) | 0) + .5]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], hi = [];
+  for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of pts.slice().reverse()) { while (hi.length >= 2 && cross(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+  const H = lo.slice(0, -1).concat(hi.slice(0, -1));
+  const m = new Array(G * G).fill(false);
+  if (H.length < 3) { cells.forEach(i => m[i] = true); return m; }
+  for (let i = 0; i < G * G; i++) {
+    const p = [i % G + .5, ((i / G) | 0) + .5];
+    let inside = true;
+    for (let k = 0; k < H.length; k++) if (cross(H[k], H[(k + 1) % H.length], p) < -0.5) { inside = false; break; }
+    m[i] = inside;
+  }
+  return m;
+}
+
+// ---- features ----
+async function features(cv, mode = 'shape') {
+  const img = await RawImage.fromURL(cv.toDataURL('image/jpeg', 0.92));
+  const out = await extractor(img);              // [1, 1+N, D]
+  const [, T, D] = out.dims;
+  const d = out.data;
+  const N = T - 1;
+  const G = Math.round(Math.sqrt(N));
+  const raw = new Float32Array(N * D);
+  raw.set(d.subarray ? d.subarray(D, T * D) : d.slice(D, T * D));
+  let mask = mode === 'colour' ? colourMask(cv, G) : null;
+  if (!mask || mask.filter(Boolean).length < N / 20) { mask = largestComponent(foreground(raw, N, D, G), G); mode = 'shape'; }
+  const P = new Float32Array(N * D);
+  for (let i = 0; i < N; i++) {
+    let n = 0;
+    for (let j = 0; j < D; j++) n += raw[i * D + j] ** 2;
+    n = Math.sqrt(n) || 1;
+    for (let j = 0; j < D; j++) P[i * D + j] = raw[i * D + j] / n;
+  }
+  return { P, mask, D, N, G, cv, mode };
+}
+
+// first principal component of patch features separates object from background (DINO trick)
+function foreground(X0, N, D, G) {
+  const mean = new Float64Array(D);
+  for (let i = 0; i < N; i++) for (let j = 0; j < D; j++) mean[j] += X0[i * D + j] / N;
+  const X = new Float32Array(N * D);
+  for (let i = 0; i < N; i++) for (let j = 0; j < D; j++) X[i * D + j] = X0[i * D + j] - mean[j];
+  let v = new Float64Array(D).map((_, j) => Math.sin(j * 12.9898) + 0.1);
+  const s = new Float64Array(N);
+  for (let it = 0; it < 40; it++) {
+    for (let i = 0; i < N; i++) { let a = 0; for (let j = 0; j < D; j++) a += X[i * D + j] * v[j]; s[i] = a; }
+    const w = new Float64Array(D);
+    for (let i = 0; i < N; i++) for (let j = 0; j < D; j++) w[j] += X[i * D + j] * s[i];
+    let n = 0; for (const x of w) n += x * x; n = Math.sqrt(n) || 1;
+    v = w.map(x => x / n);
+  }
+  for (let i = 0; i < N; i++) { let a = 0; for (let j = 0; j < D; j++) a += X[i * D + j] * v[j]; s[i] = a; }
+  // object is assumed to be nearer the centre than the border
+  let cIn = 0, nIn = 0, cOut = 0, nOut = 0;
+  for (let i = 0; i < N; i++) {
+    const x = i % G, y = (i / G) | 0;
+    const edge = Math.min(x, y, G - 1 - x, G - 1 - y);
+    if (edge >= G * 5 / 16) { cIn += s[i]; nIn++; } else if (edge < G / 8) { cOut += s[i]; nOut++; }
+  }
+  const sign = (cIn / nIn < cOut / nOut) ? -1 : 1;
+  const mask = Array.from(s, x => sign * x > 0);
+  if (mask.filter(Boolean).length < N / 16) return mask.map(() => true);
+  return mask;
+}
+
+// keep only the biggest connected blob (removes stray background patches)
+function largestComponent(mask, G) {
+  const lab = new Int32Array(mask.length).fill(-1);
+  let best = -1, bestSize = 0, id = 0;
+  for (let s = 0; s < mask.length; s++) {
+    if (!mask[s] || lab[s] >= 0) continue;
+    const st = [s]; lab[s] = id; let size = 0;
+    while (st.length) {
+      const i = st.pop(); size++;
+      const x = i % G, y = (i / G) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= G || ny >= G) continue;
+        const j = ny * G + nx;
+        if (mask[j] && lab[j] < 0) { lab[j] = id; st.push(j); }
+      }
+    }
+    if (size > bestSize) { bestSize = size; best = id; }
+    id++;
+  }
+  if (bestSize < mask.length / 32) return mask;
+  return Array.from(lab, l => l === best);
+}
+
+// ---- matching ----
+function mutualMatches(A, B) {
+  const ia = [], ib = [];
+  A.mask.forEach((m, i) => m && ia.push(i));
+  B.mask.forEach((m, i) => m && ib.push(i));
+  const D = A.D, na = ia.length, nb = ib.length;
+  const sim = new Float32Array(na * nb);
+  for (let a = 0; a < na; a++) {
+    const oa = ia[a] * D;
+    for (let b = 0; b < nb; b++) {
+      const ob = ib[b] * D; let s = 0;
+      for (let k = 0; k < D; k++) s += A.P[oa + k] * B.P[ob + k];
+      sim[a * nb + b] = s;
+    }
+  }
+  const bestA = new Int32Array(na), bestB = new Int32Array(nb).fill(-1), valB = new Float32Array(nb).fill(-2);
+  for (let a = 0; a < na; a++) {
+    let bi = 0, bv = -2;
+    for (let b = 0; b < nb; b++) {
+      const v = sim[a * nb + b];
+      if (v > bv) { bv = v; bi = b; }
+      if (v > valB[b]) { valB[b] = v; bestB[b] = a; }
+    }
+    bestA[a] = bi;
+  }
+  const m = [];
+  for (let a = 0; a < na; a++) if (bestB[bestA[a]] === a) m.push([ia[a], ib[bestA[a]], sim[a * nb + bestA[a]]]);
+  return { matches: m, fgA: na, fgB: nb };
+}
+
+const xy = (i, G) => [i % G + 0.5, ((i / G) | 0) + 0.5];
+
+// RANSAC over similarity transforms (rotation + scale + shift), with and without mirror
+function ransac(matches, G) {
+  if (matches.length < 3) return [];
+  const P = matches.map(m => xy(m[0], G)), Q = matches.map(m => xy(m[1], G));
+  const TOL = 1.5 * Math.max(1, G / 32);
+  const MIN_SPAN2 = (G / 8) ** 2;
+  let best = [];
+  for (let it = 0; it < 2500; it++) {
+    const i = (Math.random() * matches.length) | 0;
+    const j = (Math.random() * matches.length) | 0;
+    if (i === j) continue;
+    for (const mirror of [false]) {             // a stone in a fob is never mirrored
+      const p1 = mirror ? [P[i][0], -P[i][1]] : P[i], p2 = mirror ? [P[j][0], -P[j][1]] : P[j];
+      const dp = [p2[0] - p1[0], p2[1] - p1[1]], dq = [Q[j][0] - Q[i][0], Q[j][1] - Q[i][1]];
+      const den = dp[0] * dp[0] + dp[1] * dp[1];
+      if (den < MIN_SPAN2) continue;
+      const a = (dq[0] * dp[0] + dq[1] * dp[1]) / den;
+      const b = (dq[1] * dp[0] - dq[0] * dp[1]) / den;
+      const sc = Math.hypot(a, b);
+      // both crops are already cut to the stone and turned to the best angle,
+      // so the true transform is close to "nothing moved". Random look-alike patches
+      // on a different stone only line up under some arbitrary transform — reject those.
+      if (sc < 0.8 || sc > 1.25) continue;
+      if (Math.abs(Math.atan2(b, a)) > 25 * Math.PI / 180) continue;
+      const tx = Q[i][0] - (a * p1[0] - b * p1[1]), ty = Q[i][1] - (b * p1[0] + a * p1[1]);
+      const c0 = G / 2, mx = a * c0 - b * c0 + tx - c0, my = b * c0 + a * c0 + ty - c0;
+      if (Math.hypot(mx, my) > G * 0.25) continue;
+      const inl = [];
+      for (let k = 0; k < P.length; k++) {
+        const px = P[k][0], py = mirror ? -P[k][1] : P[k][1];
+        const ex = a * px - b * py + tx - Q[k][0], ey = b * px + a * py + ty - Q[k][1];
+        if (ex * ex + ey * ey < TOL * TOL) inl.push(k);
+      }
+      if (inl.length > best.length) best = inl;
+    }
+  }
+  return best.map(k => matches[k]);
+}
+
+// three outcomes: clear match, clear mismatch, or "not sure — retake"
+const NO_INLIERS = 30, NO_RATIO = 0.06;
+function verdictOf(r) {
+  if (r.inl.length >= MIN_INLIERS && r.ratio >= MIN_RATIO) return 'yes';
+  if (r.inl.length < NO_INLIERS || r.ratio < NO_RATIO) return 'no';
+  return 'unsure';
+}
+
+// features of the stone in a crop, rotated so the stone's edges are axis-aligned (+extra turn)
+async function stoneFeatures(cv, extra = 0, targetHue = null) {
+  const p = { img: cv, bg: borderColor(cv) };
+  const b = findStoneByColour(p, targetHue);
+  if (!b) return null;
+  return { f: await features(render(p, b.cx, b.cy, b.side, -b.angle + extra), 'colour'), p, b };
+}
+
+function scoreAgainst(A, B) {
+  const { matches, fgA, fgB } = mutualMatches(A, B);
+  const inl = ransac(matches, A.G);
+  return { B, inl, fgA, fgB, ratio: inl.length / Math.max(1, Math.min(fgA, fgB)) };
+}
+
+// =====================================================================
+//  JadeKey app (v9): scanner + collection, one photo per stone
+// =====================================================================
+const $ = id => document.getElementById(id);
+let extractor = null, backend = 'CPU';
+const tick = () => new Promise(r => setTimeout(r, 0));
+
+// ---------- tiny helpers ----------
+function toast(t, ms = 2600) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), ms); }
+function veil(t) { $('veilTxt').textContent = t || ''; $('veil').classList.toggle('on', !!t); }
+function chip(t, cls = '') { const c = $('chip'); c.textContent = t; c.className = 'chip ' + cls; }
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function bytesB64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return btoa(s); }
+function b64Bytes(str) { const s = atob(str), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+const f32B64 = a => bytesB64(new Uint8Array(a.buffer, a.byteOffset, a.byteLength));
+const b64F32 = s => { const u = b64Bytes(s); return new Float32Array(u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength)); };
+
+// ---------- model ----------
+async function loadModel() {
+  try {
+    chip('Скачиваю модель…');
+    const fixProc = ex => { for (const ip of [ex.processor?.image_processor, ex.processor]) if (ip) { ip.do_resize = false; ip.do_center_crop = false; } };
+    const warm = async ex => { const c = document.createElement('canvas'); c.width = c.height = RES; c.getContext('2d').fillRect(0, 0, RES, RES); await ex(await RawImage.fromURL(c.toDataURL('image/jpeg'))); };
+    const files = {};
+    const progress_callback = p => {
+      if (p.status === 'progress' && p.total) {
+        files[p.file] = [p.loaded, p.total];
+        let l = 0, t = 0; for (const [a, b] of Object.values(files)) { l += a; t += b; }
+        chip(`Модель ${(l / 1e6).toFixed(0)} из ${(t / 1e6).toFixed(0)} МБ`);
+      } else if (p.status === 'ready') chip('Запускаю модель…');
+    };
+    const withTimeout = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('таймаут')), ms))]);
+    // ?cpu=1 forces the processor (some Android GPUs return wrong numbers); ?gpu=1 undoes it. Remembered on this phone.
+    try { const q = new URLSearchParams(location.search); if (q.has('cpu')) localStorage.setItem('jk2_cpu', '1'); if (q.has('gpu')) localStorage.removeItem('jk2_cpu'); } catch (e) {}
+    let forceCpu = false; try { forceCpu = localStorage.getItem('jk2_cpu') === '1'; } catch (e) {}
+    if (navigator.gpu && !forceCpu) {
+      try {
+        const ex = await withTimeout(pipeline('image-feature-extraction', 'dinov2', { dtype: 'fp32', subfolder: '', device: 'webgpu', progress_callback }), 120000);
+        fixProc(ex); await withTimeout(warm(ex), 30000);
+        extractor = ex; backend = 'GPU';
+      } catch (e) { extractor = null; }
+    }
+    if (!extractor) {
+      chip('Запускаю без видеокарты…');
+      extractor = await withTimeout(pipeline('image-feature-extraction', 'dinov2', { dtype: 'fp32', subfolder: '', progress_callback }), 180000);
+      fixProc(extractor);
+    }
+    chip('Готов · ' + (backend === 'GPU' ? 'GPU' : 'CPU'), 'ok');
+  } catch (err) {
+    chip('Модель не загрузилась · нажми', 'err');
+    $('chip').onclick = () => { $('chip').onclick = null; loadModel(); };
+  }
+}
+
+// ---------- cloud storage (Firestore REST) ----------
+const FS = { project: 'jadekey-46f37', key: 'AIzaSyCmc4qJFC0rkFvcz7ZBG42ApnZfCcrrT20' };
+const BASE = `https://firestore.googleapis.com/v1/projects/${FS.project}/databases/(default)/documents`;
+const COL = 'jk2_stones', COLP = 'jk2_patches', COL_OLD = 'stones';
+function fsVal(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === 'string') return { stringValue: v };
+  if (typeof v === 'number') return { doubleValue: v };
+  if (typeof v === 'boolean') return { booleanValue: v };
+  return { stringValue: String(v) };
+}
+function fromFs(fields) {
+  const o = {};
+  for (const k in fields || {}) {
+    const v = fields[k];
+    if ('stringValue' in v) o[k] = v.stringValue;
+    else if ('doubleValue' in v) o[k] = v.doubleValue;
+    else if ('integerValue' in v) o[k] = Number(v.integerValue);
+    else if ('booleanValue' in v) o[k] = v.booleanValue;
+  }
+  return o;
+}
+async function fsCall(url, opt) {
+  const r = await fetch(url, opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error((j.error && (j.error.message || j.error.status)) || ('HTTP ' + r.status));
+  return j;
+}
+const fsFields = d => ({ fields: Object.fromEntries(Object.entries(d).map(([k, v]) => [k, fsVal(v)])) });
+async function fsList(col, mask = []) {
+  const out = []; let tok = '';
+  do {
+    const q = mask.map(m => '&mask.fieldPaths=' + m).join('');
+    const j = await fsCall(`${BASE}/${col}?key=${FS.key}&pageSize=100${q}${tok ? '&pageToken=' + tok : ''}`);
+    (j.documents || []).forEach(d => out.push({ id: d.name.split('/').pop(), ...fromFs(d.fields) }));
+    tok = j.nextPageToken || '';
+  } while (tok);
+  return out;
+}
+const fsCreate = (col, data, id) => fsCall(`${BASE}/${col}?key=${FS.key}${id ? '&documentId=' + id : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fsFields(data)) });
+const fsPatch = (col, id, data) => fsCall(`${BASE}/${col}/${id}?key=${FS.key}${Object.keys(data).map(k => '&updateMask.fieldPaths=' + k).join('')}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fsFields(data)) });
+const fsDelete = (col, id) => fetch(`${BASE}/${col}/${id}?key=${FS.key}`, { method: 'DELETE' });
+
+// ---------- collection in memory ----------
+let stones = [], legacy = [];
+const patchCache = new Map();
+const D = 384;
+
+function prepStone(s) { s.gv = s.g ? b64F32(s.g) : null; s.contacts = (() => { try { return JSON.parse(s.contacts || '{}'); } catch (e) { return {}; } })(); return s; }
+let lastLoad = 0;
+async function loadStones() {
+  lastLoad = Date.now();
+  try {
+    const list = await fsList(COL);
+    stones = list.map(prepStone).sort((a, b) => (b.created || 0) - (a.created || 0));
+  } catch (e) { stones = []; toast('Коллекция не загрузилась: ' + e.message, 4500); }
+  renderColl();
+}
+
+// patches: store only stone patches, int8 per patch with its own scale
+function encodePatches(f) {
+  const idx = []; f.mask.forEach((m, i) => m && idx.push(i));
+  const q = new Int8Array(idx.length * D), sc = new Float32Array(idx.length);
+  idx.forEach((i, k) => {
+    let mx = 1e-9; for (let j = 0; j < D; j++) mx = Math.max(mx, Math.abs(f.P[i * D + j]));
+    sc[k] = mx;
+    for (let j = 0; j < D; j++) q[k * D + j] = Math.round(f.P[i * D + j] / mx * 127);
+  });
+  const ix = new Uint16Array(idx);
+  return { idx: bytesB64(new Uint8Array(ix.buffer)), p: bytesB64(new Uint8Array(q.buffer)), sc: f32B64(sc), n: idx.length };
+}
+function decodePatches(doc, G) {
+  const N = G * G;
+  const u = b64Bytes(doc.idx), idx = new Uint16Array(u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength));
+  const q = new Int8Array(b64Bytes(doc.p).buffer), sc = b64F32(doc.sc);
+  const P = new Float32Array(N * D), mask = new Array(N).fill(false);
+  idx.forEach((i, k) => { mask[i] = true; for (let j = 0; j < D; j++) P[i * D + j] = q[k * D + j] * sc[k] / 127; });
+  return { P, mask, D, N, G, mode: 'colour' };
+}
+async function getPatches(s) {
+  if (patchCache.has(s.id)) return patchCache.get(s.id);
+  const j = await fsCall(`${BASE}/${COLP}/${s.id}?key=${FS.key}`);
+  const f = decodePatches(fromFs(j.fields), s.G || 32);
+  patchCache.set(s.id, f);
+  return f;
+}
+function gvecOf(f) {
+  const g = new Float32Array(D); let n = 0;
+  f.mask.forEach((m, i) => { if (!m) return; n++; for (let j = 0; j < D; j++) g[j] += f.P[i * D + j]; });
+  let s = 0; for (let j = 0; j < D; j++) s += g[j] * g[j]; s = Math.sqrt(s) || 1;
+  for (let j = 0; j < D; j++) g[j] /= s;
+  return g;
+}
+function dot(a, b) { let s = 0; for (let j = 0; j < D; j++) s += a[j] * b[j]; return s; }
+
+// ---------- camera ----------
+let stream = null, camTimer = null, camJob = null;
+const camS = { vid: $('vidS'), ov: $('ovS'), msg: $('msgS'), bar: $('barS'), idle: $('idleS') };
+const camA = { vid: $('vidA'), ov: $('ovA'), msg: $('msgA'), bar: $('barA'), idle: $('idleA') };
+
+async function startCam(ctx) {
+  if (!stream) {
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } }); }
+    catch (e) { toast('Нет доступа к камере. Разреши камеру для этого сайта в настройках Safari.', 5000); return false; }
+    try { const tr = stream.getVideoTracks()[0]; const caps = tr.getCapabilities ? tr.getCapabilities() : {}; if (caps.focusMode && caps.focusMode.includes('continuous')) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+  }
+  ctx.vid.srcObject = stream;
+  await ctx.vid.play().catch(() => {});
+  ctx.idle.style.display = 'none';
+  return true;
+}
+function stopCam() {
+  cancelCapture();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  for (const c of [camS, camA]) { c.vid.srcObject = null; c.idle.style.display = ''; const g = c.ov.getContext('2d'); g.clearRect(0, 0, c.ov.width, c.ov.height); c.bar.style.width = '0'; }
+}
+function cancelCapture() { clearTimeout(camTimer); if (camJob) { const j = camJob; camJob = null; j(null); } }
+
+const det = document.createElement('canvas');
+function detectFrame(ctx, last) {
+  const vid = ctx.vid, vw = vid.videoWidth, vh = vid.videoHeight;
+  if (!vw) return null;
+  const W = 480, sc = W / vw;
+  det.width = W; det.height = Math.round(vh * sc);
+  det.getContext('2d').drawImage(vid, 0, 0, det.width, det.height);
+  const near = last ? { x: last.cx * sc, y: last.cy * sc } : null;   // stay on the stone we already follow
+  const b = findStoneByColour({ img: det, near });
+  if (!b) return null;
+  return { cx: b.cx / sc, cy: b.cy / sc, side: b.side / sc, angle: b.angle };
+}
+function cropFrame(ctx, box) {
+  const vid = ctx.vid, S = 900, side = box.side * 1.8, k = S / side;
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#808080'; g.fillRect(0, 0, S, S);
+  let sx = box.cx - side / 2, sy = box.cy - side / 2, sw = side, sh = side, dx = 0, dy = 0;
+  if (sx < 0) { dx = -sx * k; sw += sx; sx = 0; }
+  if (sy < 0) { dy = -sy * k; sh += sy; sy = 0; }
+  sw = Math.min(sw, vid.videoWidth - sx); sh = Math.min(sh, vid.videoHeight - sy);
+  if (sw > 0 && sh > 0) g.drawImage(vid, sx, sy, sw, sh, dx, dy, sw * k, sh * k);
+  return cv;
+}
+function sharpness(cv) {
+  const n = 192, t = document.createElement('canvas'); t.width = t.height = n;
+  const g = t.getContext('2d'), m = cv.width * 0.22;
+  g.drawImage(cv, m, m, cv.width - 2 * m, cv.height - 2 * m, 0, 0, n, n);
+  const d = g.getImageData(0, 0, n, n).data, L = new Float32Array(n * n);
+  for (let i = 0; i < n * n; i++) L[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  let s = 0, s2 = 0, c = 0;
+  for (let y = 1; y < n - 1; y++) for (let x = 1; x < n - 1; x++) {
+    const i = y * n + x, v = 4 * L[i] - L[i - 1] - L[i + 1] - L[i - n] - L[i + n];
+    s += v; s2 += v * v; c++;
+  }
+  return s2 / c - (s / c) ** 2;
+}
+function drawOverlay(ctx, box, colour) {
+  const { vid, ov } = ctx, r = vid.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  ov.width = r.width * dpr; ov.height = r.height * dpr;
+  const g = ov.getContext('2d'); g.clearRect(0, 0, ov.width, ov.height);
+  if (!box) return;
+  const vw = vid.videoWidth, vh = vid.videoHeight;
+  const k = Math.max(ov.width / vw, ov.height / vh);
+  const ox = (ov.width - vw * k) / 2, oy = (ov.height - vh * k) / 2;
+  g.save(); g.translate(ox + box.cx * k, oy + box.cy * k); g.rotate(box.angle * Math.PI / 180);
+  const h = box.side / 1.12 / 2 * k, L = h * 0.32;
+  g.strokeStyle = colour; g.lineWidth = 4 * dpr; g.lineCap = 'round';
+  for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    g.beginPath(); g.moveTo(sx * h, sy * (h - L)); g.lineTo(sx * h, sy * h); g.lineTo(sx * (h - L), sy * h); g.stroke();
+  }
+  g.restore();
+}
+
+// find stone → right size → hold still → sharp → burst of 6 → keep the sharpest crop
+function captureStone(ctx) {
+  return new Promise(resolve => {
+    let last = null, burst = [], peak = 1;
+    camJob = resolve;
+    const step = () => {
+      if (camJob !== resolve) return;
+      const raw = detectFrame(ctx, last);
+      let box = raw;
+      if (raw && last && Math.hypot(raw.cx - last.cx, raw.cy - last.cy) < raw.side * 0.5) {
+        const a = 0.35;
+        box = { cx: last.cx + a * (raw.cx - last.cx), cy: last.cy + a * (raw.cy - last.cy), side: last.side + a * (raw.side - last.side), angle: raw.angle };
+      }
+      if (!box) { last = null; burst = []; drawOverlay(ctx, null); ctx.bar.style.width = '0'; ctx.msg.textContent = 'Наведи на камень'; camTimer = setTimeout(step, 100); return; }
+      const frac = box.side / 1.12 / Math.min(ctx.vid.videoWidth, ctx.vid.videoHeight);
+      const moved = last ? Math.hypot(box.cx - last.cx, box.cy - last.cy) / box.side + Math.abs(box.side / last.side - 1) : 1;
+      last = box;
+      const cv = cropFrame(ctx, box), sh = sharpness(cv);
+      peak = Math.max(peak * 0.995, sh);
+      const rel = sh / peak;
+      ctx.bar.style.width = Math.min(100, rel * 100) + '%';
+      ctx.bar.style.background = rel > 0.75 ? 'var(--jade)' : rel > 0.5 ? 'var(--warn)' : 'var(--bad)';
+      let msg = null;
+      if (frac < 0.22) msg = 'Ближе';
+      else if (frac > 0.75) msg = 'Дальше';
+      else if (moved > 0.1) msg = 'Держи ровно';
+      else if (rel < 0.4 && peak > 1) msg = 'Не в фокусе, чуть отодвинь';
+      if (msg) { if (moved > 0.1) burst = []; ctx.msg.textContent = msg; drawOverlay(ctx, box, '#e8c25a'); }
+      else {
+        burst.push({ cv, sharp: sh });
+        ctx.msg.textContent = `Снимаю ${'●'.repeat(Math.min(6, burst.length))}${'○'.repeat(Math.max(0, 6 - burst.length))}`;
+        drawOverlay(ctx, box, '#3fd8a2');
+      }
+      if (burst.length >= 6) {
+        const best = burst.reduce((a, b) => b.sharp > a.sharp ? b : a);
+        camJob = null; drawOverlay(ctx, null);
+        resolve(best.cv); return;
+      }
+      camTimer = setTimeout(step, 100);
+    };
+    step();
+  });
+}
+
+// ---------- identification ----------
+// returns { state: 'found'|'unknown'|'unsure'|'nostone'|'empty', stone, res, best }
+async function identify(cv, status = () => {}) {
+  if (!stones.length) return { state: 'empty' };
+  const cache = {};
+  const getQ = async q => { if (!(q in cache)) cache[q] = await stoneFeatures(cv, q, null); return cache[q]; };
+  status('Нахожу камень…'); await tick();
+  const q0 = await getQ(0);
+  if (!q0) return { state: 'nostone' };
+  const gq = gvecOf(q0.f);
+  // coarse prefilter by one mean vector, then the exact geometric check on the closest few
+  const ranked = stones.filter(s => s.gv).map(s => ({ s, sc: dot(gq, s.gv) })).sort((a, b) => b.sc - a.sc).slice(0, 4);
+  const rect = q0.b.rect > 0.9;
+  let best = null;
+  for (const { s } of ranked) {
+    status(`Сверяю с «${s.name}»…`); await tick();
+    let ref;
+    try { ref = await getPatches(s); } catch (e) { continue; }
+    const rots = rect ? [0, 90, 180, 270] : [0, 90, 180, 270, 45, 135, 225, 315];
+    let local = null;
+    for (const q of rots) {
+      const r = await getQ(q);
+      if (!r) continue;
+      const sc = scoreAgainst(ref, r.f); sc.angle = q;
+      if (!local || sc.ratio * sc.inl.length > local.ratio * local.inl.length) local = sc;
+      if (local.inl.length >= MIN_INLIERS * 1.5 && local.ratio >= MIN_RATIO * 1.5) break;
+      if (q === 270 && !rect && verdictOf(local) === 'yes') break;
+    }
+    if (!local) continue;
+    const entry = { stone: s, res: local, score: local.ratio * local.inl.length };
+    if (!best || entry.score > best.score) best = entry;
+    if (verdictOf(local) === 'yes' && local.inl.length >= MIN_INLIERS * 1.5) break;
+  }
+  if (!best) return { state: 'unknown' };
+  const v = verdictOf(best.res);
+  return { state: v === 'yes' ? 'found' : v === 'no' ? 'unknown' : 'unsure', stone: best.stone, res: best.res, q0 };
+}
+
+// ---------- sheet ----------
+function openLink(url) { if (/^(tel:|mailto:)/.test(url)) location.href = url; else window.open(url, '_blank'); }
+function sheet(html) { const s = $('sheet'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
+function hideSheet() { $('sheet').classList.remove('on'); }
+function contactRows(c) {
+  const defs = [['phone', '📞', 'Телефон', v => 'tel:' + v], ['tg', '✈️', 'Telegram', v => 'https://t.me/' + v.replace('@', '')], ['email', '✉️', 'Email', v => 'mailto:' + v], ['site', '🔗', 'Сайт', v => /^https?:/.test(v) ? v : 'https://' + v]];
+  return defs.filter(d => c[d[0]]).map(d => `<button class="row" data-url="${esc(d[3](c[d[0]]))}"><span><small>${d[2]}</small><b>${esc(c[d[0]])}</b></span><span style="flex:none;color:var(--mute)">›</span></button>`).join('');
+}
+function bindRows() { document.querySelectorAll('#sheet .row[data-url]').forEach(b => b.onclick = () => openLink(b.dataset.url)); }
+
+function stoneCard(s, state, extra = '') {
+  const label = { found: 'Узнал', unknown: 'Не узнал', unsure: 'Не уверен', info: 'Камень' }[state] || '';
+  const cls = state === 'unknown' ? 'bad' : state === 'unsure' ? 'warn' : '';
+  return `<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state ${cls}">${label}</div><div class="sh-name">${esc(s.name)}</div>${s.jk ? `<span class="sh-jk">${esc(s.jk)}</span>` : ''}</div></div>${extra}`;
+}
+
+async function ownerLine(s) {
+  const m = /JK-\d+/i.exec(s.jk || (s.contacts && s.contacts.site) || '');
+  if (!m) return '';
+  try {
+    const works = await (await fetch('https://raw.githubusercontent.com/paninsergey1965-lgtm/jadekey-art/main/works.json')).json();
+    const jk = m[0].toUpperCase();
+    for (const k in works) if (works[k].works && works[k].works.includes(jk)) return works[k].name;
+  } catch (e) {}
+  return '';
+}
+
+function showFound(r) {
+  const s = r.stone, pct = Math.round(r.res.ratio * 100);
+  sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
+  bindRows(); $('again').onclick = hideSheet;
+  ownerLine(s).then(n => { if (n && $('ownerLn')) $('ownerLn').innerHTML = `<div class="sh-note" style="color:var(--fg)">Владелец: <b>${esc(n)}</b></div>`; });
+}
+function showUnknown(r, cv) {
+  const near = r.stone ? `Ближайший: «${esc(r.stone.name)}», но совпало только ${r.res.inl.length} участков, этого мало.` : '';
+  const dbg = r.res ? `<p class="sh-note" style="font-size:12px">Диагностика: ${backend}, участков камня ${r.res.fgA} / ${r.res.fgB}, поворот ${r.res.angle}°</p>` : '';
+  sheet(`<div class="sh-head"><div><div class="sh-state bad">Не узнал</div><div class="sh-name">Этого камня нет в коллекции</div></div></div><p class="sh-note">${near}</p>${dbg}<div class="btns"><button class="btn" id="again">Ещё раз</button><button class="btn main" id="toAdd">Добавить в коллекцию</button></div>`);
+  $('again').onclick = hideSheet;
+  $('toAdd').onclick = async () => { hideSheet(); lastScanCv = cv; await openAdd({ fromCv: cv }); };
+}
+let lastScanCv = null;
+
+// ---------- scan flow ----------
+let scanning = false;
+$('shutter').onclick = async () => {
+  if (scanning) { cancelCapture(); return; }
+  if (!extractor) { toast('Модель ещё загружается'); return; }
+  scanning = true; $('shutter').classList.add('busy'); hideSheet();
+  try {
+    if (Date.now() - lastLoad > 15000) loadStones();   // pick up stones added from other phones (runs while the camera starts)
+    if (!(await startCam(camS))) return;
+    let best = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      camS.msg.textContent = attempt === 1 ? 'Наведи на камень' : `Не уверен, пересниму (${attempt} из 3)`;
+      const cv = await captureStone(camS);
+      if (!cv) { best = null; return; }
+      camS.msg.textContent = 'Узнаю…';
+      const r = await identify(cv, t => camS.msg.textContent = t);
+      r.cv = cv;
+      if (r.state === 'empty') { sheet('<div class="sh-head"><div><div class="sh-state warn">Пусто</div><div class="sh-name">В коллекции нет камней</div></div></div><p class="sh-note">Сначала добавь хотя бы один камень на вкладке «Добавить».</p>'); return; }
+      if (r.state === 'nostone') { camS.msg.textContent = 'Камень на кадре не найден'; continue; }
+      if (!best || (r.res && (!best.res || r.res.ratio * r.res.inl.length > best.res.ratio * best.res.inl.length))) best = r;
+      if (r.state !== 'unsure') break;
+    }
+    if (!best) { camS.msg.textContent = 'Не получилось, попробуй ещё'; return; }
+    camS.msg.textContent = 'Готов';
+    if (best.state === 'found') showFound(best);
+    else if (best.state === 'unsure') showUnknown({ ...best }, best.cv);
+    else showUnknown(best, best.cv);
+    stopCam();
+  } catch (e) { toast('Ошибка: ' + e.message, 4500); }
+  finally { scanning = false; $('shutter').classList.remove('busy'); if (camS.msg.textContent !== 'Готов') camS.msg.textContent = 'Готов'; }
+};
+
+// ---------- collection view ----------
+function renderColl() {
+  const q = $('search').value.trim().toLowerCase();
+  const list = stones.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
+  $('collSub').textContent = stones.length ? `${stones.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(stones.length)}` : 'Пока пусто. Добавь первый камень.';
+  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${esc(s.jk || '')}</span></div></button>`).join('');
+  $('grid').querySelectorAll('.card').forEach(b => b.onclick = () => showInfo(stones.find(s => s.id === b.dataset.id)));
+}
+$('search').oninput = renderColl;
+
+function showInfo(s) {
+  sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  bindRows();
+  $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
+  $('del').onclick = async () => {
+    if (!(await ownerOk())) return;
+    if (!confirm(`Удалить «${s.name}»?`)) return;
+    veil('Удаляю…');
+    try { await fsDelete(COLP, s.id); await fsDelete(COL, s.id); patchCache.delete(s.id); await loadStones(); hideSheet(); }
+    catch (e) { toast('Не удалось удалить: ' + e.message); }
+    veil();
+  };
+}
+
+// owner PIN (this device only)
+let owner = false;
+async function sha(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('jk2:' + t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+async function ownerOk() {
+  if (owner) return true;
+  let h = null; try { h = localStorage.getItem('jk2_pin'); } catch (e) {}
+  if (!h) {
+    const p = prompt('Придумай PIN владельца (им защищены добавление, правка и удаление камней на этом телефоне)');
+    if (!p) return false;
+    try { localStorage.setItem('jk2_pin', await sha(p)); } catch (e) {}
+    owner = true; return true;
+  }
+  const p = prompt('PIN владельца');
+  if (p && await sha(p) === h) { owner = true; return true; }
+  toast('Неверный PIN'); return false;
+}
+
+// ---------- add / edit ----------
+let addShot = null, addCtx = {};
+const FIELDS = { fName: 'name', fJk: 'jk', fPhone: 'phone', fTg: 'tg', fMail: 'email', fSite: 'site' };
+function setAddMode(mode) {   // 'cam' | 'form'
+  $('camPart').style.display = mode === 'cam' ? '' : 'none';
+  $('shotPart').style.display = mode === 'form' && addShot ? '' : 'none';
+  $('formPart').style.display = mode === 'form' ? '' : 'none';
+}
+async function openAdd(ctx = {}) {
+  if (!(await ownerOk())) return;
+  addCtx = ctx; addShot = null;
+  for (const id in FIELDS) $(id).value = '';
+  const src = ctx.edit || ctx.legacy;
+  if (src) {
+    const c = ctx.edit ? src.contacts : (() => { try { return JSON.parse(src.contacts || '{}'); } catch (e) { return {}; } })();
+    $('fName').value = src.name || ''; $('fJk').value = src.jk || (/JK-\d+/i.exec(c.site || '') || [''])[0].toUpperCase();
+    $('fPhone').value = c.phone || ''; $('fTg').value = c.tg || ''; $('fMail').value = c.email || ''; $('fSite').value = c.site || '';
+  }
+  $('addTitle').textContent = ctx.edit ? 'Изменить' : ctx.legacy ? 'Переснять камень' : 'Новый камень';
+  tab('add');
+  if (ctx.edit) { setAddMode('form'); $('shotPart').style.display = 'none'; $('btnSave').textContent = 'Сохранить'; return; }
+  $('btnSave').textContent = 'Сохранить в коллекцию';
+  if (ctx.fromCv) { await processShot(ctx.fromCv); return; }
+  setAddMode('cam');
+}
+async function processShot(cv) {
+  if (!extractor) { toast('Модель ещё загружается'); setAddMode('cam'); return; }
+  veil('Запоминаю камень…'); await tick();
+  try {
+    const r = await stoneFeatures(cv, 0, null);
+    if (!r) { toast('Камень на кадре не найден, попробуй ещё'); setAddMode('cam'); return; }
+    const n = r.f.mask.filter(Boolean).length;
+    const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(r.f.cv, 0, 0, 240, 240);
+    addShot = { cv, f: r.f, thumb: t.toDataURL('image/jpeg', 0.8), n, hue: r.b.hue };
+    $('shotImg').src = addShot.thumb;
+    $('shotInfo').textContent = `${n} участков рисунка`;
+    setAddMode('form');
+  } catch (e) { toast('Ошибка: ' + e.message); setAddMode('cam'); }
+  veil();
+}
+$('btnShoot').onclick = async () => {
+  if (scanning) { cancelCapture(); return; }
+  if (!extractor) { toast('Модель ещё загружается'); return; }
+  scanning = true; $('btnShoot').textContent = 'Стоп';
+  try {
+    if (!(await startCam(camA))) return;
+    const cv = await captureStone(camA);
+    if (cv) { stopCam(); await processShot(cv); }
+  } finally { scanning = false; $('btnShoot').textContent = 'Снять камень'; }
+};
+$('fileAdd').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const p = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(f); });
+  const S = 2000, sc = Math.min(1, S / Math.max(p.width, p.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(p.width * sc); cv.height = Math.round(p.height * sc);
+  cv.getContext('2d').drawImage(p, 0, 0, cv.width, cv.height);
+  await processShot(cv);
+};
+$('btnRetake').onclick = () => { addShot = null; setAddMode('cam'); };
+$('btnCancel').onclick = () => { stopCam(); addShot = null; tab('coll'); };
+
+$('btnSave').onclick = async () => {
+  const name = $('fName').value.trim();
+  if (!name) { toast('Введи название'); return; }
+  const contacts = {};
+  for (const [id, k] of [['fPhone', 'phone'], ['fTg', 'tg'], ['fMail', 'email'], ['fSite', 'site']]) { const v = $(id).value.trim(); if (v) contacts[k] = v; }
+  const jk = $('fJk').value.trim().toUpperCase();
+  veil('Сохраняю…');
+  try {
+    if (addCtx.edit) {
+      await fsPatch(COL, addCtx.edit.id, { name, jk, contacts: JSON.stringify(contacts) });
+    } else {
+      if (!addShot) { toast('Сначала сними камень'); veil(); return; }
+      if (stones.length) {   // do not register the same stone twice
+        veil('Проверяю, нет ли такого камня…');
+        const r = await identify(addShot.cv, t => veil(t));
+        if (r.state === 'found' && !confirm(`Похоже, этот камень уже есть: «${r.stone.name}» (${r.res.inl.length} совпадений). Всё равно добавить?`)) { veil(); return; }
+        veil('Сохраняю…');
+      }
+      const enc = encodePatches(addShot.f);
+      const g = f32B64(gvecOf(addShot.f));
+      const doc = await fsCreate(COL, { name, jk, contacts: JSON.stringify(contacts), created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
+      const id = doc.name.split('/').pop();
+      try { await fsCreate(COLP, { idx: enc.idx, p: enc.p, sc: enc.sc }, id); }
+      catch (e) { await fsDelete(COL, id); throw e; }
+    }
+    await loadStones();
+    addShot = null; stopCam();
+    tab('coll'); toast('Сохранено');
+  } catch (e) { toast('Не сохранилось: ' + e.message, 5500); }
+  veil();
+};
+
+// ---------- tabs ----------
+function tab(name) {
+  hideSheet();
+  if (name !== 'scan' && name !== 'add') stopCam();
+  if (name === 'scan') { try { stopCam(); } catch (e) {} }
+  for (const [n, v, b] of [['scan', 'vScan', 'nScan'], ['coll', 'vColl', 'nColl'], ['add', 'vAdd', 'nAdd']]) {
+    $(v).classList.toggle('on', n === name); $(b).classList.toggle('on', n === name);
+  }
+}
+$('nScan').onclick = () => tab('scan');
+$('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
+$('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({}); };
+$('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
+
+loadStones();
+loadModel();
+</script>
+</body>
+</html>
