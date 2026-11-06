@@ -644,6 +644,9 @@ async function loadModel() {
     // ?cpu=1 forces the processor (some Android GPUs return wrong numbers); ?gpu=1 undoes it. Remembered on this phone.
     try { const q = new URLSearchParams(location.search); if (q.has('cpu')) localStorage.setItem('jk2_cpu', '1'); if (q.has('gpu')) localStorage.removeItem('jk2_cpu'); } catch (e) {}
     let forceCpu = false; try { forceCpu = localStorage.getItem('jk2_cpu') === '1'; } catch (e) {}
+    // Android WebGPU gives wrong features (0 matches) on many phones — use the processor there unless ?gpu=1
+    let wantGpu = false; try { wantGpu = new URLSearchParams(location.search).has('gpu'); } catch (e) {}
+    if (/Android/i.test(navigator.userAgent) && !wantGpu) forceCpu = true;
     if (navigator.gpu && !forceCpu) {
       try {
         const ex = await withTimeout(pipeline('image-feature-extraction', 'dinov2', { dtype: 'fp32', subfolder: '', device: 'webgpu', progress_callback }), 120000);
