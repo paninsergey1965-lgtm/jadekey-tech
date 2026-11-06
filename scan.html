@@ -1144,24 +1144,69 @@ $('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoa
 $('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({}); };
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
 
-// ---------- NFC (only inside the iOS app) ----------
+// ---------- NFC: native plugin in the iOS app, Web NFC in Chrome on Android ----------
 const Cap = window.Capacitor;
 const inApp = !!(Cap && (typeof Cap.isNativePlatform === 'function' ? Cap.isNativePlatform()
   : (typeof Cap.getPlatform === 'function' && Cap.getPlatform() !== 'web')));
-const JadeNfc = !inApp ? null : (typeof Cap.registerPlugin === 'function' ? Cap.registerPlugin('JadeNfc')
+let JadeNfc = !inApp ? null : (typeof Cap.registerPlugin === 'function' ? Cap.registerPlugin('JadeNfc')
   : Object.fromEntries(['isAvailable', 'scan', 'writeUrl', 'enableCounter'].map(m => [m, (o = {}) => Cap.nativePromise('JadeNfc', m, o)])));
 const NFC_URL = 'https://jadekey.tech/scan.html';
+// Web NFC (Chrome on Android): same interface as the native plugin, fewer details (no counter / signature)
+function nfcWait(text) {
+  return new Promise(res => {
+    sheet(`<div class="sh-head"><div><div class="sh-state">NFC</div><div class="sh-name">${text}</div></div></div>
+      <p class="sh-note">Держи метку у задней крышки телефона, ближе к центру, 1–2 секунды.</p>
+      <div class="btns"><button class="btn" id="nfcCancel">Отмена</button></div>`);
+    $('nfcCancel').onclick = () => res('cancel');
+  });
+}
+function makeWebNfc() {
+  const dec = new TextDecoder();
+  const hex = sn => (sn || '').replace(/:/g, '').toUpperCase();
+  const withSheet = async (text, work) => {
+    const ctl = new AbortController();
+    const cancel = nfcWait(text).then(() => { ctl.abort(); throw new Error('Отменено'); });
+    try { return await Promise.race([work(ctl.signal), cancel]); }
+    finally { ctl.abort(); hideSheet(); }
+  };
+  return {
+    web: true,
+    isAvailable: async () => ({ available: true }),
+    scan: () => withSheet('Поднеси метку к телефону', signal => new Promise((res, rej) => {
+      const r = new NDEFReader();
+      r.onreading = e => {
+        const ndef = [];
+        for (const rec of e.message.records) {
+          try {
+            if (rec.recordType === 'url' || rec.recordType === 'absolute-url' || rec.recordType === 'text')
+              ndef.push(dec.decode(rec.data));
+            else ndef.push('[' + rec.recordType + ']');
+          } catch (x) {}
+        }
+        res({ uid: hex(e.serialNumber), family: 'web', chip: 'NFC-метка', ndef });
+      };
+      r.onreadingerror = () => rej(new Error('Не удалось прочитать, попробуй ещё'));
+      r.scan({ signal }).catch(rej);
+    })),
+    writeUrl: ({ url }) => withSheet('Поднеси метку для записи', async signal => {
+      const r = new NDEFReader();
+      await r.write({ records: [{ recordType: 'url', data: url }] }, { signal, overwrite: true });
+      return { written: url };
+    }),
+  };
+}
+if (!JadeNfc && 'NDEFReader' in window) JadeNfc = makeWebNfc();
 function nfcErr(e) { const m = (e && (e.message || e.errorMessage)) || String(e); if (!/Отменено|cancel/i.test(m)) toast('NFC: ' + m, 4000); }
 function nfcRow(label, value) { return `<div class="row"><span><small>${label}</small><b style="word-break:break-all">${esc(value)}</b></span></div>`; }
 function nfcSheet(r, title) {
   const rows = [nfcRow('Чип', r.chip || r.family || '—'), nfcRow('UID', r.uid || '—')];
-  rows.push(nfcRow('Счётчик касаний', r.counter == null ? 'выключен' : String(r.counter)));
+  if (r.family !== 'web') rows.push(nfcRow('Счётчик касаний', r.counter == null ? 'выключен' : String(r.counter)));
   if (r.ndef && r.ndef.length) rows.push(nfcRow('Записано в чипе', r.ndef.join(' · ')));
   if (r.signature) rows.push(nfcRow('Подпись NXP', r.signature.slice(0, 16) + '…'));
-  const canSetup = r.family === 'ultralight';
+  const canSetup = r.family === 'ultralight' || r.family === 'web';
   sheet(`<div class="sh-head"><div><div class="sh-state">${title}</div><div class="sh-name">Чип брелока</div></div></div>
     <div class="rows">${rows.join('')}</div>
-    ${canSetup ? `<div class="btns">${r.counter == null ? '<button class="btn" id="nfcCnt">Включить счётчик</button>' : ''}<button class="btn" id="nfcUrl">Записать ссылку</button></div>` : ''}
+    ${canSetup ? `<div class="btns">${r.counter == null && r.family !== 'web' ? '<button class="btn" id="nfcCnt">Включить счётчик</button>' : ''}<button class="btn" id="nfcUrl">Записать ссылку</button></div>` : ''}
     <div class="btns"><button class="btn main" id="nfcAgain">Прочитать ещё</button></div>`);
   $('nfcAgain').onclick = nfcScan;
   if ($('nfcCnt')) $('nfcCnt').onclick = async () => { try { await JadeNfc.enableCounter(); toast('Счётчик включён'); nfcScan(); } catch (e) { nfcErr(e); } };
@@ -1203,6 +1248,7 @@ async function nfcScan() {
   catch (e) {
     const m = (e && (e.message || e.errorMessage)) || String(e);
     if (/not implemented|UNIMPLEMENTED/i.test(m)) toast('NFC: обнови приложение в TestFlight до сборки 19+', 5000);
+    else if (/NotAllowed|permission/i.test(m)) toast('NFC: разреши доступ к NFC для сайта и включи NFC в настройках телефона', 6000);
     else nfcErr(e);
   }
 }
