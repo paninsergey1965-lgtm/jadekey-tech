@@ -1162,7 +1162,13 @@ function nfcSheet(r, title) {
 }
 async function nfcScan() {
   hideSheet();
-  try { const r = await JadeNfc.scan({}); nfcSheet(r, 'Прочитан'); } catch (e) { nfcErr(e); }
+  toast('NFC: запускаю…', 1500);
+  try { const r = await JadeNfc.scan({}); nfcSheet(r, 'Прочитан'); }
+  catch (e) {
+    const m = (e && (e.message || e.errorMessage)) || String(e);
+    if (/not implemented|UNIMPLEMENTED/i.test(m)) toast('NFC: обнови приложение в TestFlight до сборки 19+', 5000);
+    else nfcErr(e);
+  }
 }
 if (JadeNfc) {
   $('nNfc').style.display = '';
