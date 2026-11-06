@@ -1252,10 +1252,19 @@ async function nfcScan() {
     else nfcErr(e);
   }
 }
-if (JadeNfc) {
+if (JadeNfc || /Android/i.test(navigator.userAgent)) {
   $('nNfc').style.display = '';
   document.querySelector('nav').style.gridTemplateColumns = 'repeat(4,1fr)';
-  $('nNfc').onclick = nfcScan;
+  $('nNfc').onclick = JadeNfc ? nfcScan : () => {
+    const why = !window.isSecureContext ? 'Сайт открыт без https. Открой https://jadekey.tech/scan.html'
+      : !/Chrome\//.test(navigator.userAgent) || /SamsungBrowser|MiuiBrowser|YaBrowser|OPR\//.test(navigator.userAgent)
+        ? 'NFC в браузере работает только в Google Chrome. Открой эту страницу в Chrome'
+        : 'Этот Chrome не поддерживает NFC. Обнови Chrome в Play Маркете и включи NFC в настройках телефона';
+    sheet(`<div class="sh-head"><div><div class="sh-state warn">NFC недоступен</div><div class="sh-name">Нужен Chrome</div></div></div>
+      <p class="sh-note">${esc(why)}</p><p class="sh-note" style="font-size:11px;opacity:.6">${esc(navigator.userAgent)}</p>
+      <div class="btns"><button class="btn main" id="nfcOk">Понятно</button></div>`);
+    $('nfcOk').onclick = hideSheet;
+  };
 }
 
 loadStones();
