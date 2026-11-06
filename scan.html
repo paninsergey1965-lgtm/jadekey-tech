@@ -1158,20 +1158,40 @@ function nfcSheet(r, title) {
     <div class="btns"><button class="btn main" id="nfcAgain">Прочитать ещё</button></div>`);
   $('nfcAgain').onclick = nfcScan;
   if ($('nfcCnt')) $('nfcCnt').onclick = async () => { try { await JadeNfc.enableCounter(); toast('Счётчик включён'); nfcScan(); } catch (e) { nfcErr(e); } };
-  if ($('nfcUrl')) $('nfcUrl').onclick = async () => { try { await JadeNfc.writeUrl({ url: NFC_URL }); toast('Ссылка записана'); nfcScan(); } catch (e) { nfcErr(e); } };
+  if ($('nfcUrl')) $('nfcUrl').onclick = () => nfcWriteForm(r);
+}
+function nfcNormalize(v) {
+  v = v.trim();
+  if (!v) return '';
+  if (/^(https?:|tel:|mailto:|sms:|geo:)/i.test(v)) return v;
+  if (/^\+?[\d\s()-]{6,}$/.test(v)) return 'tel:' + v.replace(/[\s()-]/g, '');
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return 'mailto:' + v;
+  if (/^@?[A-Za-z0-9_]{4,}$/.test(v) && v.startsWith('@')) return 'https://t.me/' + v.slice(1);
+  return 'https://' + v.replace(/^\/+/, '');
+}
+function nfcWriteForm(r) {
+  const cur = (r && r.ndef && r.ndef[0]) || NFC_URL;
+  const presets = [['Сканер JadeKey', NFC_URL], ['Сайт', 'https://jadekey.tech'], ['Мой Telegram', '@direkto']];
+  sheet(`<div class="sh-head"><div><div class="sh-state">Запись в чип</div><div class="sh-name">Что записать?</div></div></div>
+    <p class="sh-note">Ссылка, телефон, почта или @telegram. Старая запись сотрётся.</p>
+    <input id="nfcIn" value="${esc(cur)}" autocapitalize="off" autocorrect="off" spellcheck="false"
+      style="width:100%;margin-top:12px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);font-size:16px">
+    <div class="btns">${presets.map((p, i) => `<button class="btn" data-p="${i}">${p[0]}</button>`).join('')}</div>
+    <p class="sh-note" id="nfcPrev"></p>
+    <div class="btns"><button class="btn" id="nfcBack">Назад</button><button class="btn main" id="nfcGo">Записать</button></div>`);
+  const upd = () => { $('nfcPrev').textContent = 'Будет записано: ' + (nfcNormalize($('nfcIn').value) || '—'); };
+  $('nfcIn').oninput = upd; upd();
+  document.querySelectorAll('#sheet [data-p]').forEach(b => b.onclick = () => { $('nfcIn').value = presets[+b.dataset.p][1]; upd(); });
+  $('nfcBack').onclick = () => nfcSheet(r, 'Прочитан');
+  $('nfcGo').onclick = async () => {
+    const url = nfcNormalize($('nfcIn').value);
+    if (!url) { toast('Пусто'); return; }
+    if (url.length > 120) { toast('Слишком длинно для этого чипа (макс ~120 символов)', 4000); return; }
+    try { await JadeNfc.writeUrl({ url }); toast('Записано'); nfcScan(); } catch (e) { nfcErr(e); }
+  };
 }
 async function nfcScan() {
   hideSheet();
-  const heads = ((window.Capacitor && window.Capacitor.PluginHeaders) || []).map(h => h.name);
-  const hasNative = heads.includes('JadeNfc');
-  const timeout = ms => new Promise((_, rj) => setTimeout(() => rj(new Error('нет ответа ' + ms / 1000 + 'с')), ms));
-  try {
-    const a = await Promise.race([JadeNfc.isAvailable(), timeout(4000)]);
-    toast('NFC: модуль ' + (hasNative ? 'есть' : 'НЕТ') + ', доступен=' + a.available, 2500);
-  } catch (e) {
-    toast('NFC диагностика: модуль ' + (hasNative ? 'есть' : 'НЕТ') + ' (' + heads.length + ' плагинов), ' + ((e && e.message) || e), 8000);
-    return;
-  }
   try { const r = await JadeNfc.scan({}); nfcSheet(r, 'Прочитан'); }
   catch (e) {
     const m = (e && (e.message || e.errorMessage)) || String(e);
