@@ -1162,7 +1162,16 @@ function nfcSheet(r, title) {
 }
 async function nfcScan() {
   hideSheet();
-  toast('NFC: запускаю…', 1500);
+  const heads = ((window.Capacitor && window.Capacitor.PluginHeaders) || []).map(h => h.name);
+  const hasNative = heads.includes('JadeNfc');
+  const timeout = ms => new Promise((_, rj) => setTimeout(() => rj(new Error('нет ответа ' + ms / 1000 + 'с')), ms));
+  try {
+    const a = await Promise.race([JadeNfc.isAvailable(), timeout(4000)]);
+    toast('NFC: модуль ' + (hasNative ? 'есть' : 'НЕТ') + ', доступен=' + a.available, 2500);
+  } catch (e) {
+    toast('NFC диагностика: модуль ' + (hasNative ? 'есть' : 'НЕТ') + ' (' + heads.length + ' плагинов), ' + ((e && e.message) || e), 8000);
+    return;
+  }
   try { const r = await JadeNfc.scan({}); nfcSheet(r, 'Прочитан'); }
   catch (e) {
     const m = (e && (e.message || e.errorMessage)) || String(e);
