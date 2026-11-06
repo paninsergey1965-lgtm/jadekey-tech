@@ -1,0 +1,29 @@
+name: Fetch scanner model into repo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download DINOv2 model from R2
+        run: |
+          mkdir -p models/dinov2
+          curl -fL --retry 3 -A "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)" \
+            -H "Origin: https://jadekey.tech" -H "Referer: https://jadekey.tech/scan.html" \
+            -o models/dinov2/model.onnx \
+            https://pub-fb06a4548f2c4db89da61c0ed32064c7.r2.dev/dinov2/model.onnx
+          ls -la models/dinov2
+          test $(stat -c%s models/dinov2/model.onnx) -gt 1000000
+      - name: Commit
+        run: |
+          git config user.name "jadekey-ci"
+          git config user.email "jadekey-ci@users.noreply.github.com"
+          git add models/dinov2/model.onnx
+          git commit -m "Add DINOv2 model for self-hosted scanner" || echo "no change"
+          git push

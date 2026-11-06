@@ -184,14 +184,18 @@ nav button.on{color:var(--jade)}
 <div class="veil" id="veil"><div class="ring"></div><div id="veilTxt"></div></div>
 
 <script type="module">
-import { pipeline, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1';
+import { pipeline, RawImage, env } from './vendor/transformers.min.js';
 
-// model files live in our own Cloudflare R2 bucket, not on Hugging Face
+// model, library and wasm are served from this site (no CDN / Cloudflare R2 — works in Russia without VPN)
 env.allowLocalModels = false;
-env.remoteHost = 'https://pub-fb06a4548f2c4db89da61c0ed32064c7.r2.dev/';
+env.remoteHost = new URL('./models/', location.href).href;
+env.backends.onnx.wasm.wasmPaths = {
+  mjs: new URL('./vendor/ort-wasm-simd-threaded.jsep.js', location.href).href,
+  wasm: new URL('./vendor/ort-wasm-simd-threaded.jsep.wasm', location.href).href,
+};
 env.remotePathTemplate = '{model}/';
 
-// the two small config files are built in, so only model.onnx is fetched from R2
+// the two small config files are built in, so only model.onnx is fetched
 const BUILTIN = {
   'config.json': {"_name_or_path": "facebook/dinov2-small", "apply_layernorm": true, "architectures": ["Dinov2Model"], "attention_probs_dropout_prob": 0.0, "drop_path_rate": 0.0, "hidden_act": "gelu", "hidden_dropout_prob": 0.0, "hidden_size": 384, "image_size": 518, "initializer_range": 0.02, "layer_norm_eps": 1e-06, "layerscale_value": 1.0, "mlp_ratio": 4, "model_type": "dinov2", "num_attention_heads": 6, "num_channels": 3, "num_hidden_layers": 12, "out_features": ["stage12"], "out_indices": [12], "patch_size": 14, "qkv_bias": true, "reshape_hidden_states": true, "stage_names": ["stem", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "stage9", "stage10", "stage11", "stage12"], "transformers_version": "4.45.0.dev0", "use_swiglu_ffn": false},
   'preprocessor_config.json': {"crop_size": {"height": 224, "width": 224}, "do_center_crop": true, "do_convert_rgb": true, "do_normalize": true, "do_rescale": true, "do_resize": true, "image_mean": [0.485, 0.456, 0.406], "image_processor_type": "BitImageProcessor", "image_std": [0.229, 0.224, 0.225], "resample": 3, "rescale_factor": 0.00392156862745098, "size": {"shortest_edge": 256}},
