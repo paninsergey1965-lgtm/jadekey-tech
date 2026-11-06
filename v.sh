@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Xray VLESS + Reality + Vision — установка одной командой (Ubuntu 22/24)
 set -e
-SNI="${SNI:-www.microsoft.com}"
+SNI="${SNI:-dl.google.com}"
+NET="${NET:-xhttp}"
+XPATH="/$(openssl rand -hex 4 2>/dev/null || echo jk)"
 PORT="${PORT:-443}"
 export DEBIAN_FRONTEND=noninteractive
 
@@ -17,6 +19,15 @@ UUID="$(/usr/local/bin/xray uuid)"
 SID="$(openssl rand -hex 8)"
 IP="$(curl -4 -fsS https://api.ipify.org || hostname -I | awk '{print $1}')"
 
+if [ "$NET" = "xhttp" ]; then
+  FLOWJSON=""
+  XHTTPJSON="
+      \"xhttpSettings\": { \"path\": \"$XPATH\", \"mode\": \"auto\" },"
+else
+  FLOWJSON=', "flow": "xtls-rprx-vision"'
+  XHTTPJSON=""
+fi
+
 cat > /usr/local/etc/xray/config.json <<EOF
 {
   "log": { "loglevel": "warning" },
@@ -25,11 +36,11 @@ cat > /usr/local/etc/xray/config.json <<EOF
     "port": $PORT,
     "protocol": "vless",
     "settings": {
-      "clients": [{ "id": "$UUID", "flow": "xtls-rprx-vision" }],
+      "clients": [{ "id": "$UUID"$FLOWJSON }],
       "decryption": "none"
     },
     "streamSettings": {
-      "network": "tcp",
+      "network": "$NET",$XHTTPJSON
       "security": "reality",
       "realitySettings": {
         "dest": "$SNI:443",
@@ -59,7 +70,11 @@ systemctl restart xray
 sleep 1
 systemctl is-active --quiet xray || { echo "XRAY НЕ ЗАПУСТИЛСЯ:"; journalctl -u xray -n 20 --no-pager; exit 1; }
 
-LINK="vless://$UUID@$IP:$PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$SNI&fp=chrome&pbk=$PUB&sid=$SID&type=tcp#JadeVPN"
+if [ "$NET" = "xhttp" ]; then
+  LINK="vless://$UUID@$IP:$PORT?encryption=none&security=reality&sni=$SNI&fp=chrome&pbk=$PUB&sid=$SID&type=xhttp&path=%2F${XPATH#/}&mode=auto#JadeVPN-X"
+else
+  LINK="vless://$UUID@$IP:$PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$SNI&fp=chrome&pbk=$PUB&sid=$SID&type=tcp#JadeVPN"
+fi
 echo "$LINK" > /root/vless.txt
 echo
 echo "===== ГОТОВО. Скопируй строку ниже в V2Box ====="
