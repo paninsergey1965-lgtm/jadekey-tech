@@ -1138,8 +1138,11 @@ $('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({});
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
 
 // ---------- NFC (only inside the iOS app) ----------
-const JadeNfc = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.registerPlugin)
-  ? window.Capacitor.registerPlugin('JadeNfc') : null;
+const Cap = window.Capacitor;
+const inApp = !!(Cap && (typeof Cap.isNativePlatform === 'function' ? Cap.isNativePlatform()
+  : (typeof Cap.getPlatform === 'function' && Cap.getPlatform() !== 'web')));
+const JadeNfc = !inApp ? null : (typeof Cap.registerPlugin === 'function' ? Cap.registerPlugin('JadeNfc')
+  : Object.fromEntries(['isAvailable', 'scan', 'writeUrl', 'enableCounter'].map(m => [m, (o = {}) => Cap.nativePromise('JadeNfc', m, o)])));
 const NFC_URL = 'https://jadekey.tech/scan.html';
 function nfcErr(e) { const m = (e && (e.message || e.errorMessage)) || String(e); if (!/Отменено|cancel/i.test(m)) toast('NFC: ' + m, 4000); }
 function nfcRow(label, value) { return `<div class="row"><span><small>${label}</small><b style="word-break:break-all">${esc(value)}</b></span></div>`; }
