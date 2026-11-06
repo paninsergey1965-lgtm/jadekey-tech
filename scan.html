@@ -23,7 +23,10 @@ nav button.on{color:var(--jade)}
 .top{position:absolute;left:0;right:0;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 12px) 16px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(#000b,#0000)}
 .word{font-family:var(--serif);font-size:18px;letter-spacing:.32em;text-transform:uppercase}
 .word i{font-style:normal;color:var(--jade)}
-.chip{font-size:12px;padding:5px 10px;border-radius:999px;background:#ffffff14;color:var(--warn);max-width:60vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb{display:flex;align-items:center;gap:6px}
+.tbtn{display:flex;align-items:center;gap:4px;font-size:12px;padding:5px 10px;border-radius:999px;background:#ffffff14;color:var(--fg)}
+.tbtn svg{width:14px;height:14px;stroke:var(--jade);fill:none;stroke-width:1.8;stroke-linejoin:round}
+.chip{font-size:12px;padding:5px 10px;border-radius:999px;background:#ffffff14;color:var(--warn);max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip.ok{color:var(--jade)} .chip.err{color:var(--bad)}
 
 /* scan view */
@@ -110,7 +113,7 @@ nav button.on{color:var(--jade)}
 
 <!-- ============ SCAN ============ -->
 <section class="view on" id="vScan">
-  <div class="top"><div class="word">Jade<i>Key</i></div><div class="chip" id="chip">Загружаю модель…</div></div>
+  <div class="top"><div class="word">Jade<i>Key</i></div><div class="tb"><button class="tbtn" id="btnFind" title="Найти брелок"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Найти</button><button class="tbtn" id="btnLang">EN</button><div class="chip" id="chip">Загружаю модель…</div></div></div>
   <div class="stage">
     <video id="vidS" playsinline muted autoplay></video>
     <canvas class="ov" id="ovS"></canvas>
@@ -182,6 +185,130 @@ nav button.on{color:var(--jade)}
 <div class="sheet" id="sheet"></div>
 <div id="toast"></div>
 <div class="veil" id="veil"><div class="ring"></div><div id="veilTxt"></div></div>
+
+<script>
+// ---------- language (RU / EN) + "find keychain" button ----------
+(() => {
+  let lang = 'ru';
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'ru') localStorage.setItem('jk2_lang', q);
+    lang = localStorage.getItem('jk2_lang') || (/^ru|^uk|^be|^kk/i.test(navigator.language || 'ru') ? 'ru' : 'en');
+  } catch (e) {}
+  window.JK_LANG = lang;
+
+  const D = {
+    'Загружаю модель…': 'Loading model…', 'Скачиваю модель…': 'Downloading model…', 'Запускаю модель…': 'Starting model…',
+    'Запускаю без видеокарты…': 'Starting without GPU…', 'Модель не загрузилась · нажми': 'Model failed to load · tap',
+    'Покажи камень': 'Show the stone',
+    'Положи брелок на ровную поверхность при хорошем свете и нажми кнопку. Сканер сам найдёт камень и узнает его.':
+      'Place the keychain on a flat surface in good light and press the button. The scanner will find the stone and recognise it.',
+    'Готов': 'Ready', 'Сканировать': 'Scan', 'Сканер': 'Scanner', 'Коллекция': 'Collection', 'Добавить': 'Add',
+    'Загружаю…': 'Loading…', 'Поиск по названию или JK-номеру': 'Search by name or JK number',
+    'Новый камень': 'New stone', 'Одного снимка достаточно: сканер сам разворачивает камень.': 'One photo is enough: the scanner rotates the stone by itself.',
+    'Нажми «Снять камень»': 'Tap «Capture stone»', 'Снять камень': 'Capture stone', 'Из фото': 'From photo',
+    'Камень найден': 'Stone found', 'Переснять': 'Retake', 'Название': 'Name', 'Например, Агат розовый №3': 'e.g. Pink agate #3',
+    'JK-номер': 'JK number', 'Контакты владельца': "Owner's contacts", 'Телефон': 'Phone', 'Сайт https://…': 'Website https://…',
+    'Отмена': 'Cancel', 'Сохранить в коллекцию': 'Save to collection', 'Сохранить': 'Save',
+    'Наведи на камень': 'Point at the stone', 'Ближе': 'Closer', 'Дальше': 'Further', 'Держи ровно': 'Hold steady',
+    'Не в фокусе, чуть отодвинь': 'Out of focus, move back a little', 'Нахожу камень…': 'Finding the stone…', 'Узнаю…': 'Recognising…',
+    'Узнал': 'Recognised', 'Не узнал': 'Not recognised', 'Не уверен': 'Not sure', 'Камень': 'Stone', 'Сайт': 'Website',
+    'Сканировать ещё': 'Scan again', 'Этого камня нет в коллекции': 'This stone is not in the collection',
+    'Ещё раз': 'Try again', 'Добавить в коллекцию': 'Add to collection', 'Владелец:': 'Owner:',
+    'Модель ещё загружается': 'The model is still loading', 'Пусто': 'Empty', 'В коллекции нет камней': 'The collection is empty',
+    'Сначала добавь хотя бы один камень на вкладке «Добавить».': 'First add at least one stone on the «Add» tab.',
+    'Камень на кадре не найден': 'No stone found in the frame', 'Не получилось, попробуй ещё': "Didn't work, try again",
+    'Пока пусто. Добавь первый камень.': 'Empty so far. Add your first stone.',
+    'Изменить': 'Edit', 'Удалить': 'Delete', 'Удаляю…': 'Deleting…', 'Неверный PIN': 'Wrong PIN', 'PIN владельца': 'Owner PIN',
+    'Придумай PIN владельца (им защищены добавление, правка и удаление камней на этом телефоне)':
+      'Create an owner PIN (it protects adding, editing and deleting stones on this phone)',
+    'Переснять камень': 'Retake stone', 'Запоминаю камень…': 'Memorising the stone…',
+    'Камень на кадре не найден, попробуй ещё': 'No stone in the frame, try again', 'Стоп': 'Stop', 'Введи название': 'Enter a name',
+    'Сохраняю…': 'Saving…', 'Сначала сними камень': 'Capture the stone first', 'Проверяю, нет ли такого камня…': 'Checking for duplicates…',
+    'Сохранено': 'Saved', 'Нет доступа к камере. Разреши камеру для этого сайта в настройках Safari.':
+      'No camera access. Allow the camera for this site in Safari settings.',
+    'Держи метку у задней крышки телефона, ближе к центру, 1–2 секунды.': 'Hold the tag to the back of the phone, near the centre, for 1–2 seconds.',
+    'Поднеси метку к телефону': 'Hold the tag to the phone', 'Поднеси метку для записи': 'Hold the tag to write',
+    'NFC-метка': 'NFC tag', 'Чип': 'Chip', 'Счётчик касаний': 'Tap counter', 'выключен': 'off', 'Записано в чипе': 'Stored on chip',
+    'Подпись NXP': 'NXP signature', 'Чип брелока': 'Keychain chip', 'Включить счётчик': 'Enable counter', 'Записать ссылку': 'Write link',
+    'Прочитать ещё': 'Read again', 'Счётчик включён': 'Counter enabled', 'Сканер JadeKey': 'JadeKey scanner', 'Мой Telegram': 'My Telegram',
+    'Запись в чип': 'Write to chip', 'Что записать?': 'What to write?',
+    'Ссылка, телефон, почта или @telegram. Старая запись сотрётся.': 'Link, phone, email or @telegram. The old record will be erased.',
+    'Назад': 'Back', 'Записать': 'Write', 'Прочитан': 'Read', 'Записано': 'Written',
+    'Слишком длинно для этого чипа (макс ~120 символов)': 'Too long for this chip (max ~120 characters)',
+    'NFC недоступен': 'NFC unavailable', 'Нужен Chrome': 'Chrome needed', 'Понятно': 'OK',
+    'Сайт открыт без https. Открой https://jadekey.tech/scan.html': 'The site is open without https. Open https://jadekey.tech/scan.html',
+    'NFC в браузере работает только в Google Chrome. Открой эту страницу в Chrome': 'NFC in the browser works only in Google Chrome. Open this page in Chrome',
+    'Этот Chrome не поддерживает NFC. Обнови Chrome в Play Маркете и включи NFC в настройках телефона':
+      "This Chrome doesn't support NFC. Update Chrome in Play Store and turn on NFC in phone settings",
+    'Не удалось прочитать, попробуй ещё': "Couldn't read, try again", 'Отменено': 'Cancelled',
+    'обнови приложение в TestFlight до сборки 19+': 'update the app in TestFlight to build 19+',
+    'разреши доступ к NFC для сайта и включи NFC в настройках телефона': 'allow NFC for this site and turn on NFC in phone settings',
+    'Найти': 'Find', 'Найти брелок': 'Find keychain',
+  };
+  const R = [
+    [/^Модель (\d+) из (\d+) МБ$/, 'Model $1 of $2 MB'],
+    [/^Готов · (GPU|CPU)$/, 'Ready · $1'],
+    [/^Коллекция не загрузилась: (.*)$/, 'Collection failed to load: $1'],
+    [/^Снимаю (.*)$/, 'Capturing $1'],
+    [/^Сверяю с «(.*)»…$/, 'Comparing with «$1»…'],
+    [/^Совпало (\d+) участков рисунка \((\d+)% камня\)$/, 'Matched $1 pattern regions ($2% of the stone)'],
+    [/^Ближайший: «(.*)», но совпало только (\d+) участков, этого мало\.$/, 'Closest: «$1», but only $2 regions matched — not enough.'],
+    [/^Диагностика: (.*), участков камня (.*), поворот (.*)$/, 'Diagnostics: $1, stone regions $2, rotation $3'],
+    [/^Не уверен, пересниму \((\d) из 3\)$/, 'Not sure, retaking ($1 of 3)'],
+    [/^Ошибка: (.*)$/, 'Error: $1'],
+    [/^(\d+) (камень|камня|камней)$/, (m, n) => n + (n === '1' ? ' stone' : ' stones')],
+    [/^Удалить «(.*)»\?$/, 'Delete «$1»?'],
+    [/^Не удалось удалить: (.*)$/, "Couldn't delete: $1"],
+    [/^Не сохранилось: (.*)$/, "Couldn't save: $1"],
+    [/^Похоже, этот камень уже есть: «(.*)» \((\d+) совпадений\)\. Всё равно добавить\?$/, 'This stone seems to exist already: «$1» ($2 matches). Add anyway?'],
+    [/^(\d+) участков рисунка$/, '$1 pattern regions'],
+    [/^Будет записано: (.*)$/, 'Will be written: $1'],
+    [/^NFC: (.*)$/, (m, x) => 'NFC: ' + (D[x] || x)],
+  ];
+  const CYR = /[А-Яа-яЁё]/;
+  const tr = s => {
+    if (lang !== 'en' || !s || !CYR.test(s)) return s;
+    const t = s.trim();
+    let o = D[t];
+    if (o == null) for (const [re, rep] of R) if (re.test(t)) { o = t.replace(re, rep); break; }
+    return o == null ? s : s.replace(t, o);
+  };
+  window.JK_T = tr;
+  const ATTR = ['placeholder', 'aria-label', 'title'];
+  const walk = n => {
+    if (n.nodeType === 3) { const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; return; }
+    if (n.nodeType !== 1 || n.tagName === 'SCRIPT' || n.tagName === 'STYLE') return;
+    for (const a of ATTR) if (n.hasAttribute(a)) { const v = tr(n.getAttribute(a)); if (v !== n.getAttribute(a)) n.setAttribute(a, v); }
+    for (const c of n.childNodes) walk(c);
+  };
+  if (lang === 'en') {
+    document.documentElement.lang = 'en';
+    walk(document.body);
+    new MutationObserver(ms => { for (const m of ms) { if (m.type === 'childList') m.addedNodes.forEach(walk); else walk(m.target); } })
+      .observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTR });
+    const c = window.confirm.bind(window), p = window.prompt.bind(window);
+    window.confirm = m => c(tr(m));
+    window.prompt = (m, d) => p(tr(m), d);
+  }
+
+  const bl = document.getElementById('btnLang');
+  bl.textContent = lang === 'en' ? 'RU' : 'EN';
+  bl.onclick = () => {
+    try { localStorage.setItem('jk2_lang', lang === 'en' ? 'ru' : 'en'); } catch (e) {}
+    const u = new URL(location.href); u.searchParams.delete('lang'); location.replace(u.href);
+  };
+
+  document.getElementById('btnFind').onclick = () => {
+    const ua = navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (ios) location.href = 'findmy://';
+    else if (/Android/.test(ua)) location.href = 'intent://#Intent;package=com.google.android.apps.adm;S.browser_fallback_url=' +
+      encodeURIComponent('https://www.google.com/android/find') + ';end';
+    else window.open('https://www.icloud.com/find', '_blank');
+  };
+})();
+</script>
 
 <script type="module">
 import { pipeline, RawImage, env } from './vendor/transformers.min.js';
