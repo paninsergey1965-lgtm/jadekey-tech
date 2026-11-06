@@ -176,6 +176,7 @@ nav button.on{color:var(--jade)}
   <button id="nScan" class="on"><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 12h8"/></svg>Сканер</button>
   <button id="nColl"><svg viewBox="0 0 24 24"><path d="M12 3 20 9l-3 11H7L4 9z"/><path d="M4 9h16"/></svg>Коллекция</button>
   <button id="nAdd"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Добавить</button>
+  <button id="nNfc" style="display:none"><svg viewBox="0 0 24 24"><path d="M6 8.5a5 5 0 0 1 0 7"/><path d="M9.5 6a9 9 0 0 1 0 12"/><path d="M13 3.5a13 13 0 0 1 0 17"/></svg>NFC</button>
 </nav>
 
 <div class="sheet" id="sheet"></div>
@@ -1135,6 +1136,36 @@ $('nScan').onclick = () => tab('scan');
 $('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
 $('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({}); };
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
+
+// ---------- NFC (only inside the iOS app) ----------
+const JadeNfc = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.registerPlugin)
+  ? window.Capacitor.registerPlugin('JadeNfc') : null;
+const NFC_URL = 'https://jadekey.tech/scan.html';
+function nfcErr(e) { const m = (e && (e.message || e.errorMessage)) || String(e); if (!/Отменено|cancel/i.test(m)) toast('NFC: ' + m, 4000); }
+function nfcRow(label, value) { return `<div class="row"><span><small>${label}</small><b style="word-break:break-all">${esc(value)}</b></span></div>`; }
+function nfcSheet(r, title) {
+  const rows = [nfcRow('Чип', r.chip || r.family || '—'), nfcRow('UID', r.uid || '—')];
+  rows.push(nfcRow('Счётчик касаний', r.counter == null ? 'выключен' : String(r.counter)));
+  if (r.ndef && r.ndef.length) rows.push(nfcRow('Записано в чипе', r.ndef.join(' · ')));
+  if (r.signature) rows.push(nfcRow('Подпись NXP', r.signature.slice(0, 16) + '…'));
+  const canSetup = r.family === 'ultralight';
+  sheet(`<div class="sh-head"><div><div class="sh-state">${title}</div><div class="sh-name">Чип брелока</div></div></div>
+    <div class="rows">${rows.join('')}</div>
+    ${canSetup ? `<div class="btns">${r.counter == null ? '<button class="btn" id="nfcCnt">Включить счётчик</button>' : ''}<button class="btn" id="nfcUrl">Записать ссылку</button></div>` : ''}
+    <div class="btns"><button class="btn main" id="nfcAgain">Прочитать ещё</button></div>`);
+  $('nfcAgain').onclick = nfcScan;
+  if ($('nfcCnt')) $('nfcCnt').onclick = async () => { try { await JadeNfc.enableCounter(); toast('Счётчик включён'); nfcScan(); } catch (e) { nfcErr(e); } };
+  if ($('nfcUrl')) $('nfcUrl').onclick = async () => { try { await JadeNfc.writeUrl({ url: NFC_URL }); toast('Ссылка записана'); nfcScan(); } catch (e) { nfcErr(e); } };
+}
+async function nfcScan() {
+  hideSheet();
+  try { const r = await JadeNfc.scan({}); nfcSheet(r, 'Прочитан'); } catch (e) { nfcErr(e); }
+}
+if (JadeNfc) {
+  $('nNfc').style.display = '';
+  document.querySelector('nav').style.gridTemplateColumns = 'repeat(4,1fr)';
+  $('nNfc').onclick = nfcScan;
+}
 
 loadStones();
 loadModel();
