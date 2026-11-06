@@ -228,7 +228,7 @@ nav button.on{color:var(--jade)}
     'Сохранено': 'Saved', 'Нет доступа к камере. Разреши камеру для этого сайта в настройках Safari.':
       'No camera access. Allow the camera for this site in Safari settings.',
     'Держи метку у задней крышки телефона, ближе к центру, 1–2 секунды.': 'Hold the tag to the back of the phone, near the centre, for 1–2 seconds.',
-    'Поднеси метку к телефону': 'Hold the tag to the phone', 'Поднеси метку для записи': 'Hold the tag to write',
+    'Поднеси метку к телефону': 'Hold the tag to the phone', 'Поднеси метку для настройки счётчика': 'Hold the tag to set up the counter', 'Поднеси метку для записи': 'Hold the tag to write',
     'NFC-метка': 'NFC tag', 'Чип': 'Chip', 'Счётчик касаний': 'Tap counter', 'выключен': 'off', 'Записано в чипе': 'Stored on chip',
     'Подпись NXP': 'NXP signature', 'Чип брелока': 'Keychain chip', 'Включить счётчик': 'Enable counter', 'Записать ссылку': 'Write link',
     'Прочитать ещё': 'Read again', 'Счётчик включён': 'Counter enabled', 'Сканер JadeKey': 'JadeKey scanner', 'Мой Telegram': 'My Telegram',
@@ -303,6 +303,8 @@ nav button.on{color:var(--jade)}
     const ua = navigator.userAgent;
     const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     if (ios) location.href = 'findmy://';
+    else if (/Android/.test(ua) && window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android')
+      location.href = 'https://www.google.com/android/find';
     else if (/Android/.test(ua)) location.href = 'intent://#Intent;package=com.google.android.apps.adm;S.browser_fallback_url=' +
       encodeURIComponent('https://www.google.com/android/find') + ';end';
     else window.open('https://www.icloud.com/find', '_blank');
@@ -1323,6 +1325,16 @@ function makeWebNfc() {
   };
 }
 if (!JadeNfc && 'NDEFReader' in window) JadeNfc = makeWebNfc();
+// Android app: native plugin has no system sheet — show ours, with a working Cancel
+if (JadeNfc && inApp && typeof Cap.getPlatform === 'function' && Cap.getPlatform() === 'android') {
+  const p = JadeNfc;
+  const w = (fn, text) => async (o = {}) => {
+    const cancel = nfcWait(text).then(() => { p.cancel().catch(() => {}); throw new Error('Отменено'); });
+    try { return await Promise.race([p[fn](o), cancel]); } finally { hideSheet(); }
+  };
+  JadeNfc = { isAvailable: o => p.isAvailable(o), scan: w('scan', 'Поднеси метку к телефону'),
+    writeUrl: w('writeUrl', 'Поднеси метку для записи'), enableCounter: w('enableCounter', 'Поднеси метку для настройки счётчика') };
+}
 function nfcErr(e) { const m = (e && (e.message || e.errorMessage)) || String(e); if (!/Отменено|cancel/i.test(m)) toast('NFC: ' + m, 4000); }
 function nfcRow(label, value) { return `<div class="row"><span><small>${label}</small><b style="word-break:break-all">${esc(value)}</b></span></div>`; }
 function nfcSheet(r, title) {
