@@ -177,8 +177,8 @@ nav button.on{color:var(--jade)}
 
 <nav>
   <button id="nScan" class="on"><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 12h8"/></svg>Сканер</button>
-  <button id="nColl"><svg viewBox="0 0 24 24"><path d="M12 3 20 9l-3 11H7L4 9z"/><path d="M4 9h16"/></svg>Коллекция</button>
-  <button id="nAdd"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Добавить</button>
+  <button id="nColl" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 3 20 9l-3 11H7L4 9z"/><path d="M4 9h16"/></svg>Коллекция</button>
+  <button id="nAdd" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Добавить</button>
   <button id="nNfc" style="display:none"><svg viewBox="0 0 24 24"><path d="M6 8.5a5 5 0 0 1 0 7"/><path d="M9.5 6a9 9 0 0 1 0 12"/><path d="M13 3.5a13 13 0 0 1 0 17"/></svg>NFC</button>
 </nav>
 
@@ -219,7 +219,7 @@ nav button.on{color:var(--jade)}
     'Сначала добавь хотя бы один камень на вкладке «Добавить».': 'First add at least one stone on the «Add» tab.',
     'Камень на кадре не найден': 'No stone found in the frame', 'Не получилось, попробуй ещё': "Didn't work, try again",
     'Пока пусто. Добавь первый камень.': 'Empty so far. Add your first stone.',
-    'Изменить': 'Edit', 'Удалить': 'Delete', 'Удаляю…': 'Deleting…', 'Неверный PIN': 'Wrong PIN', 'PIN владельца': 'Owner PIN',
+    'Пароль администратора': 'Admin password', 'Вход…': 'Signing in…', 'Режим администратора включён': 'Admin mode on', 'Режим администратора выключен': 'Admin mode off', 'Выйти из режима администратора?': 'Leave admin mode?', 'Только для администратора': 'Admin only', 'Изменить': 'Edit', 'Удалить': 'Delete', 'Удаляю…': 'Deleting…', 'Неверный PIN': 'Wrong PIN', 'PIN владельца': 'Owner PIN',
     'Придумай PIN владельца (им защищены добавление, правка и удаление камней на этом телефоне)':
       'Create an owner PIN (it protects adding, editing and deleting stones on this phone)',
     'Переснять камень': 'Retake stone', 'Запоминаю камень…': 'Memorising the stone…',
@@ -258,7 +258,7 @@ nav button.on{color:var(--jade)}
     [/^Не уверен, пересниму \((\d) из 3\)$/, 'Not sure, retaking ($1 of 3)'],
     [/^Ошибка: (.*)$/, 'Error: $1'],
     [/^(\d+) (камень|камня|камней)$/, (m, n) => n + (n === '1' ? ' stone' : ' stones')],
-    [/^Удалить «(.*)»\?$/, 'Delete «$1»?'],
+    [/^Удалить «(.*)»\?$/, 'Delete «$1»?'], [/^Вход не удался: (.*)$/, 'Sign-in failed: $1'],
     [/^Не удалось удалить: (.*)$/, "Couldn't delete: $1"],
     [/^Не сохранилось: (.*)$/, "Couldn't save: $1"],
     [/^Похоже, этот камень уже есть: «(.*)» \((\d+) совпадений\)\. Всё равно добавить\?$/, 'This stone seems to exist already: «$1» ($2 matches). Add anyway?'],
@@ -834,9 +834,52 @@ async function fsList(col, mask = []) {
   } while (tok);
   return out;
 }
-const fsCreate = (col, data, id) => fsCall(`${BASE}/${col}?key=${FS.key}${id ? '&documentId=' + id : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fsFields(data)) });
-const fsPatch = (col, id, data) => fsCall(`${BASE}/${col}/${id}?key=${FS.key}${Object.keys(data).map(k => '&updateMask.fieldPaths=' + k).join('')}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fsFields(data)) });
-const fsDelete = (col, id) => fetch(`${BASE}/${col}/${id}?key=${FS.key}`, { method: 'DELETE' });
+// ---------- admin (Firebase Auth, only the owner account can write) ----------
+const ADMIN_EMAIL = 'jadekey1965@gmail.com';
+const AUTH = { id: null, exp: 0 };
+async function authToken() {
+  let rt = null; try { rt = localStorage.getItem('jk2_rt'); } catch (e) {}
+  if (!rt) return null;
+  if (AUTH.id && Date.now() < AUTH.exp) return AUTH.id;
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.id_token) { try { localStorage.removeItem('jk2_rt'); } catch (e) {} setAdmin(false); return null; }
+  AUTH.id = j.id_token; AUTH.exp = Date.now() + (Number(j.expires_in || 3600) - 120) * 1000;
+  try { localStorage.setItem('jk2_rt', j.refresh_token); } catch (e) {}
+  return AUTH.id;
+}
+async function adminLogin() {
+  const pw = prompt('Пароль администратора');
+  if (!pw) return;
+  veil('Вход…');
+  try {
+    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: pw, returnSecureToken: true }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.idToken) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+    AUTH.id = j.idToken; AUTH.exp = Date.now() + (Number(j.expiresIn || 3600) - 120) * 1000;
+    try { localStorage.setItem('jk2_rt', j.refreshToken); } catch (e) {}
+    setAdmin(true); toast('Режим администратора включён');
+  } catch (e) { toast('Вход не удался: ' + e.message, 4000); }
+  finally { veil(''); }
+}
+function adminLogout() {
+  if (!confirm('Выйти из режима администратора?')) return;
+  try { localStorage.removeItem('jk2_rt'); } catch (e) {}
+  AUTH.id = null; setAdmin(false); tab('scan'); toast('Режим администратора выключен');
+}
+let isAdmin = false;
+function setAdmin(on) {
+  isAdmin = !!on;
+  $('nColl').style.display = isAdmin ? '' : 'none';
+  $('nAdd').style.display = isAdmin ? '' : 'none';
+}
+async function authHeaders() {
+  const t = await authToken();
+  return t ? { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+}
+const fsCreate = async (col, data, id) => fsCall(`${BASE}/${col}?key=${FS.key}${id ? '&documentId=' + id : ''}`, { method: 'POST', headers: await authHeaders(), body: JSON.stringify(fsFields(data)) });
+const fsPatch = async (col, id, data) => fsCall(`${BASE}/${col}/${id}?key=${FS.key}${Object.keys(data).map(k => '&updateMask.fieldPaths=' + k).join('')}`, { method: 'PATCH', headers: await authHeaders(), body: JSON.stringify(fsFields(data)) });
+const fsDelete = async (col, id) => { const r = await fetch(`${BASE}/${col}/${id}?key=${FS.key}`, { method: 'DELETE', headers: await authHeaders() }); if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status); return r; };
 
 // ---------- collection in memory ----------
 let stones = [], legacy = [];
@@ -1084,11 +1127,11 @@ function showFound(r) {
   ownerLine(s).then(n => { if (n && $('ownerLn')) $('ownerLn').innerHTML = `<div class="sh-note" style="color:var(--fg)">Владелец: <b>${esc(n)}</b></div>`; });
 }
 function showUnknown(r, cv) {
-  const near = r.stone ? `Ближайший: «${esc(r.stone.name)}», но совпало только ${r.res.inl.length} участков, этого мало.` : '';
-  const dbg = r.res ? `<p class="sh-note" style="font-size:12px">Диагностика: ${backend}, участков камня ${r.res.fgA} / ${r.res.fgB}, поворот ${r.res.angle}°</p>` : '';
-  sheet(`<div class="sh-head"><div><div class="sh-state bad">Не узнал</div><div class="sh-name">Этого камня нет в коллекции</div></div></div><p class="sh-note">${near}</p>${dbg}<div class="btns"><button class="btn" id="again">Ещё раз</button><button class="btn main" id="toAdd">Добавить в коллекцию</button></div>`);
+  const near = r.stone && isAdmin ? `Ближайший: «${esc(r.stone.name)}», но совпало только ${r.res.inl.length} участков, этого мало.` : '';
+  const dbg = r.res && isAdmin ? `<p class="sh-note" style="font-size:12px">Диагностика: ${backend}, участков камня ${r.res.fgA} / ${r.res.fgB}, поворот ${r.res.angle}°</p>` : '';
+  sheet(`<div class="sh-head"><div><div class="sh-state bad">Не узнал</div><div class="sh-name">Этого камня нет в коллекции</div></div></div><p class="sh-note">${near}</p>${dbg}<div class="btns"><button class="btn${isAdmin ? '' : ' main'}" id="again">Ещё раз</button>${isAdmin ? '<button class="btn main" id="toAdd">Добавить в коллекцию</button>' : ''}</div>`);
   $('again').onclick = hideSheet;
-  $('toAdd').onclick = async () => { hideSheet(); lastScanCv = cv; await openAdd({ fromCv: cv }); };
+  if (isAdmin) $('toAdd').onclick = async () => { hideSheet(); lastScanCv = cv; await openAdd({ fromCv: cv }); };
 }
 let lastScanCv = null;
 
@@ -1109,7 +1152,7 @@ $('shutter').onclick = async () => {
       camS.msg.textContent = 'Узнаю…';
       const r = await identify(cv, t => camS.msg.textContent = t);
       r.cv = cv;
-      if (r.state === 'empty') { sheet('<div class="sh-head"><div><div class="sh-state warn">Пусто</div><div class="sh-name">В коллекции нет камней</div></div></div><p class="sh-note">Сначала добавь хотя бы один камень на вкладке «Добавить».</p>'); return; }
+      if (r.state === 'empty') { sheet('<div class="sh-head"><div><div class="sh-state warn">Пусто</div><div class="sh-name">В коллекции нет камней</div></div></div><p class="sh-note">' + (isAdmin ? 'Сначала добавь хотя бы один камень на вкладке «Добавить».' : '') + '</p>'); return; }
       if (r.state === 'nostone') { camS.msg.textContent = 'Камень на кадре не найден'; continue; }
       if (!best || (r.res && (!best.res || r.res.ratio * r.res.inl.length > best.res.ratio * best.res.inl.length))) best = r;
       if (r.state !== 'unsure') break;
@@ -1152,6 +1195,10 @@ function showInfo(s) {
 let owner = false;
 async function sha(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('jk2:' + t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
 async function ownerOk() {
+  if (isAdmin && await authToken()) return true;
+  toast('Только для администратора'); return false;
+}
+async function ownerOkOld() {
   if (owner) return true;
   let h = null; try { h = localStorage.getItem('jk2_pin'); } catch (e) {}
   if (!h) {
@@ -1269,6 +1316,16 @@ function tab(name) {
   }
 }
 $('nScan').onclick = () => tab('scan');
+(() => {
+  const w = document.querySelector('#vScan .word'); if (!w) return;
+  let t = null;
+  const start = () => { t = setTimeout(() => { t = null; isAdmin ? adminLogout() : adminLogin(); }, 1500); };
+  const stop = () => { if (t) { clearTimeout(t); t = null; } };
+  w.addEventListener('touchstart', start, { passive: true }); w.addEventListener('touchend', stop); w.addEventListener('touchmove', stop);
+  w.addEventListener('mousedown', start); w.addEventListener('mouseup', stop); w.addEventListener('mouseleave', stop);
+  w.style.webkitUserSelect = 'none'; w.style.userSelect = 'none'; w.style.webkitTouchCallout = 'none';
+})();
+try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
 $('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
 $('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({}); };
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
