@@ -1324,6 +1324,17 @@ $('nScan').onclick = () => tab('scan');
   w.addEventListener('touchstart', start, { passive: true }); w.addEventListener('touchend', stop); w.addEventListener('touchmove', stop);
   w.addEventListener('mousedown', start); w.addEventListener('mouseup', stop); w.addEventListener('mouseleave', stop);
   w.style.webkitUserSelect = 'none'; w.style.userSelect = 'none'; w.style.webkitTouchCallout = 'none';
+  // 5 quick taps also open admin login (long press is eaten by the iOS text loupe in the app)
+  let taps = 0, tt = null;
+  w.addEventListener('click', () => {
+    taps++; clearTimeout(tt); tt = setTimeout(() => { taps = 0; }, 1500);
+    if (taps >= 5) { taps = 0; if (t) { clearTimeout(t); t = null; } setTimeout(() => (isAdmin ? adminLogout() : adminLogin()), 50); }
+  });
+  w.addEventListener('touchcancel', stop);
+  w.addEventListener('contextmenu', e => e.preventDefault());
+  document.documentElement.style.webkitUserSelect = 'none';
+  document.documentElement.style.webkitTouchCallout = 'none';
+  document.querySelectorAll('input,textarea').forEach(x => { x.style.webkitUserSelect = 'text'; });
 })();
 try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
 $('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
