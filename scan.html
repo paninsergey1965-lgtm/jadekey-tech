@@ -66,6 +66,16 @@ nav button.on{color:var(--jade)}
 .btns{display:flex;gap:10px;margin-top:16px}
 .btn{flex:1;padding:14px;border-radius:14px;background:var(--panel2);font-weight:600;text-align:center;display:block}
 .btn.main{background:var(--jade);color:#04150e}
+body.love{--bg:#170b10;--panel:#22121a;--panel2:#2b1722;--line:#45242f;--mute:#b58f9c;--jade:#ff8fb1}
+body.love .gem{stroke:#ff8fb1}
+.sheet.love{background:linear-gradient(180deg,#3a1626,#1d0d15);border-top-color:#6b2f45}
+.lv-top{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:#ff9fbd;margin:6px 0 14px}
+.lv-to{font-family:var(--serif);font-size:22px;color:#ffd9e4}
+.lv-msg{font-family:var(--serif);font-size:27px;line-height:1.28;color:#fff;margin:10px 0 16px}
+.lv-from{font-family:var(--serif);font-size:19px;color:#ffd9e4;text-align:right}
+.lv-meta{margin-top:18px;padding-top:12px;border-top:1px solid #5a2a3c;font-size:13px;color:#d9a3b5;display:flex;justify-content:space-between}
+.sheet.love .sh-note{color:#c9909f}
+.sheet.love .btn.main{background:#ff8fb1;color:#2a0b16}
 .btn.danger{color:var(--bad)}
 .btn:disabled{opacity:.4}
 
@@ -170,6 +180,12 @@ nav button.on{color:var(--jade)}
       <input class="fld" id="fTg" placeholder="Telegram @username" autocapitalize="none" style="margin-bottom:8px">
       <input class="fld" id="fMail" placeholder="Email" inputmode="email" autocapitalize="none" style="margin-bottom:8px">
       <input class="fld" id="fSite" placeholder="Сайт https://…" autocapitalize="none">
+      <label class="lbl">JadeKey Love — послания (необязательно)</label>
+      <input class="fld" id="fLoveTo" placeholder="Кому (имя)" autocomplete="off" style="margin-bottom:8px">
+      <input class="fld" id="fLoveFrom" placeholder="От кого (имя)" autocomplete="off" style="margin-bottom:8px">
+      <label class="lbl" style="margin-top:0">Вместе с (дата)</label>
+      <input class="fld" id="fLoveSince" type="date" style="margin-bottom:8px">
+      <select class="fld" id="fLoveTone"><option value="tender">Тон: нежно</option><option value="fun">Тон: с юмором</option><option value="romantic">Тон: романтично</option></select>
       <div class="btns"><button class="btn" id="btnCancel">Отмена</button><button class="btn main" id="btnSave">Сохранить в коллекцию</button></div>
     </div>
   </div>
@@ -886,7 +902,7 @@ let stones = [], legacy = [];
 const patchCache = new Map();
 const D = 384;
 
-function prepStone(s) { s.gv = s.g ? b64F32(s.g) : null; s.contacts = (() => { try { return JSON.parse(s.contacts || '{}'); } catch (e) { return {}; } })(); return s; }
+function prepStone(s) { s.gv = s.g ? b64F32(s.g) : null; try { s.love = s.love ? JSON.parse(s.love) : null; } catch (e) { s.love = null; } s.contacts = (() => { try { return JSON.parse(s.contacts || '{}'); } catch (e) { return {}; } })(); return s; }
 let lastLoad = 0;
 async function loadStones() {
   lastLoad = Date.now();
@@ -1095,7 +1111,7 @@ async function identify(cv, status = () => {}) {
 
 // ---------- sheet ----------
 function openLink(url) { if (/^(tel:|mailto:)/.test(url)) location.href = url; else window.open(url, '_blank'); }
-function sheet(html) { const s = $('sheet'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
+function sheet(html) { const s = $('sheet'); s.classList.remove('love'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
 function hideSheet() { $('sheet').classList.remove('on'); }
 function contactRows(c) {
   const defs = [['phone', '📞', 'Телефон', v => 'tel:' + v], ['tg', '✈️', 'Telegram', v => 'https://t.me/' + v.replace('@', '')], ['email', '✉️', 'Email', v => 'mailto:' + v], ['site', '🔗', 'Сайт', v => /^https?:/.test(v) ? v : 'https://' + v]];
@@ -1120,8 +1136,75 @@ async function ownerLine(s) {
   return '';
 }
 
+// ---------- JadeKey Love (demo): a stone with a love profile opens the message of the day ----------
+const LOVE = {
+  tender: [
+    'Хочу напомнить: ты — лучшее, что есть в каждом моём дне.',
+    'Что бы ни принёс этот день — я рядом. Всегда.',
+    'Спасибо, что ты есть. С тобой даже обычный день становится тёплым.',
+    'Сегодня {days}-й день, как мы вместе. И мне всё ещё мало.',
+    'Улыбнись прямо сейчас. Мне нравится думать, что это из-за меня.',
+    'Твой голос — мой любимый звук. Позвони мне сегодня просто так.',
+    'Я думаю о тебе чаще, чем успеваю об этом сказать. Поэтому говорит камень.',
+    'С тобой мне спокойно. Это редкое чувство, и я его берегу.',
+    'Если день будет трудным — вспомни: вечером я тебя обниму.',
+    'Ты делаешь меня лучше. Каждый из этих {days} дней.',
+    'Мне нравится в тебе всё. Особенно то, что ты считаешь недостатками.',
+    'Сегодня без повода: я тебя люблю.',
+    'Этот камень один на свете. Как и ты.',
+    'Береги себя сегодня. Ты — самое важное, что у меня есть.'],
+  fun: [
+    'Официальная статистика: {days} дней вместе, жалоб не поступало.',
+    'Напоминание: ты прекрасно выглядишь. Да, даже сейчас. Да, это проверенная информация.',
+    'Сегодня в прогнозе: местами я, к вечеру — объятия.',
+    'Этот камень сканирует тебя, а не ты его. Результат: 100% любимый человек.',
+    'Если бы за мысли о тебе платили, можно было бы уже не работать.',
+    'Съешь сегодня что-нибудь вкусное. Это приказ. С любовью.',
+    'День {days}. Полёт нормальный. Экипаж влюблён.',
+    'Ты — мой любимый человек. Кот на втором месте, но он не должен об этом знать.',
+    'Сегодня у тебя есть право на одно желание. Мелким шрифтом: в пределах разумного.',
+    'Спасибо, что терпишь мои шутки. Вот ещё одна: я тебя люблю. А, нет, это правда.',
+    'Проверка связи: я тебя люблю. Приём.',
+    'Вечером с меня чай и плед. С тебя — ты.',
+    'Учёные выяснили: рядом с тобой время идёт быстрее. Требую продления.',
+    'Не забудь сегодня улыбнуться. Мне потом расскажут.'],
+  romantic: [
+    'Из всех дней моей жизни я выбираю те {days}, что с тобой.',
+    'Ты — мой дом. Где бы мы ни были.',
+    'Я влюбляюсь в тебя заново — тихо, каждый день.',
+    'Начнись всё сначала — мой выбор был бы тем же: ты.',
+    'В мире миллиарды людей. Мне нужен один человек — ты.',
+    'Пусть этот камень хранит то, что я чувствую, когда ты рядом.',
+    'Ты — моя самая красивая история. И она только начинается.',
+    'С тобой хочется жить медленнее, чтобы ничего не пропустить.',
+    'Сегодня {days}-й день нас. Я благодарю за каждый.',
+    'Твои глаза — первое, что я хочу видеть утром, и последнее — вечером.',
+    'Я не знаю, что будет завтра. Но знаю, с кем хочу это встретить.',
+    'Ты — причина, по которой обычная жизнь кажется чудом.',
+    'Моё сердце давно сделало выбор. Остальное — детали.',
+    'Камни живут тысячи лет. Мне хватит одной жизни — с тобой.']
+};
+let loveShift = 0;
+function showLove(s) {
+  const L = s.love, pool = LOVE[L.tone] || LOVE.tender;
+  const now = new Date(Date.now() + loveShift * 864e5);
+  const dayNo = Math.floor((now.getTime() - now.getTimezoneOffset() * 6e4) / 864e5);
+  let h = 0; for (const ch of s.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  let days = 0;
+  if (L.since) { const d0 = new Date(L.since + 'T00:00:00'); if (!isNaN(d0)) days = Math.max(1, Math.floor((now - d0) / 864e5) + 1); }
+  let msg = pool[(dayNo + h) % pool.length];
+  if (!days) msg = msg.replace(/\{days\}-й день/g, 'ещё один день').replace(/\{days\} /g, '');
+  if (days && days % 100 === 0) msg = `Сегодня ровно ${days} дней, как мы вместе. Пусть это будет только начало.`;
+  msg = msg.replace(/\{days\}/g, days);
+  const date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  sheet(`<div class="lv-top">♥ JadeKey Love</div><div class="lv-to">${esc(L.to)},</div><div class="lv-msg">${esc(msg)}</div>${L.from ? `<div class="lv-from">— ${esc(L.from)}</div>` : ''}<div class="lv-meta"><span>${days ? 'День ' + days + ' вместе' : ''}</span><span>${date}</span></div><p class="sh-note">Новое послание появится завтра. Открыть его может только этот камень.</p><div class="btns">${isAdmin ? '<button class="btn" id="lvNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('love');
+  $('again').onclick = () => { loveShift = 0; hideSheet(); };
+  if (isAdmin) $('lvNext').onclick = () => { loveShift++; showLove(s); };
+}
 function showFound(r) {
   const s = r.stone, pct = Math.round(r.res.ratio * 100);
+  if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
   sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
   bindRows(); $('again').onclick = hideSheet;
   ownerLine(s).then(n => { if (n && $('ownerLn')) $('ownerLn').innerHTML = `<div class="sh-note" style="color:var(--fg)">Владелец: <b>${esc(n)}</b></div>`; });
@@ -1224,6 +1307,8 @@ async function openAdd(ctx = {}) {
   if (!(await ownerOk())) return;
   addCtx = ctx; addShot = null;
   for (const id in FIELDS) $(id).value = '';
+  $('fLoveTo').value = ''; $('fLoveFrom').value = ''; $('fLoveSince').value = ''; $('fLoveTone').value = 'tender';
+  if (ctx.edit && ctx.edit.love) { const L = ctx.edit.love; $('fLoveTo').value = L.to || ''; $('fLoveFrom').value = L.from || ''; $('fLoveSince').value = L.since || ''; $('fLoveTone').value = L.tone || 'tender'; }
   const src = ctx.edit || ctx.legacy;
   if (src) {
     const c = ctx.edit ? src.contacts : (() => { try { return JSON.parse(src.contacts || '{}'); } catch (e) { return {}; } })();
@@ -1280,10 +1365,12 @@ $('btnSave').onclick = async () => {
   const contacts = {};
   for (const [id, k] of [['fPhone', 'phone'], ['fTg', 'tg'], ['fMail', 'email'], ['fSite', 'site']]) { const v = $(id).value.trim(); if (v) contacts[k] = v; }
   const jk = $('fJk').value.trim().toUpperCase();
+  const loveTo = $('fLoveTo').value.trim();
+  const love = loveTo ? JSON.stringify({ to: loveTo, from: $('fLoveFrom').value.trim(), since: $('fLoveSince').value, tone: $('fLoveTone').value }) : '';
   veil('Сохраняю…');
   try {
     if (addCtx.edit) {
-      await fsPatch(COL, addCtx.edit.id, { name, jk, contacts: JSON.stringify(contacts) });
+      await fsPatch(COL, addCtx.edit.id, { name, jk, contacts: JSON.stringify(contacts), love });
     } else {
       if (!addShot) { toast('Сначала сними камень'); veil(); return; }
       if (stones.length) {   // do not register the same stone twice
@@ -1294,7 +1381,7 @@ $('btnSave').onclick = async () => {
       }
       const enc = encodePatches(addShot.f);
       const g = f32B64(gvecOf(addShot.f));
-      const doc = await fsCreate(COL, { name, jk, contacts: JSON.stringify(contacts), created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
+      const doc = await fsCreate(COL, { name, jk, contacts: JSON.stringify(contacts), love, created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
       const id = doc.name.split('/').pop();
       try { await fsCreate(COLP, { idx: enc.idx, p: enc.p, sc: enc.sc }, id); }
       catch (e) { await fsDelete(COL, id); throw e; }
@@ -1337,6 +1424,13 @@ $('nScan').onclick = () => tab('scan');
   document.querySelectorAll('input,textarea').forEach(x => { x.style.webkitUserSelect = 'text'; });
 })();
 try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
+if (new URLSearchParams(location.search).has('love')) {
+  document.body.classList.add('love');
+  const w = document.querySelector('#vScan .word'); if (w) w.innerHTML = 'Jade<i>Key</i> <i>♥</i>';
+  const i = $('idleS');
+  if (i) { const h = i.querySelector('h2'), t = i.querySelector('p'); if (h) h.textContent = 'Наведи на свой камень'; if (t) t.textContent = 'Положи кулон при хорошем свете и нажми кнопку. Камень откроет послание дня — оно только для тебя.'; }
+  document.title = 'JadeKey Love';
+}
 $('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
 $('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({}); };
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
