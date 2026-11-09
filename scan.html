@@ -75,6 +75,14 @@ body.love .gem{stroke:#ff8fb1}
 .lv-from{font-family:var(--serif);font-size:19px;color:#ffd9e4;text-align:right}
 .lv-meta{margin-top:18px;padding-top:12px;border-top:1px solid #5a2a3c;font-size:13px;color:#d9a3b5;display:flex;justify-content:space-between}
 .sheet.love .sh-note{color:#c9909f}
+.lv-pic{font-size:54px;line-height:1;margin:2px 0 6px;display:inline-block;animation:lvpop .7s cubic-bezier(.2,1.6,.4,1) both}
+.lv-heart{display:inline-block;color:#ff7fa8;animation:lvbeat 1.3s ease-in-out infinite}
+@keyframes lvbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.28)}30%{transform:scale(1)}45%{transform:scale(1.18)}}
+@keyframes lvpop{from{transform:scale(.2) rotate(-25deg);opacity:0}to{transform:none;opacity:1}}
+.lv-rain{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.lv-rain span{position:absolute;bottom:-40px;animation:lvrise linear forwards;will-change:transform,opacity}
+@keyframes lvrise{0%{transform:translateY(0) translateX(0) rotate(0);opacity:0}10%{opacity:.95}100%{transform:translateY(-105vh) translateX(var(--dx)) rotate(var(--rot));opacity:0}}
+@media (prefers-reduced-motion:reduce){.lv-rain{display:none}.lv-pic,.lv-heart{animation:none}}
 .sheet.love .btn.main{background:#ff8fb1;color:#2a0b16}
 .btn.danger{color:var(--bad)}
 .btn:disabled{opacity:.4}
@@ -1185,6 +1193,20 @@ const LOVE = {
     'Камни живут тысячи лет. Мне хватит одной жизни — с тобой.']
 };
 let loveShift = 0;
+const LOVE_PICS = ['🌹', '💌', '✨', '🌙', '☕', '🍓', '🕊️', '🎈', '🌷', '💫', '🍫', '🦋', '🌅', '🧸'];
+function loveRain() {
+  const box = document.createElement('div'); box.className = 'lv-rain';
+  const cols = ['#ff7fa8', '#ffb3c9', '#ff4f86', '#ffd9e4', '#e85d8f'];
+  for (let i = 0; i < 26; i++) {
+    const h = document.createElement('span'); h.textContent = i % 7 === 3 ? '✦' : '♥';
+    h.style.left = (Math.random() * 96) + '%'; h.style.fontSize = (14 + Math.random() * 26) + 'px';
+    h.style.color = cols[i % cols.length];
+    h.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px'); h.style.setProperty('--rot', (Math.random() * 80 - 40) + 'deg');
+    h.style.animationDuration = (2.6 + Math.random() * 2.4) + 's'; h.style.animationDelay = (Math.random() * 1.2) + 's';
+    box.appendChild(h);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 6500);
+}
 function showLove(s) {
   const L = s.love, pool = LOVE[L.tone] || LOVE.tender;
   const now = new Date(Date.now() + loveShift * 864e5);
@@ -1197,8 +1219,9 @@ function showLove(s) {
   if (days && days % 100 === 0) msg = `Сегодня ровно ${days} дней, как мы вместе. Пусть это будет только начало.`;
   msg = msg.replace(/\{days\}/g, days);
   const date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  sheet(`<div class="lv-top">♥ JadeKey Love</div><div class="lv-to">${esc(L.to)},</div><div class="lv-msg">${esc(msg)}</div>${L.from ? `<div class="lv-from">— ${esc(L.from)}</div>` : ''}<div class="lv-meta"><span>${days ? 'День ' + days + ' вместе' : ''}</span><span>${date}</span></div><p class="sh-note">Новое послание появится завтра. Открыть его может только этот камень.</p><div class="btns">${isAdmin ? '<button class="btn" id="lvNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
-  $('sheet').classList.add('love');
+  const pic = LOVE_PICS[(dayNo + h * 7) % LOVE_PICS.length];
+  sheet(`<div class="lv-top"><span class="lv-heart">♥</span> JadeKey Love</div><div class="lv-pic">${pic}</div><div class="lv-to">${esc(L.to)},</div><div class="lv-msg">${esc(msg)}</div>${L.from ? `<div class="lv-from">— ${esc(L.from)}</div>` : ''}<div class="lv-meta"><span>${days ? 'День ' + days + ' вместе' : ''}</span><span>${date}</span></div><p class="sh-note">Новое послание появится завтра. Открыть его может только этот камень.</p><div class="btns">${isAdmin ? '<button class="btn" id="lvNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('love'); loveRain();
   $('again').onclick = () => { loveShift = 0; hideSheet(); };
   if (isAdmin) $('lvNext').onclick = () => { loveShift++; showLove(s); };
 }
@@ -1428,7 +1451,7 @@ if (new URLSearchParams(location.search).has('love')) {
   document.body.classList.add('love');
   const w = document.querySelector('#vScan .word'); if (w) w.innerHTML = 'Jade<i>Key</i> <i>♥</i>';
   const i = $('idleS');
-  if (i) { const h = i.querySelector('h2'), t = i.querySelector('p'); if (h) h.textContent = 'Наведи на свой камень'; if (t) t.textContent = 'Положи кулон при хорошем свете и нажми кнопку. Камень откроет послание дня — оно только для тебя.'; }
+  if (i) { const g = i.querySelector('.gem'); if (g) { g.setAttribute('viewBox', '0 0 64 64'); g.innerHTML = '<path d="M32 54S8 40 8 23a12 12 0 0 1 24-4 12 12 0 0 1 24 4c0 17-24 31-24 31z"/><path d="M32 19v35" opacity=".35"/>'; g.style.animation = 'lvbeat 1.6s ease-in-out infinite'; } const h = i.querySelector('h2'), t = i.querySelector('p'); if (h) h.textContent = 'Наведи на свой камень'; if (t) t.textContent = 'Положи кулон при хорошем свете и нажми кнопку. Камень откроет послание дня — оно только для тебя.'; }
   document.title = 'JadeKey Love';
 }
 $('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
