@@ -2,6 +2,20 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<script>
+// Android: turn on multi-core CPU for the scanner via a service worker (one reload on first visit)
+window.__coi = new Promise(res => {
+  try {
+    if (!/Android/i.test(navigator.userAgent) || window.crossOriginIsolated || !('serviceWorker' in navigator) || !window.isSecureContext || /[?&]nocoi/.test(location.search)) return res();
+    const tried = sessionStorage.getItem('jk_coi');
+    navigator.serviceWorker.register('coi-sw.js', { scope: './' }).then(() => {
+      if (tried) return res();
+      const go = () => { sessionStorage.setItem('jk_coi', '1'); location.reload(); };
+      if (navigator.serviceWorker.controller) go(); else { navigator.serviceWorker.addEventListener('controllerchange', go); setTimeout(res, 4000); }
+    }).catch(() => res());
+  } catch (e) { res(); }
+});
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <meta name="theme-color" content="#0a1310">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -432,6 +446,8 @@ env.backends.onnx.wasm.wasmPaths = {
   wasm: new URL('./vendor/ort-wasm-simd-threaded.jsep.wasm', location.href).href,
 };
 env.remotePathTemplate = '{model}/';
+const THREADS = (q => q ? Math.max(1, +q || 1) : window.crossOriginIsolated ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 4)) : 1)(new URLSearchParams(location.search).get('thr'));
+env.backends.onnx.wasm.numThreads = THREADS;
 
 // the two small config files are built in, so only model.onnx is fetched
 const BUILTIN = {
@@ -897,7 +913,7 @@ async function loadModel() {
       extractor = await withTimeout(pipeline('image-feature-extraction', 'dinov2', { dtype: 'fp32', subfolder: '', progress_callback }), 180000);
       fixProc(extractor);
     }
-    chip('Готов · ' + (backend === 'GPU' ? 'GPU' : 'CPU'), 'ok');
+    chip('Готов · ' + (backend === 'GPU' ? 'GPU' : THREADS > 1 ? 'CPU×' + THREADS : 'CPU'), 'ok');
   } catch (err) {
     chip('Модель не загрузилась · нажми', 'err');
     $('chip').onclick = () => { $('chip').onclick = null; loadModel(); };
@@ -2227,13 +2243,13 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 }
 
 loadStones();
-loadModel();
+window.__coi.then(() => { loadModel(); liveInit(); });
 if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showTeaser, showLove, LV, liveRender, liveDone };
-(function liveInit() {
+function liveInit() {
   const g = new URLSearchParams(location.search).get('g');
   if (g && /^[\w-]+\.[a-z0-9]+$/.test(g)) { const [id, claim] = g.split('.'); openGift(id, claim); }
   else if (new URLSearchParams(location.search).has('live')) { tab('live'); liveHome(); }
-})();
+}
 </script>
 </body>
 </html>
