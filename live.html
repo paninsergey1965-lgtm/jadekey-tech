@@ -1672,7 +1672,11 @@ function playWav(url) { if (loveMuted()) return; try { loveAudio.pause(); loveAu
 const sndBtn = () => `<button class="btn" id="lvSnd" style="flex:0 0 58px;padding-left:0;padding-right:0" title="Звук">${loveMuted() ? '🔇' : '🔊'}</button>`;
 function bindSnd(src) {
   const b = $('lvSnd'); if (!b) return;
-  b.onclick = () => { const m = !loveMuted(); ls.set('jk2_mute', m ? '1' : '0'); b.textContent = m ? '🔇' : '🔊'; if (m) loveStop(); else playWav(src()); };
+  b.onclick = () => {
+    // not muted but silent (browser blocked autoplay or the tune ended) -> just play
+    if (!loveMuted() && (loveAudio.paused || loveAudio.ended)) { playWav(src()); return; }
+    const m = !loveMuted(); ls.set('jk2_mute', m ? '1' : '0'); b.textContent = m ? '🔇' : '🔊'; if (m) loveStop(); else playWav(src());
+  };
 }
 
 // ---------- effects ----------
