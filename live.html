@@ -1646,10 +1646,15 @@ function synthWav(kind) {
     const i0 = Math.floor(t0 * rate), len = Math.min(out.length - i0, Math.floor(dec * 5 * rate));
     for (let i = 0; i < len; i++) { const t = i / rate; let v = 0; for (const [k, g, d] of parts) v += g * Math.sin(2 * Math.PI * f * k * t) * Math.exp(-t / (dec * d)); out[i0 + i] += amp * v; }
   };
-  if (kind === 'bells') {
-    out = new Float32Array(Math.floor(rate * 4.4));
-    [83, 88, 90, 88, 86, 83, 86, 88, 91, 88].forEach((m, i) => add(mf(m), 0.05 + i * 0.26, 0.2, 0.5, [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.18, 0.25]]));
-    for (let b = 0; b < 22; b++) { const i0 = Math.floor((0.05 + b * 0.13) * rate), L = Math.floor(rate * 0.07); for (let i = 0; i < L && i0 + i < out.length; i++) out[i0 + i] += (Math.random() * 2 - 1) * 0.07 * (1 - i / L); }
+  if (kind === 'bells') {   // Jingle Bells chorus (Pierpont, 1857, public domain) on bells + sleigh bells
+    const E = 76, G = 79, C = 72, D = 74, F = 77, q = 0.2;
+    const tune = [[E,1],[E,1],[E,2],[E,1],[E,1],[E,2],[E,1],[G,1],[C,1.5],[D,.5],[E,4],[F,1],[F,1],[F,1.5],[F,.5],[F,1],[E,1],[E,1],[E,.5],[E,.5],[E,1],[D,1],[D,1],[E,1],[D,2],[G,2],
+      [E,1],[E,1],[E,2],[E,1],[E,1],[E,2],[E,1],[G,1],[C,1.5],[D,.5],[E,4],[F,1],[F,1],[F,1.5],[F,.5],[F,1],[E,1],[E,1],[E,.5],[E,.5],[G,1],[G,1],[F,1],[D,1],[C,4]];
+    const beats = tune.reduce((a, n) => a + n[1], 0);
+    out = new Float32Array(Math.floor(rate * (beats * q + 1.5)));
+    let t = 0.05;
+    for (const [m, b] of tune) { add(mf(m), t, 0.17, 0.45, [[1, 1, 1], [2.76, 0.35, 0.5], [5.4, 0.15, 0.25]]); t += b * q; }
+    for (let k = 0; k * q * 2 < beats * q; k++) { const i0 = Math.floor((0.05 + k * q * 2) * rate), L = Math.floor(rate * 0.06); for (let i = 0; i < L && i0 + i < out.length; i++) out[i0 + i] += (Math.random() * 2 - 1) * 0.06 * (1 - i / L); }
   } else if (kind === 'bowl') {
     out = new Float32Array(rate * 7);
     add(196, 0.05, 0.32, 1.6, [[1, 1, 1], [1.004, 0.8, 1], [2.71, 0.35, 0.6], [5.15, 0.15, 0.35]]);
