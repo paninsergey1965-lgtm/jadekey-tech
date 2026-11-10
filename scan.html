@@ -292,7 +292,7 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
       </div>
       <div id="lvForm" style="display:none"></div>
       <div id="lvDone" style="display:none"></div>
-      <div class="btns" id="lvNavBox"><button class="btn" id="lvBack">Отмена</button><button class="btn main" id="lvNext">Далее</button></div>
+      <div class="btns" id="lvNavBox"><button class="btn" id="lvBack">Отмена</button><button class="btn main" id="lvGo">Далее</button></div>
     </div>
   </div>
 </section>
@@ -1923,7 +1923,7 @@ async function liveCapture(side) {
   finally { veil(); LV.busy = false; stopCam(); lvNav(); }
 }
 function lvNav() {
-  const st = LV.step, nx = $('lvNext'), sh = $('lvShoot');
+  const st = LV.step, nx = $('lvGo'), sh = $('lvShoot');
   $('lvBack').textContent = st === 0 ? 'Отмена' : 'Назад';
   $('lvNavBox').style.display = st === 3 ? 'none' : '';
   sh.textContent = LV.busy ? 'Стоп' : ((st === 0 ? LV.a : LV.b) ? 'Переснять' : 'Снять');
@@ -2065,7 +2065,7 @@ $('lvStart').onclick = () => {
 $('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
 $('lvHidden').onclick = () => { if (LV.busy) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
 $('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; liveRender(); };
-$('lvNext').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; liveRender(); };
+$('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; liveRender(); };
 
 // ---------- tabs ----------
 function tab(name) {
