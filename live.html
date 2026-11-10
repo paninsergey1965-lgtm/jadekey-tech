@@ -1,0 +1,2238 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#0a1310">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>JadeKey</title>
+<style>
+:root{--bg:#0a1310;--panel:#112019;--panel2:#16291f;--line:#223a2e;--fg:#e9f3ee;--mute:#86a396;--jade:#3fd8a2;--gold:#d8b45c;--bad:#ff7a66;--warn:#e8c25a;
+  --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;--nav:62px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.view{position:fixed;left:0;right:0;top:0;bottom:calc(var(--nav) + env(safe-area-inset-bottom));display:none;flex-direction:column;overflow:hidden}
+.view.on{display:flex}
+nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:grid;grid-template-columns:repeat(3,1fr);background:#0d1914f2;border-top:1px solid var(--line);backdrop-filter:blur(12px);z-index:20}
+nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mute);font-size:11px;letter-spacing:.04em}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--jade)}
+
+/* top bar */
+.top{position:absolute;left:0;right:0;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 12px) 16px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(#000b,#0000)}
+.word{font-family:var(--serif);font-size:18px;letter-spacing:.32em;text-transform:uppercase}
+.word i{font-style:normal;color:var(--jade)}
+.tb{display:flex;align-items:center;gap:6px}
+.tbtn{display:flex;align-items:center;gap:4px;font-size:12px;padding:5px 10px;border-radius:999px;background:#ffffff14;color:var(--fg)}
+.tbtn svg{width:14px;height:14px;stroke:var(--jade);fill:none;stroke-width:1.8;stroke-linejoin:round}
+.chip{font-size:12px;padding:5px 10px;border-radius:999px;background:#ffffff14;color:var(--warn);max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.ok{color:var(--jade)} .chip.err{color:var(--bad)}
+
+/* scan view */
+.stage{position:relative;flex:1;background:#000;overflow:hidden}
+.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.stage canvas.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:0 40px;color:var(--mute);background:radial-gradient(circle at 50% 42%,#14281f,#0a1310 70%)}
+.idle .gem{width:92px;height:92px;opacity:.9}
+.idle h2{margin:0;font-family:var(--serif);font-weight:400;font-size:26px;color:var(--fg)}
+.idle p{margin:0;font-size:14px;max-width:280px}
+.hud{position:absolute;left:0;right:0;bottom:0;padding:14px 16px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;background:linear-gradient(#0000,#000c)}
+.msg{font-size:14px;padding:7px 14px;border-radius:999px;background:#000a;color:var(--fg);min-height:32px;text-align:center}
+.sharp{width:120px;height:4px;border-radius:2px;background:#ffffff26;overflow:hidden}
+.sharp i{display:block;height:100%;width:0;background:var(--bad);transition:width .15s,background .15s}
+.shutter{width:76px;height:76px;border-radius:50%;border:3px solid var(--jade);display:flex;align-items:center;justify-content:center}
+.shutter b{display:block;width:58px;height:58px;border-radius:50%;background:var(--jade);transition:.2s}
+.shutter.busy b{width:26px;height:26px;border-radius:7px;background:var(--bad)}
+.shutter:active b{transform:scale(.92)}
+
+/* sheet */
+.sheet{position:fixed;left:0;right:0;bottom:calc(var(--nav) + env(safe-area-inset-bottom));max-height:78vh;overflow-y:auto;background:var(--panel);border-radius:22px 22px 0 0;border-top:1px solid var(--line);padding:10px 20px 24px;transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:15;box-shadow:0 -20px 50px #0009}
+.sheet.on{transform:none}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sh-head{display:flex;gap:14px;align-items:center}
+.sh-thumb{width:84px;height:84px;border-radius:14px;object-fit:cover;background:#0006;flex:none;border:1px solid var(--line)}
+.sh-state{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--jade)}
+.sh-state.bad{color:var(--bad)} .sh-state.warn{color:var(--warn)}
+.sh-name{font-family:var(--serif);font-size:25px;line-height:1.15;margin:3px 0}
+.sh-jk{display:inline-block;font:600 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--gold);border:1px solid #d8b45c55;border-radius:6px;padding:2px 7px}
+.sh-meta{margin:14px 0 4px;font-size:13px;color:var(--mute)}
+.sh-note{margin:12px 0 0;font-size:14px;color:var(--mute)}
+.rows{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel2);border-radius:14px;text-align:left;width:100%}
+.row small{display:block;color:var(--mute);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.row span{flex:1;min-width:0}
+.row b{font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btns{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:14px;border-radius:14px;background:var(--panel2);font-weight:600;text-align:center;display:block}
+.btn.main{background:var(--jade);color:#04150e}
+body.love{--bg:#170b10;--panel:#22121a;--panel2:#2b1722;--line:#45242f;--mute:#b58f9c;--jade:#ff8fb1}
+body.love .gem{stroke:#ff8fb1}
+.sheet.love{background:linear-gradient(180deg,#3a1626,#1d0d15);border-top-color:#6b2f45}
+.lv-top{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:#ff9fbd;margin:6px 0 14px}
+.lv-to{font-family:var(--serif);font-size:22px;color:#ffd9e4}
+.lv-msg{font-family:var(--serif);font-size:27px;line-height:1.28;color:#fff;margin:10px 0 16px}
+.lv-from{font-family:var(--serif);font-size:19px;color:#ffd9e4;text-align:right}
+.lv-meta{margin-top:18px;padding-top:12px;border-top:1px solid #5a2a3c;font-size:13px;color:#d9a3b5;display:flex;justify-content:space-between}
+.sheet.love .sh-note{color:#c9909f}
+.lv-pic{font-size:54px;line-height:1;margin:2px 0 6px;display:inline-block;animation:lvpop .7s cubic-bezier(.2,1.6,.4,1) both}
+.lv-heart{display:inline-block;color:#ff7fa8;animation:lvbeat 1.3s ease-in-out infinite}
+@keyframes lvbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.28)}30%{transform:scale(1)}45%{transform:scale(1.18)}}
+@keyframes lvpop{from{transform:scale(.2) rotate(-25deg);opacity:0}to{transform:none;opacity:1}}
+.lv-rain{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.lv-rain span{position:absolute;bottom:-40px;animation:lvrise linear forwards;will-change:transform,opacity}
+@keyframes lvrise{0%{transform:translateY(0) translateX(0) rotate(0);opacity:0}10%{opacity:.95}100%{transform:translateY(-105vh) translateX(var(--dx)) rotate(var(--rot));opacity:0}}
+@media (prefers-reduced-motion:reduce){.lv-rain{display:none}.lv-pic,.lv-heart{animation:none}}
+.sheet.love .btn.main{background:#ff8fb1;color:#2a0b16}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.4}
+
+/* pages */
+.page{flex:1;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 18px) 16px 28px}
+.page h1{font-family:var(--serif);font-weight:400;font-size:32px;margin:6px 0 2px}
+.sub{color:var(--mute);font-size:14px;margin-bottom:16px}
+.search{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit;margin-bottom:14px;outline:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;display:block;width:100%}
+.card img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#0006}
+.card div{padding:10px 12px 12px}
+.card b{display:block;font-family:var(--serif);font-weight:400;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card span{font:600 11px ui-monospace,Menlo,monospace;color:var(--gold);letter-spacing:.06em}
+.h2{margin:26px 0 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.legacy{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.legacy img,.legacy .ph{width:46px;height:46px;border-radius:10px;object-fit:cover;background:#0006;flex:none}
+.legacy span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legacy button{color:var(--jade);font-size:14px;padding:6px 4px}
+.empty{padding:50px 20px;text-align:center;color:var(--mute)}
+
+/* add */
+.cambox{position:relative;border-radius:20px;overflow:hidden;background:#000;aspect-ratio:4/5;max-height:46vh;width:100%;margin:0 auto}
+.cambox video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cambox canvas.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cambox .hud{padding:10px}
+.shot{display:flex;gap:14px;align-items:center;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.shot img{width:96px;height:96px;border-radius:12px;object-fit:cover;flex:none}
+.shot b{display:block;font-family:var(--serif);font-weight:400;font-size:20px}
+.shot span{color:var(--mute);font-size:13px}
+.lbl{display:block;margin:14px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.fld{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit;outline:none}
+.fld:focus{border-color:var(--jade)}
+.pick{position:relative;overflow:hidden}
+.pick input{position:absolute;inset:0;opacity:0;width:100%}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translate(-50%,-20px);background:#000d;color:var(--fg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:88vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.veil{position:fixed;inset:0;background:#000b;z-index:60;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--jade);font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+.veil.on{display:flex}
+.ring{width:40px;height:40px;border:3px solid #3fd8a233;border-top-color:var(--jade);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- live stones ---------- */
+nav{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:1fr}
+input,textarea{-webkit-user-select:text;user-select:text}
+.steps{display:flex;gap:4px;margin:2px 0 14px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--jade)}
+.qrow{display:flex;gap:14px;justify-content:center;font-size:13px;color:var(--mute);margin:10px 0 0;min-height:18px}
+.qrow .ok{color:var(--jade)} .qrow .no{color:var(--bad)}
+.verdict{border-radius:14px;padding:12px 14px;margin:12px 0 0;font-weight:600;font-size:14px;display:none}
+.verdict.ok{display:block;background:#3fd8a222;color:#7ff0c4}
+.verdict.no{display:block;background:#ff7a6622;color:#ffb3a6}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:11px 6px;border-radius:12px;border:1px solid var(--line);font-size:14px;font-weight:600;color:var(--mute)}
+.seg button.on{border-color:var(--jade);color:var(--jade)}
+.lvlink{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:12px;font-size:13px;word-break:break-all;margin:12px 0 0}
+.mine{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.mine img{width:52px;height:52px;border-radius:12px;object-fit:cover;flex:none;background:#0006}
+.mine span{flex:1;min-width:0}
+.mine b{display:block;font-family:var(--serif);font-weight:400;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mine small{color:var(--mute);font-size:12px}
+.tag{flex:none !important;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.t-love{background:#ff8fb122;color:#ffaecb} .t-ny{background:#f2c45a22;color:#ffd987} .t-tal{background:#b79cff22;color:#d5c6ff}
+.sheet.ny{background:linear-gradient(180deg,#132650,#0a1530);border-top-color:#2f4d86}
+.ny-k{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#f2c45a;margin:6px 0 8px}
+.ny-cd{font-family:var(--serif);font-size:34px;font-variant-numeric:tabular-nums;color:#fff;margin:0 0 12px}
+.adv{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:12px 0 4px}
+.adv span{aspect-ratio:1;border-radius:9px;background:#ffffff0d;border:1px solid #2a3d66;color:#7f93bd;font-weight:700;font-size:12px;display:grid;place-items:center}
+.adv span.o{background:linear-gradient(160deg,#c9322f,#7d1715);border-color:#e0504c;color:#ffe7b0}
+.adv span.t{background:linear-gradient(160deg,#f2c45a,#c98a1c);border-color:#ffe3a1;color:#2a1600}
+.ny-msg{font-family:var(--serif);font-size:25px;line-height:1.28;color:#fff;margin:6px 0 10px}
+.ny-big{font-family:var(--serif);font-size:40px;line-height:1.1;color:#ffe3a1;margin:4px 0}
+.sheet.ny .sh-note{color:#9fb3dc} .sheet.ny .btn.main{background:#f2c45a;color:#2a1600}
+.sheet.tal{background:linear-gradient(180deg,#3b2a5e,#140d24);border-top-color:#5b4590}
+.tl-k{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#cdb8ff;margin:6px 0 8px;text-align:center}
+.tl-img{width:110px;height:110px;border-radius:50%;object-fit:cover;display:block;margin:4px auto 10px;box-shadow:0 0 0 1px #ffffff30,0 0 40px #b79cff55}
+.tl-wish{font-family:var(--serif);font-size:25px;line-height:1.28;color:#fff;text-align:center;margin:6px 0 12px}
+.tl-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #ffffff22;padding-top:10px;font-size:13px;color:#cdb8ff}
+.tl-row b{display:block;font-family:var(--serif);font-weight:400;font-size:19px;color:#fff}
+.tl-rit{margin-top:10px;font-size:14px;color:#e6dcff;background:#ffffff10;border-radius:12px;padding:10px 12px}
+.sheet.tal .btn.main{background:#fff;color:#1a1030} .sheet.tal .sh-note{color:#b9a8dd}
+.tz-img{width:150px;height:150px;border-radius:50%;object-fit:cover;display:block;margin:8px auto 14px;box-shadow:0 0 0 1px #ffffff30,0 0 50px #3fd8a244;background:#0006}
+.tz-lock{display:inline-block;background:#ffffff14;border-radius:999px;padding:7px 14px;font-size:13px;margin:8px 0 10px}
+.tz-facts{display:flex;justify-content:center;gap:24px;font-size:12px;color:var(--mute);margin:6px 0 4px}
+.tz-facts b{display:block;font-family:var(--serif);font-weight:400;font-size:24px;color:var(--fg)}
+.lv-rain.fx-snow span{bottom:auto;top:-30px;animation-name:lvfall}
+@keyframes lvfall{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.9}100%{transform:translateY(108vh) translateX(var(--dx));opacity:.15}}
+canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:61}
+
+</style>
+</head>
+<body>
+
+<!-- ============ SCAN ============ -->
+<section class="view on" id="vScan">
+  <div class="top"><div class="word">Jade<i>Key</i></div><div class="tb"><button class="tbtn" id="btnFind" title="Найти брелок"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Найти</button><button class="tbtn" id="btnLang">EN</button><div class="chip" id="chip">Загружаю модель…</div></div></div>
+  <div class="stage">
+    <video id="vidS" playsinline muted autoplay></video>
+    <canvas class="ov" id="ovS"></canvas>
+    <div class="idle" id="idleS">
+      <svg class="gem" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg>
+      <h2>Покажи камень</h2>
+      <p>Положи брелок на ровную поверхность при хорошем свете и нажми кнопку. Сканер сам найдёт камень и узнает его.</p>
+    </div>
+    <div class="hud">
+      <div class="msg" id="msgS">Готов</div>
+      <div class="sharp"><i id="barS"></i></div>
+      <button class="shutter" id="shutter" aria-label="Сканировать"><b></b></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COLLECTION ============ -->
+<section class="view" id="vColl">
+  <div class="page">
+    <h1>Коллекция</h1>
+    <div class="sub" id="collSub">Загружаю…</div>
+    <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- ============ ADD ============ -->
+<section class="view" id="vAdd">
+  <div class="page">
+    <h1 id="addTitle">Новый камень</h1>
+    <div class="sub">Одного снимка достаточно: сканер сам разворачивает камень.</div>
+    <div id="camPart">
+      <div class="cambox">
+        <video id="vidA" playsinline muted autoplay></video>
+        <canvas class="ov" id="ovA"></canvas>
+        <div class="idle" id="idleA" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Нажми «Снять камень»</p></div>
+        <div class="hud"><div class="msg" id="msgA">Готов</div><div class="sharp"><i id="barA"></i></div></div>
+      </div>
+      <div class="btns">
+        <button class="btn main" id="btnShoot">Снять камень</button>
+        <label class="btn pick">Из фото<input type="file" id="fileAdd" accept="image/*"></label>
+      </div>
+    </div>
+    <div id="shotPart" style="display:none">
+      <div class="shot"><img id="shotImg" alt=""><div><b id="shotTitle">Камень найден</b><span id="shotInfo"></span><br><button id="btnRetake" style="color:var(--jade);font-size:14px;padding:6px 0">Переснять</button></div></div>
+    </div>
+    <div id="formPart" style="display:none">
+      <label class="lbl">Название</label>
+      <input class="fld" id="fName" placeholder="Например, Агат розовый №3" autocomplete="off">
+      <label class="lbl">JK-номер</label>
+      <input class="fld" id="fJk" placeholder="JK-000009" autocomplete="off" autocapitalize="characters">
+      <label class="lbl">Контакты владельца</label>
+      <input class="fld" id="fPhone" placeholder="Телефон" inputmode="tel" style="margin-bottom:8px">
+      <input class="fld" id="fTg" placeholder="Telegram @username" autocapitalize="none" style="margin-bottom:8px">
+      <input class="fld" id="fMail" placeholder="Email" inputmode="email" autocapitalize="none" style="margin-bottom:8px">
+      <input class="fld" id="fSite" placeholder="Сайт https://…" autocapitalize="none">
+      <label class="lbl">JadeKey Love — послания (необязательно)</label>
+      <input class="fld" id="fLoveTo" placeholder="Кому (имя)" autocomplete="off" style="margin-bottom:8px">
+      <input class="fld" id="fLoveFrom" placeholder="От кого (имя)" autocomplete="off" style="margin-bottom:8px">
+      <label class="lbl" style="margin-top:0">Вместе с (дата)</label>
+      <input class="fld" id="fLoveSince" type="date" style="margin-bottom:8px">
+      <select class="fld" id="fLoveTone"><option value="tender">Тон: нежно</option><option value="fun">Тон: с юмором</option><option value="romantic">Тон: романтично</option></select>
+      <div class="btns"><button class="btn" id="btnCancel">Отмена</button><button class="btn main" id="btnSave">Сохранить в коллекцию</button></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ LIVE STONES ============ -->
+<section class="view" id="vLive">
+  <div class="page">
+    <div id="lvHomeBox">
+      <h1>Живой камень</h1>
+      <div class="sub">Купил камень с рисунком? Оживи его за пару минут и подари: камень будет каждый день открывать послание.</div>
+      <button class="btn main" id="lvStart">Оживить камень</button>
+      <div class="h2">Мои камни</div>
+      <div id="lvMine"></div>
+    </div>
+    <div id="lvWiz" style="display:none">
+      <div class="steps" id="lvSteps"></div>
+      <h1 id="lvH">Сторона А</h1>
+      <div class="sub" id="lvSub"></div>
+      <div id="lvCam">
+        <div class="cambox">
+          <video id="vidL" playsinline muted autoplay></video>
+          <canvas class="ov" id="ovL"></canvas>
+          <div class="idle" id="idleL" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Положи камень на однотонный фон при хорошем свете и нажми «Снять»</p></div>
+          <div class="hud"><div class="msg" id="msgL">Готов</div><div class="sharp"><i id="barL"></i></div></div>
+        </div>
+        <div class="qrow" id="lvQ"></div>
+        <div class="verdict" id="lvV"></div>
+        <div class="btns"><button class="btn main" id="lvShoot">Снять</button></div>
+        <div class="btns" id="lvHiddenBox"><button class="btn" id="lvHidden">Вторая сторона закрыта оправой</button></div>
+      </div>
+      <div id="lvForm" style="display:none"></div>
+      <div id="lvDone" style="display:none"></div>
+      <div class="btns" id="lvNavBox"><button class="btn" id="lvBack">Отмена</button><button class="btn main" id="lvNext">Далее</button></div>
+    </div>
+  </div>
+</section>
+
+<nav>
+  <button id="nScan" class="on"><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 12h8"/></svg>Сканер</button>
+  <button id="nColl" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 3 20 9l-3 11H7L4 9z"/><path d="M4 9h16"/></svg>Коллекция</button>
+  <button id="nAdd" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Добавить</button>
+  <button id="nLive"><svg viewBox="0 0 24 24"><path d="M12 3 19 8l-2.5 11h-9L5 8z"/><path d="M12 9.5c1.2-1.6 3.6-.6 2.9 1.3-.5 1.4-2.9 3-2.9 3s-2.4-1.6-2.9-3c-.7-1.9 1.7-2.9 2.9-1.3z"/></svg>Живой</button>
+  <button id="nNfc" style="display:none"><svg viewBox="0 0 24 24"><path d="M6 8.5a5 5 0 0 1 0 7"/><path d="M9.5 6a9 9 0 0 1 0 12"/><path d="M13 3.5a13 13 0 0 1 0 17"/></svg>NFC</button>
+</nav>
+
+<div class="sheet" id="sheet"></div>
+<div id="toast"></div>
+<div class="veil" id="veil"><div class="ring"></div><div id="veilTxt"></div></div>
+
+<script>
+// ---------- language (RU / EN) + "find keychain" button ----------
+(() => {
+  let lang = 'ru';
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q === 'en' || q === 'ru') localStorage.setItem('jk2_lang', q);
+    lang = localStorage.getItem('jk2_lang') || (/^ru|^uk|^be|^kk/i.test(navigator.language || 'ru') ? 'ru' : 'en');
+  } catch (e) {}
+  window.JK_LANG = lang;
+
+  const D = {
+    'Загружаю модель…': 'Loading model…', 'Скачиваю модель…': 'Downloading model…', 'Запускаю модель…': 'Starting model…',
+    'Запускаю без видеокарты…': 'Starting without GPU…', 'Модель не загрузилась · нажми': 'Model failed to load · tap',
+    'Покажи камень': 'Show the stone',
+    'Положи брелок на ровную поверхность при хорошем свете и нажми кнопку. Сканер сам найдёт камень и узнает его.':
+      'Place the keychain on a flat surface in good light and press the button. The scanner will find the stone and recognise it.',
+    'Готов': 'Ready', 'Сканировать': 'Scan', 'Сканер': 'Scanner', 'Коллекция': 'Collection', 'Добавить': 'Add',
+    'Загружаю…': 'Loading…', 'Поиск по названию или JK-номеру': 'Search by name or JK number',
+    'Новый камень': 'New stone', 'Одного снимка достаточно: сканер сам разворачивает камень.': 'One photo is enough: the scanner rotates the stone by itself.',
+    'Нажми «Снять камень»': 'Tap «Capture stone»', 'Снять камень': 'Capture stone', 'Из фото': 'From photo',
+    'Камень найден': 'Stone found', 'Переснять': 'Retake', 'Название': 'Name', 'Например, Агат розовый №3': 'e.g. Pink agate #3',
+    'JK-номер': 'JK number', 'Контакты владельца': "Owner's contacts", 'Телефон': 'Phone', 'Сайт https://…': 'Website https://…',
+    'Отмена': 'Cancel', 'Сохранить в коллекцию': 'Save to collection', 'Сохранить': 'Save',
+    'Наведи на камень': 'Point at the stone', 'Ближе': 'Closer', 'Дальше': 'Further', 'Держи ровно': 'Hold steady',
+    'Не в фокусе, чуть отодвинь': 'Out of focus, move back a little', 'Нахожу камень…': 'Finding the stone…', 'Узнаю…': 'Recognising…',
+    'Узнал': 'Recognised', 'Не узнал': 'Not recognised', 'Не уверен': 'Not sure', 'Камень': 'Stone', 'Сайт': 'Website',
+    'Сканировать ещё': 'Scan again', 'Этого камня нет в коллекции': 'This stone is not in the collection',
+    'Ещё раз': 'Try again', 'Добавить в коллекцию': 'Add to collection', 'Владелец:': 'Owner:',
+    'Модель ещё загружается': 'The model is still loading', 'Пусто': 'Empty', 'В коллекции нет камней': 'The collection is empty',
+    'Сначала добавь хотя бы один камень на вкладке «Добавить».': 'First add at least one stone on the «Add» tab.',
+    'Камень на кадре не найден': 'No stone found in the frame', 'Не получилось, попробуй ещё': "Didn't work, try again",
+    'Пока пусто. Добавь первый камень.': 'Empty so far. Add your first stone.',
+    'Пароль администратора': 'Admin password', 'Вход…': 'Signing in…', 'Режим администратора включён': 'Admin mode on', 'Режим администратора выключен': 'Admin mode off', 'Выйти из режима администратора?': 'Leave admin mode?', 'Только для администратора': 'Admin only', 'Сверяю с коллекцией…': 'Checking the collection…', 'Изменить': 'Edit', 'Удалить': 'Delete', 'Удаляю…': 'Deleting…', 'Неверный PIN': 'Wrong PIN', 'PIN владельца': 'Owner PIN',
+    'Придумай PIN владельца (им защищены добавление, правка и удаление камней на этом телефоне)':
+      'Create an owner PIN (it protects adding, editing and deleting stones on this phone)',
+    'Переснять камень': 'Retake stone', 'Запоминаю камень…': 'Memorising the stone…',
+    'Камень на кадре не найден, попробуй ещё': 'No stone in the frame, try again', 'Стоп': 'Stop', 'Введи название': 'Enter a name',
+    'Сохраняю…': 'Saving…', 'Сначала сними камень': 'Capture the stone first', 'Проверяю, нет ли такого камня…': 'Checking for duplicates…',
+    'Сохранено': 'Saved', 'Нет доступа к камере. Разреши камеру для этого сайта в настройках Safari.':
+      'No camera access. Allow the camera for this site in Safari settings.',
+    'Держи метку у задней крышки телефона, ближе к центру, 1–2 секунды.': 'Hold the tag to the back of the phone, near the centre, for 1–2 seconds.',
+    'Поднеси метку к телефону': 'Hold the tag to the phone', 'Поднеси метку для настройки счётчика': 'Hold the tag to set up the counter', 'Поднеси метку для записи': 'Hold the tag to write',
+    'NFC-метка': 'NFC tag', 'Чип': 'Chip', 'Счётчик касаний': 'Tap counter', 'выключен': 'off', 'Записано в чипе': 'Stored on chip',
+    'Подпись NXP': 'NXP signature', 'Чип брелока': 'Keychain chip', 'Включить счётчик': 'Enable counter', 'Записать ссылку': 'Write link',
+    'Прочитать ещё': 'Read again', 'Счётчик включён': 'Counter enabled', 'Сканер JadeKey': 'JadeKey scanner', 'Мой Telegram': 'My Telegram',
+    'Запись в чип': 'Write to chip', 'Что записать?': 'What to write?',
+    'Ссылка, телефон, почта или @telegram. Старая запись сотрётся.': 'Link, phone, email or @telegram. The old record will be erased.',
+    'Назад': 'Back', 'Записать': 'Write', 'Прочитан': 'Read', 'Записано': 'Written',
+    'Слишком длинно для этого чипа (макс ~120 символов)': 'Too long for this chip (max ~120 characters)',
+    'NFC недоступен': 'NFC unavailable', 'Нужен Chrome': 'Chrome needed', 'Понятно': 'OK',
+    'Сайт открыт без https. Открой https://jadekey.tech/scan.html': 'The site is open without https. Open https://jadekey.tech/scan.html',
+    'NFC в браузере работает только в Google Chrome. Открой эту страницу в Chrome': 'NFC in the browser works only in Google Chrome. Open this page in Chrome',
+    'Этот Chrome не поддерживает NFC. Обнови Chrome в Play Маркете и включи NFC в настройках телефона':
+      "This Chrome doesn't support NFC. Update Chrome in Play Store and turn on NFC in phone settings",
+    'Не удалось прочитать, попробуй ещё': "Couldn't read, try again", 'Отменено': 'Cancelled',
+    'обнови приложение в TestFlight до сборки 19+': 'update the app in TestFlight to build 19+',
+    'разреши доступ к NFC для сайта и включи NFC в настройках телефона': 'allow NFC for this site and turn on NFC in phone settings',
+    'Найти': 'Find', 'Найти брелок': 'Find keychain',
+  };
+  const R = [
+    [/^Модель (\d+) из (\d+) МБ$/, 'Model $1 of $2 MB'],
+    [/^Готов · (GPU|CPU)$/, 'Ready · $1'],
+    [/^Коллекция не загрузилась: (.*)$/, 'Collection failed to load: $1'],
+    [/^Снимаю (.*)$/, 'Capturing $1'],
+    [/^Сверяю с «(.*)»…$/, 'Comparing with «$1»…'],
+    [/^Совпало (\d+) участков рисунка \((\d+)% камня\)$/, 'Matched $1 pattern regions ($2% of the stone)'],
+    [/^Ближайший: «(.*)», но совпало только (\d+) участков, этого мало\.$/, 'Closest: «$1», but only $2 regions matched — not enough.'],
+    [/^Диагностика: (.*), участков камня (.*), поворот (.*)$/, 'Diagnostics: $1, stone regions $2, rotation $3'],
+    [/^Не уверен, пересниму \((\d) из 3\)$/, 'Not sure, retaking ($1 of 3)'],
+    [/^Ошибка: (.*)$/, 'Error: $1'],
+    [/^(\d+) (камень|камня|камней)$/, (m, n) => n + (n === '1' ? ' stone' : ' stones')],
+    [/^Удалить «(.*)»\?$/, 'Delete «$1»?'], [/^Вход не удался: (.*)$/, 'Sign-in failed: $1'],
+    [/^Не удалось удалить: (.*)$/, "Couldn't delete: $1"],
+    [/^Не сохранилось: (.*)$/, "Couldn't save: $1"],
+    [/^Похоже, этот камень уже есть: «(.*)» \((\d+) совпадений\)\. Всё равно добавить\?$/, 'This stone seems to exist already: «$1» ($2 matches). Add anyway?'],
+    [/^(\d+) участков рисунка$/, '$1 pattern regions'],
+    [/^Будет записано: (.*)$/, 'Will be written: $1'],
+    [/^NFC: (.*)$/, (m, x) => 'NFC: ' + (D[x] || x)],
+  ];
+  const CYR = /[А-Яа-яЁё]/;
+  const tr = s => {
+    if (lang !== 'en' || !s || !CYR.test(s)) return s;
+    const t = s.trim();
+    let o = D[t];
+    if (o == null) for (const [re, rep] of R) if (re.test(t)) { o = t.replace(re, rep); break; }
+    return o == null ? s : s.replace(t, o);
+  };
+  window.JK_T = tr;
+  const ATTR = ['placeholder', 'aria-label', 'title'];
+  const walk = n => {
+    if (n.nodeType === 3) { const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; return; }
+    if (n.nodeType !== 1 || n.tagName === 'SCRIPT' || n.tagName === 'STYLE') return;
+    for (const a of ATTR) if (n.hasAttribute(a)) { const v = tr(n.getAttribute(a)); if (v !== n.getAttribute(a)) n.setAttribute(a, v); }
+    for (const c of n.childNodes) walk(c);
+  };
+  if (lang === 'en') {
+    document.documentElement.lang = 'en';
+    walk(document.body);
+    new MutationObserver(ms => { for (const m of ms) { if (m.type === 'childList') m.addedNodes.forEach(walk); else walk(m.target); } })
+      .observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTR });
+    const c = window.confirm.bind(window), p = window.prompt.bind(window);
+    window.confirm = m => c(tr(m));
+    window.prompt = (m, d) => p(tr(m), d);
+  }
+
+  const bl = document.getElementById('btnLang');
+  bl.textContent = lang === 'en' ? 'RU' : 'EN';
+  bl.onclick = () => {
+    try { localStorage.setItem('jk2_lang', lang === 'en' ? 'ru' : 'en'); } catch (e) {}
+    const u = new URL(location.href); u.searchParams.delete('lang'); location.replace(u.href);
+  };
+
+  document.getElementById('btnFind').onclick = () => {
+    const ua = navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (ios) location.href = 'findmy://';
+    else if (/Android/.test(ua) && window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android')
+      location.href = 'https://www.google.com/android/find';
+    else if (/Android/.test(ua)) location.href = 'intent://#Intent;package=com.google.android.apps.adm;S.browser_fallback_url=' +
+      encodeURIComponent('https://www.google.com/android/find') + ';end';
+    else window.open('https://www.icloud.com/find', '_blank');
+  };
+})();
+</script>
+
+<script type="module">
+import { pipeline, RawImage, env } from './vendor/transformers.min.js';
+
+// model, library and wasm are served from this site (no CDN / Cloudflare R2 — works in Russia without VPN)
+env.allowLocalModels = false;
+env.remoteHost = new URL('./models/', location.href).href;
+env.backends.onnx.wasm.wasmPaths = {
+  mjs: new URL('./vendor/ort-wasm-simd-threaded.jsep.js', location.href).href,
+  wasm: new URL('./vendor/ort-wasm-simd-threaded.jsep.wasm', location.href).href,
+};
+env.remotePathTemplate = '{model}/';
+
+// the two small config files are built in, so only model.onnx is fetched
+const BUILTIN = {
+  'config.json': {"_name_or_path": "facebook/dinov2-small", "apply_layernorm": true, "architectures": ["Dinov2Model"], "attention_probs_dropout_prob": 0.0, "drop_path_rate": 0.0, "hidden_act": "gelu", "hidden_dropout_prob": 0.0, "hidden_size": 384, "image_size": 518, "initializer_range": 0.02, "layer_norm_eps": 1e-06, "layerscale_value": 1.0, "mlp_ratio": 4, "model_type": "dinov2", "num_attention_heads": 6, "num_channels": 3, "num_hidden_layers": 12, "out_features": ["stage12"], "out_indices": [12], "patch_size": 14, "qkv_bias": true, "reshape_hidden_states": true, "stage_names": ["stem", "stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "stage9", "stage10", "stage11", "stage12"], "transformers_version": "4.45.0.dev0", "use_swiglu_ffn": false},
+  'preprocessor_config.json': {"crop_size": {"height": 224, "width": 224}, "do_center_crop": true, "do_convert_rgb": true, "do_normalize": true, "do_rescale": true, "do_resize": true, "image_mean": [0.485, 0.456, 0.406], "image_processor_type": "BitImageProcessor", "image_std": [0.229, 0.224, 0.225], "resample": 3, "rescale_factor": 0.00392156862745098, "size": {"shortest_edge": 256}},
+};
+const _fetch = window.fetch.bind(window);
+window.fetch = (input, init) => {
+  const url = typeof input === 'string' ? input : input.url;
+  for (const [name, obj] of Object.entries(BUILTIN))
+    if (url.endsWith('/dinov2/' + name)) return Promise.resolve(new Response(JSON.stringify(obj), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+  return _fetch(input, init);
+};
+if ('fetch' in env) env.fetch = window.fetch;
+// v8.0 cached the empty config files from R2 in the browser — throw those copies away
+try {
+  const c = await caches.open('transformers-cache');
+  for (const k of await c.keys()) if (/\/dinov2\/[^/]+\.json$/.test(k.url)) await c.delete(k);
+} catch (e) {}
+
+// ---- decision thresholds (provisional, calibrate on real stones) ----
+const MIN_INLIERS = 60;
+const MIN_RATIO = 0.12;
+
+let RES = 448;              // model input side; 448 / 14 = 32x32 patch grid
+const C = 224;              // preview size
+const ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
+// average colour of the photo's outer border, used to fill corners after rotation
+function borderColor(img) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  const g = cv.getContext('2d');
+  g.drawImage(img, 0, 0, 64, 64);
+  const d = g.getImageData(0, 0, 64, 64).data;
+  let r = 0, gg = 0, b = 0, n = 0;
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+    if (x > 3 && x < 60 && y > 3 && y < 60) continue;
+    const i = (y * 64 + x) * 4; r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++;
+  }
+  return `rgb(${r / n | 0},${gg / n | 0},${b / n | 0})`;
+}
+
+// Render a square region of the photo (centre cx,cy and side in photo pixels), rotated, into RES x RES.
+function render(p, cx, cy, side, angleDeg) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = RES;
+  const g = cv.getContext('2d');
+  g.fillStyle = p.bg; g.fillRect(0, 0, RES, RES);
+  g.translate(RES / 2, RES / 2);
+  g.rotate(angleDeg * Math.PI / 180);
+  const k = RES / side;
+  g.drawImage(p.img, -cx * k, -cy * k, p.img.width * k, p.img.height * k);
+  return cv;
+}
+
+// whole photo, centre-cropped to a square
+function full(p) {
+  const s = Math.min(p.img.width, p.img.height);
+  return { cx: p.img.width / 2, cy: p.img.height / 2, side: s };
+}
+
+// ---- colour-based stone finder ----
+// Stones are saturated; plate, frame, keys, cloth and table are not.
+const SAT_MIN = 0.30, VAL_MIN = 0.15;
+function saturatedCells(data, w, h, cell) {
+  const gw = Math.floor(w / cell), gh = Math.floor(h / cell);
+  const m = new Array(gw * gh).fill(false), hue = new Float32Array(gw * gh), val = new Float32Array(gw * gh);
+  for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+    let sat = 0, n = 0, hc = 0, hs = 0, vs = 0;
+    for (let y = Math.floor(gy * cell); y < Math.floor((gy + 1) * cell); y++) for (let x = Math.floor(gx * cell); x < Math.floor((gx + 1) * cell); x++) {
+      const i = (y * w + x) * 4, r = data[i], g = data[i + 1], b = data[i + 2];
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      vs += mx / 255;
+      if (mx / 255 > VAL_MIN && (mx - mn) / (mx || 1) > SAT_MIN) {
+        sat++;
+        const d = mx - mn;
+        let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+        h *= Math.PI / 3; hc += Math.cos(h); hs += Math.sin(h);
+      }
+      n++;
+    }
+    m[gy * gw + gx] = sat / n > 0.4;
+    hue[gy * gw + gx] = Math.atan2(hs, hc);
+    val[gy * gw + gx] = vs / n;
+  }
+  return { m, gw, gh, hue, val };
+}
+
+// connected blobs on a grid; returns array of index lists
+const HUE_JOIN = 40 * Math.PI / 180;   // neighbours join one stone only if their hue is close
+function hueDiff(a, b) { const d = Math.abs(a - b) % (2 * Math.PI); return d > Math.PI ? 2 * Math.PI - d : d; }
+const VAL_JOIN = 0.16;   // ...and brightness: blue stone vs dark blue table
+function blobs(m, gw, gh, hue = null, val = null) {
+  const lab = new Int32Array(m.length).fill(-1), out = [];
+  for (let s = 0; s < m.length; s++) {
+    if (!m[s] || lab[s] >= 0) continue;
+    const st = [s], list = []; lab[s] = out.length;
+    while (st.length) {
+      const i = st.pop(); list.push(i);
+      const x = i % gw, y = (i / gw) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) continue;
+        const j = ny * gw + nx;
+        if (m[j] && lab[j] < 0 && (!hue || hueDiff(hue[i], hue[j]) < HUE_JOIN)) { lab[j] = out.length; st.push(j); }
+      }
+    }
+    out.push(list);
+  }
+  return out;
+}
+
+// fill holes (white veins inside the stone): everything not reachable from the border is inside
+function fillHoles(m, gw, gh) {
+  const out = new Array(m.length).fill(true), seen = new Uint8Array(m.length), st = [];
+  for (let x = 0; x < gw; x++) { st.push(x, (gh - 1) * gw + x); }
+  for (let y = 0; y < gh; y++) { st.push(y * gw, y * gw + gw - 1); }
+  while (st.length) {
+    const i = st.pop();
+    if (seen[i] || m[i]) continue;
+    seen[i] = 1; out[i] = false;
+    const x = i % gw, y = (i / gw) | 0;
+    if (x > 0) st.push(i - 1); if (x < gw - 1) st.push(i + 1);
+    if (y > 0) st.push(i - gw); if (y < gh - 1) st.push(i + gw);
+  }
+  return out;
+}
+
+function blobHue(b, hue) { let c = 0, s = 0; for (const i of b) { c += Math.cos(hue[i]); s += Math.sin(hue[i]); } return Math.atan2(s, c); }
+function mergeFragments(bl, gw, hue, gap = 2) {
+  const n = bl.length, par = [...Array(n).keys()], f = i => par[i] === i ? i : (par[i] = f(par[i]));
+  const info = bl.map(b => { let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1; for (const i of b) { const x = i % gw, y = (i / gw) | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } return { x0, y0, x1, y1, h: blobHue(b, hue) }; });
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const a = info[i], b = info[j];
+    const dx = Math.max(0, a.x0 - b.x1, b.x0 - a.x1), dy = Math.max(0, a.y0 - b.y1, b.y0 - a.y1);
+    if (dx <= gap && dy <= gap && hueDiff(a.h, b.h) < HUE_JOIN * 1.5) par[f(i)] = f(j);
+  }
+  const groups = {};
+  bl.forEach((b, i) => { (groups[f(i)] ||= []).push(...b); });
+  return Object.values(groups);
+}
+
+// find the stone in the whole photo; returns square box in photo pixels or null
+function findStoneByColour(p, targetHue = null) {
+  const W = 400, sc = W / Math.max(p.img.width, p.img.height);
+  const w = Math.round(p.img.width * sc), h = Math.round(p.img.height * sc);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d'); g.drawImage(p.img, 0, 0, w, h);
+  const cell = 4, { m, gw, gh, hue, val } = saturatedCells(g.getImageData(0, 0, w, h).data, w, h, cell);
+  const touches = b => b.some(i => { const x = i % gw, y = (i / gw) | 0; return x === 0 || y === 0 || x === gw - 1 || y === gh - 1; });
+  let bl = blobs(m, gw, gh, hue, val).filter(b => b.length >= gw * gh * 0.0015);
+  const inner = bl.filter(b => !touches(b));      // table / cloth runs off the frame, a stone does not
+  if (inner.length && !p.tap) bl = inner;
+  bl = mergeFragments(bl, gw, hue).filter(b => b.length >= gw * gh * 0.003);
+  // when we know the reference stone's colour, ignore blobs of another colour (tags, cloth, skin)
+  if (targetHue !== null && !p.tap) {
+    const same = bl.filter(b => hueDiff(blobHue(b, hue), targetHue) < 50 * Math.PI / 180);
+    if (same.length) bl = same;
+  }
+  if (!bl.length) return null;
+  let pick;
+  if (p.tap) {
+    const tx = p.tap.x * sc / cell, ty = p.tap.y * sc / cell;
+    const dist = b => Math.min(...b.map(i => Math.hypot(i % gw + .5 - tx, ((i / gw) | 0) + .5 - ty)));
+    pick = bl.reduce((a, b) => dist(b) < dist(a) ? b : a);
+    if (dist(pick) > Math.max(gw, gh) * 0.08) return null;
+  } else {
+    // prefer big AND solid blobs: a stone is filled, a key tag or ring has a hole in the middle
+    // a stone in hand is near the centre of the frame, or where we already follow it: this keeps the lock from jumping to other objects
+    const cx0 = p.near ? p.near.x * sc / cell : gw / 2, cy0 = p.near ? p.near.y * sc / cell : gh / 2, R = Math.max(gw, gh) * (p.near ? 0.25 : 0.5);
+    const score = b => {
+      const info = rectInfo(b.map(i => [i % gw + .5, ((i / gw) | 0) + .5])); const fill = b.length / Math.max(1, info.hullArea);
+      let sx = 0, sy = 0; for (const i of b) { sx += i % gw + .5; sy += ((i / gw) | 0) + .5; }
+      const d = Math.hypot(sx / b.length - cx0, sy / b.length - cy0) / R;
+      return b.length * fill * fill / (1 + d * d);
+    };
+    pick = bl.reduce((a, b) => score(b) > score(a) ? b : a);
+  }
+  let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+  for (const i of pick) { const x = i % gw, y = (i / gw) | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x + 1); y1 = Math.max(y1, y + 1); }
+  const k = cell / sc;
+  return { cx: (x0 + x1) / 2 * k, cy: (y0 + y1) / 2 * k, side: Math.max(x1 - x0, y1 - y0) * k * 1.12,
+           hue: blobHue(pick, hue), ...rectInfo(pick.map(i => [i % gw + .5, ((i / gw) | 0) + .5])) };
+}
+
+// angle (deg, -45..45) of the minimum-area rectangle around the points: the stone's edge direction
+// angle + "rectness" (hull area / min rectangle area: square ≈ 1, circle ≈ 0.79)
+function rectInfo(pts) {
+  pts = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], hi = [];
+  for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of pts.slice().reverse()) { while (hi.length >= 2 && cross(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+  const H = lo.slice(0, -1).concat(hi.slice(0, -1));
+  if (H.length < 3) return { angle: 0, rect: 0, hullArea: pts.length };
+  let best = 0, bestArea = Infinity;
+  for (let i = 0; i < H.length; i++) {
+    const a = H[i], b = H[(i + 1) % H.length];
+    const t = Math.atan2(b[1] - a[1], b[0] - a[0]), c = Math.cos(t), s = Math.sin(t);
+    let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+    for (const p of H) { const u = p[0] * c + p[1] * s, v = -p[0] * s + p[1] * c; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
+    const area = (u1 - u0) * (v1 - v0);
+    if (area < bestArea) { bestArea = area; best = t; }
+  }
+  let hullArea = 0;
+  for (let i = 0; i < H.length; i++) { const a = H[i], b = H[(i + 1) % H.length]; hullArea += a[0] * b[1] - b[0] * a[1]; }
+  hullArea = Math.abs(hullArea) / 2;
+  let d = best * 180 / Math.PI;
+  d = ((d % 90) + 90) % 90; if (d > 45) d -= 90;
+  return { angle: d, rect: bestArea > 0 ? hullArea / bestArea : 0, hullArea };
+}
+
+// patch mask from colour on the rendered crop (works after rotation too)
+function colourMask(cv, G) {
+  const g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data;
+  const { m, hue, val } = saturatedCells(d, cv.width, cv.height, cv.width / G);
+  const c = G / 2;
+  const cen = b => { let sx = 0, sy = 0; for (const i of b) { sx += i % G + .5; sy += ((i / G) | 0) + .5; } return Math.hypot(sx / b.length - c, sy / b.length - c); };
+  let raw = blobs(m, G, G, hue, val).filter(b => b.length >= G * G * 0.005);
+  const central = raw.filter(b => cen(b) < G * 0.35), outer = raw.filter(b => cen(b) >= G * 0.35);
+  const bl = mergeFragments(central, G, hue, 1).concat(outer).filter(b => b.length >= G * G * 0.02);
+  if (!bl.length) return null;
+  const score = b => { let sx = 0, sy = 0; for (const i of b) { sx += i % G + .5; sy += ((i / G) | 0) + .5; } return b.length / (1 + Math.hypot(sx / b.length - c, sy / b.length - c) / (G / 6)); };
+  const big = bl.reduce((a, b) => score(b) > score(a) ? b : a);
+  return hullMask(big, G);
+}
+
+// convex hull of the stone blob: dark/grey parts of the stone inside the outline count as stone
+function hullMask(cells, G) {
+  const pts = cells.map(i => [i % G + .5, ((i / G) | 0) + .5]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], hi = [];
+  for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of pts.slice().reverse()) { while (hi.length >= 2 && cross(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+  const H = lo.slice(0, -1).concat(hi.slice(0, -1));
+  const m = new Array(G * G).fill(false);
+  if (H.length < 3) { cells.forEach(i => m[i] = true); return m; }
+  for (let i = 0; i < G * G; i++) {
+    const p = [i % G + .5, ((i / G) | 0) + .5];
+    let inside = true;
+    for (let k = 0; k < H.length; k++) if (cross(H[k], H[(k + 1) % H.length], p) < -0.5) { inside = false; break; }
+    m[i] = inside;
+  }
+  return m;
+}
+
+// ---- features ----
+async function features(cv, mode = 'shape') {
+  const img = await RawImage.fromURL(cv.toDataURL('image/jpeg', 0.92));
+  const out = await extractor(img);              // [1, 1+N, D]
+  const [, T, D] = out.dims;
+  const d = out.data;
+  const N = T - 1;
+  const G = Math.round(Math.sqrt(N));
+  const raw = new Float32Array(N * D);
+  raw.set(d.subarray ? d.subarray(D, T * D) : d.slice(D, T * D));
+  let mask = mode === 'colour' ? colourMask(cv, G) : null;
+  if (!mask || mask.filter(Boolean).length < N / 20) { mask = largestComponent(foreground(raw, N, D, G), G); mode = 'shape'; }
+  const P = new Float32Array(N * D);
+  for (let i = 0; i < N; i++) {
+    let n = 0;
+    for (let j = 0; j < D; j++) n += raw[i * D + j] ** 2;
+    n = Math.sqrt(n) || 1;
+    for (let j = 0; j < D; j++) P[i * D + j] = raw[i * D + j] / n;
+  }
+  return { P, mask, D, N, G, cv, mode };
+}
+
+// first principal component of patch features separates object from background (DINO trick)
+function foreground(X0, N, D, G) {
+  const mean = new Float64Array(D);
+  for (let i = 0; i < N; i++) for (let j = 0; j < D; j++) mean[j] += X0[i * D + j] / N;
+  const X = new Float32Array(N * D);
+  for (let i = 0; i < N; i++) for (let j = 0; j < D; j++) X[i * D + j] = X0[i * D + j] - mean[j];
+  let v = new Float64Array(D).map((_, j) => Math.sin(j * 12.9898) + 0.1);
+  const s = new Float64Array(N);
+  for (let it = 0; it < 40; it++) {
+    for (let i = 0; i < N; i++) { let a = 0; for (let j = 0; j < D; j++) a += X[i * D + j] * v[j]; s[i] = a; }
+    const w = new Float64Array(D);
+    for (let i = 0; i < N; i++) for (let j = 0; j < D; j++) w[j] += X[i * D + j] * s[i];
+    let n = 0; for (const x of w) n += x * x; n = Math.sqrt(n) || 1;
+    v = w.map(x => x / n);
+  }
+  for (let i = 0; i < N; i++) { let a = 0; for (let j = 0; j < D; j++) a += X[i * D + j] * v[j]; s[i] = a; }
+  // object is assumed to be nearer the centre than the border
+  let cIn = 0, nIn = 0, cOut = 0, nOut = 0;
+  for (let i = 0; i < N; i++) {
+    const x = i % G, y = (i / G) | 0;
+    const edge = Math.min(x, y, G - 1 - x, G - 1 - y);
+    if (edge >= G * 5 / 16) { cIn += s[i]; nIn++; } else if (edge < G / 8) { cOut += s[i]; nOut++; }
+  }
+  const sign = (cIn / nIn < cOut / nOut) ? -1 : 1;
+  const mask = Array.from(s, x => sign * x > 0);
+  if (mask.filter(Boolean).length < N / 16) return mask.map(() => true);
+  return mask;
+}
+
+// keep only the biggest connected blob (removes stray background patches)
+function largestComponent(mask, G) {
+  const lab = new Int32Array(mask.length).fill(-1);
+  let best = -1, bestSize = 0, id = 0;
+  for (let s = 0; s < mask.length; s++) {
+    if (!mask[s] || lab[s] >= 0) continue;
+    const st = [s]; lab[s] = id; let size = 0;
+    while (st.length) {
+      const i = st.pop(); size++;
+      const x = i % G, y = (i / G) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= G || ny >= G) continue;
+        const j = ny * G + nx;
+        if (mask[j] && lab[j] < 0) { lab[j] = id; st.push(j); }
+      }
+    }
+    if (size > bestSize) { bestSize = size; best = id; }
+    id++;
+  }
+  if (bestSize < mask.length / 32) return mask;
+  return Array.from(lab, l => l === best);
+}
+
+// ---- matching ----
+function mutualMatches(A, B) {
+  const ia = [], ib = [];
+  A.mask.forEach((m, i) => m && ia.push(i));
+  B.mask.forEach((m, i) => m && ib.push(i));
+  const D = A.D, na = ia.length, nb = ib.length;
+  const sim = new Float32Array(na * nb);
+  for (let a = 0; a < na; a++) {
+    const oa = ia[a] * D;
+    for (let b = 0; b < nb; b++) {
+      const ob = ib[b] * D; let s = 0;
+      for (let k = 0; k < D; k++) s += A.P[oa + k] * B.P[ob + k];
+      sim[a * nb + b] = s;
+    }
+  }
+  const bestA = new Int32Array(na), bestB = new Int32Array(nb).fill(-1), valB = new Float32Array(nb).fill(-2);
+  for (let a = 0; a < na; a++) {
+    let bi = 0, bv = -2;
+    for (let b = 0; b < nb; b++) {
+      const v = sim[a * nb + b];
+      if (v > bv) { bv = v; bi = b; }
+      if (v > valB[b]) { valB[b] = v; bestB[b] = a; }
+    }
+    bestA[a] = bi;
+  }
+  const m = [];
+  for (let a = 0; a < na; a++) if (bestB[bestA[a]] === a) m.push([ia[a], ib[bestA[a]], sim[a * nb + bestA[a]]]);
+  return { matches: m, fgA: na, fgB: nb };
+}
+
+const xy = (i, G) => [i % G + 0.5, ((i / G) | 0) + 0.5];
+
+// RANSAC over similarity transforms (rotation + scale + shift), with and without mirror
+function ransac(matches, G) {
+  if (matches.length < 3) return [];
+  const P = matches.map(m => xy(m[0], G)), Q = matches.map(m => xy(m[1], G));
+  const TOL = 1.5 * Math.max(1, G / 32);
+  const MIN_SPAN2 = (G / 8) ** 2;
+  let best = [];
+  for (let it = 0; it < 2500; it++) {
+    const i = (Math.random() * matches.length) | 0;
+    const j = (Math.random() * matches.length) | 0;
+    if (i === j) continue;
+    for (const mirror of [false]) {             // a stone in a fob is never mirrored
+      const p1 = mirror ? [P[i][0], -P[i][1]] : P[i], p2 = mirror ? [P[j][0], -P[j][1]] : P[j];
+      const dp = [p2[0] - p1[0], p2[1] - p1[1]], dq = [Q[j][0] - Q[i][0], Q[j][1] - Q[i][1]];
+      const den = dp[0] * dp[0] + dp[1] * dp[1];
+      if (den < MIN_SPAN2) continue;
+      const a = (dq[0] * dp[0] + dq[1] * dp[1]) / den;
+      const b = (dq[1] * dp[0] - dq[0] * dp[1]) / den;
+      const sc = Math.hypot(a, b);
+      // both crops are already cut to the stone and turned to the best angle,
+      // so the true transform is close to "nothing moved". Random look-alike patches
+      // on a different stone only line up under some arbitrary transform — reject those.
+      if (sc < 0.8 || sc > 1.25) continue;
+      if (Math.abs(Math.atan2(b, a)) > 25 * Math.PI / 180) continue;
+      const tx = Q[i][0] - (a * p1[0] - b * p1[1]), ty = Q[i][1] - (b * p1[0] + a * p1[1]);
+      const c0 = G / 2, mx = a * c0 - b * c0 + tx - c0, my = b * c0 + a * c0 + ty - c0;
+      if (Math.hypot(mx, my) > G * 0.25) continue;
+      const inl = [];
+      for (let k = 0; k < P.length; k++) {
+        const px = P[k][0], py = mirror ? -P[k][1] : P[k][1];
+        const ex = a * px - b * py + tx - Q[k][0], ey = b * px + a * py + ty - Q[k][1];
+        if (ex * ex + ey * ey < TOL * TOL) inl.push(k);
+      }
+      if (inl.length > best.length) best = inl;
+    }
+  }
+  return best.map(k => matches[k]);
+}
+
+// three outcomes: clear match, clear mismatch, or "not sure — retake"
+const NO_INLIERS = 30, NO_RATIO = 0.06;
+function verdictOf(r) {
+  if (r.inl.length >= MIN_INLIERS && r.ratio >= MIN_RATIO) return 'yes';
+  if (r.inl.length < NO_INLIERS || r.ratio < NO_RATIO) return 'no';
+  return 'unsure';
+}
+
+// features of the stone in a crop, rotated so the stone's edges are axis-aligned (+extra turn)
+async function stoneFeatures(cv, extra = 0, targetHue = null) {
+  const p = { img: cv, bg: borderColor(cv) };
+  const b = findStoneByColour(p, targetHue);
+  if (!b) return null;
+  return { f: await features(render(p, b.cx, b.cy, b.side, -b.angle + extra), 'colour'), p, b };
+}
+
+function scoreAgainst(A, B) {
+  const { matches, fgA, fgB } = mutualMatches(A, B);
+  const inl = ransac(matches, A.G);
+  return { B, inl, fgA, fgB, ratio: inl.length / Math.max(1, Math.min(fgA, fgB)) };
+}
+
+// =====================================================================
+//  JadeKey app (v9): scanner + collection, one photo per stone
+// =====================================================================
+const $ = id => document.getElementById(id);
+let extractor = null, backend = 'CPU';
+const tick = () => new Promise(r => setTimeout(r, 0));
+
+// ---------- tiny helpers ----------
+function toast(t, ms = 2600) { const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), ms); }
+function veil(t) { $('veilTxt').textContent = t || ''; $('veil').classList.toggle('on', !!t); }
+function chip(t, cls = '') { const c = $('chip'); c.textContent = t; c.className = 'chip ' + cls; }
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function bytesB64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return btoa(s); }
+function b64Bytes(str) { const s = atob(str), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+const f32B64 = a => bytesB64(new Uint8Array(a.buffer, a.byteOffset, a.byteLength));
+const b64F32 = s => { const u = b64Bytes(s); return new Float32Array(u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength)); };
+
+// ---------- model ----------
+async function loadModel() {
+  try {
+    chip('Скачиваю модель…');
+    const fixProc = ex => { for (const ip of [ex.processor?.image_processor, ex.processor]) if (ip) { ip.do_resize = false; ip.do_center_crop = false; } };
+    const warm = async ex => { const c = document.createElement('canvas'); c.width = c.height = RES; c.getContext('2d').fillRect(0, 0, RES, RES); await ex(await RawImage.fromURL(c.toDataURL('image/jpeg'))); };
+    const files = {};
+    const progress_callback = p => {
+      if (p.status === 'progress' && p.total) {
+        files[p.file] = [p.loaded, p.total];
+        let l = 0, t = 0; for (const [a, b] of Object.values(files)) { l += a; t += b; }
+        chip(`Модель ${(l / 1e6).toFixed(0)} из ${(t / 1e6).toFixed(0)} МБ`);
+      } else if (p.status === 'ready') chip('Запускаю модель…');
+    };
+    const withTimeout = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('таймаут')), ms))]);
+    // ?cpu=1 forces the processor (some Android GPUs return wrong numbers); ?gpu=1 undoes it. Remembered on this phone.
+    try { const q = new URLSearchParams(location.search); if (q.has('cpu')) localStorage.setItem('jk2_cpu', '1'); if (q.has('gpu')) localStorage.removeItem('jk2_cpu'); } catch (e) {}
+    let forceCpu = false; try { forceCpu = localStorage.getItem('jk2_cpu') === '1'; } catch (e) {}
+    // Android WebGPU gives wrong features (0 matches) on many phones — use the processor there unless ?gpu=1
+    let wantGpu = false; try { wantGpu = new URLSearchParams(location.search).has('gpu'); } catch (e) {}
+    if (/Android/i.test(navigator.userAgent) && !wantGpu) forceCpu = true;
+    if (navigator.gpu && !forceCpu) {
+      try {
+        const ex = await withTimeout(pipeline('image-feature-extraction', 'dinov2', { dtype: 'fp32', subfolder: '', device: 'webgpu', progress_callback }), 120000);
+        fixProc(ex); await withTimeout(warm(ex), 30000);
+        extractor = ex; backend = 'GPU';
+      } catch (e) { extractor = null; }
+    }
+    if (!extractor) {
+      chip('Запускаю без видеокарты…');
+      extractor = await withTimeout(pipeline('image-feature-extraction', 'dinov2', { dtype: 'fp32', subfolder: '', progress_callback }), 180000);
+      fixProc(extractor);
+    }
+    chip('Готов · ' + (backend === 'GPU' ? 'GPU' : 'CPU'), 'ok');
+  } catch (err) {
+    chip('Модель не загрузилась · нажми', 'err');
+    $('chip').onclick = () => { $('chip').onclick = null; loadModel(); };
+  }
+}
+
+// ---------- cloud storage (Firestore REST) ----------
+const FS = { project: 'jadekey-46f37', key: 'AIzaSyCmc4qJFC0rkFvcz7ZBG42ApnZfCcrrT20' };
+const BASE = `https://firestore.googleapis.com/v1/projects/${FS.project}/databases/(default)/documents`;
+const COL = 'jk2_stones', COLP = 'jk2_patches', COL_OLD = 'stones';
+function fsVal(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === 'string') return { stringValue: v };
+  if (typeof v === 'number') return { doubleValue: v };
+  if (typeof v === 'boolean') return { booleanValue: v };
+  return { stringValue: String(v) };
+}
+function fromFs(fields) {
+  const o = {};
+  for (const k in fields || {}) {
+    const v = fields[k];
+    if ('stringValue' in v) o[k] = v.stringValue;
+    else if ('doubleValue' in v) o[k] = v.doubleValue;
+    else if ('integerValue' in v) o[k] = Number(v.integerValue);
+    else if ('booleanValue' in v) o[k] = v.booleanValue;
+  }
+  return o;
+}
+async function fsCall(url, opt) {
+  const r = await fetch(url, opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error((j.error && (j.error.message || j.error.status)) || ('HTTP ' + r.status));
+  return j;
+}
+const fsFields = d => ({ fields: Object.fromEntries(Object.entries(d).map(([k, v]) => [k, fsVal(v)])) });
+async function fsList(col, mask = []) {
+  const out = []; let tok = '';
+  do {
+    const q = mask.map(m => '&mask.fieldPaths=' + m).join('');
+    const j = await fsCall(`${BASE}/${col}?key=${FS.key}&pageSize=100${q}${tok ? '&pageToken=' + tok : ''}`);
+    (j.documents || []).forEach(d => out.push({ id: d.name.split('/').pop(), ...fromFs(d.fields) }));
+    tok = j.nextPageToken || '';
+  } while (tok);
+  return out;
+}
+// ---------- admin (Firebase Auth, only the owner account can write) ----------
+const ADMIN_EMAIL = 'jadekey1965@gmail.com';
+const AUTH = { id: null, exp: 0 };
+async function authToken() {
+  let rt = null; try { rt = localStorage.getItem('jk2_rt'); } catch (e) {}
+  if (!rt) return null;
+  if (AUTH.id && Date.now() < AUTH.exp) return AUTH.id;
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.id_token) { try { localStorage.removeItem('jk2_rt'); } catch (e) {} setAdmin(false); return null; }
+  AUTH.id = j.id_token; AUTH.exp = Date.now() + (Number(j.expires_in || 3600) - 120) * 1000;
+  try { localStorage.setItem('jk2_rt', j.refresh_token); } catch (e) {}
+  return AUTH.id;
+}
+async function adminLogin() {
+  const pw = prompt('Пароль администратора');
+  if (!pw) return;
+  veil('Вход…');
+  try {
+    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: pw, returnSecureToken: true }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.idToken) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
+    AUTH.id = j.idToken; AUTH.exp = Date.now() + (Number(j.expiresIn || 3600) - 120) * 1000;
+    try { localStorage.setItem('jk2_rt', j.refreshToken); } catch (e) {}
+    setAdmin(true); toast('Режим администратора включён');
+  } catch (e) { toast('Вход не удался: ' + e.message, 4000); }
+  finally { veil(''); }
+}
+function adminLogout() {
+  if (!confirm('Выйти из режима администратора?')) return;
+  try { localStorage.removeItem('jk2_rt'); } catch (e) {}
+  AUTH.id = null; setAdmin(false); tab('scan'); toast('Режим администратора выключен');
+}
+let isAdmin = false;
+function setAdmin(on) {
+  isAdmin = !!on;
+  $('nColl').style.display = isAdmin ? '' : 'none';
+  $('nAdd').style.display = isAdmin ? '' : 'none';
+}
+async function authHeaders() {
+  const t = await authToken();
+  return t ? { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t } : { 'Content-Type': 'application/json' };
+}
+const fsCreate = async (col, data, id) => fsCall(`${BASE}/${col}?key=${FS.key}${id ? '&documentId=' + id : ''}`, { method: 'POST', headers: await authHeaders(), body: JSON.stringify(fsFields(data)) });
+const fsPatch = async (col, id, data) => fsCall(`${BASE}/${col}/${id}?key=${FS.key}${Object.keys(data).map(k => '&updateMask.fieldPaths=' + k).join('')}`, { method: 'PATCH', headers: await authHeaders(), body: JSON.stringify(fsFields(data)) });
+const fsDelete = async (col, id) => { const r = await fetch(`${BASE}/${col}/${id}?key=${FS.key}`, { method: 'DELETE', headers: await authHeaders() }); if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status); return r; };
+
+// ---------- collection in memory ----------
+let stones = [], legacy = [];
+const patchCache = new Map();
+const D = 384;
+
+function prepStone(s) { s.gv = s.g ? b64F32(s.g) : null; try { s.love = s.love ? JSON.parse(s.love) : null; } catch (e) { s.love = null; } s.contacts = (() => { try { return JSON.parse(s.contacts || '{}'); } catch (e) { return {}; } })(); return s; }
+let lastLoad = 0;
+async function loadStones() {
+  lastLoad = Date.now();
+  try {
+    const list = await fsList(COL);
+    stones = list.map(prepStone).sort((a, b) => (b.created || 0) - (a.created || 0));
+  } catch (e) { stones = []; toast('Коллекция не загрузилась: ' + e.message, 4500); }
+  renderColl();
+}
+
+// patches: store only stone patches, int8 per patch with its own scale
+function encodePatches(f) {
+  const idx = []; f.mask.forEach((m, i) => m && idx.push(i));
+  const q = new Int8Array(idx.length * D), sc = new Float32Array(idx.length);
+  idx.forEach((i, k) => {
+    let mx = 1e-9; for (let j = 0; j < D; j++) mx = Math.max(mx, Math.abs(f.P[i * D + j]));
+    sc[k] = mx;
+    for (let j = 0; j < D; j++) q[k * D + j] = Math.round(f.P[i * D + j] / mx * 127);
+  });
+  const ix = new Uint16Array(idx);
+  return { idx: bytesB64(new Uint8Array(ix.buffer)), p: bytesB64(new Uint8Array(q.buffer)), sc: f32B64(sc), n: idx.length };
+}
+function decodePatches(doc, G) {
+  const N = G * G;
+  const u = b64Bytes(doc.idx), idx = new Uint16Array(u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength));
+  const q = new Int8Array(b64Bytes(doc.p).buffer), sc = b64F32(doc.sc);
+  const P = new Float32Array(N * D), mask = new Array(N).fill(false);
+  idx.forEach((i, k) => { mask[i] = true; for (let j = 0; j < D; j++) P[i * D + j] = q[k * D + j] * sc[k] / 127; });
+  return { P, mask, D, N, G, mode: 'colour' };
+}
+async function getPatches(s) {
+  if (patchCache.has(s.id)) return patchCache.get(s.id);
+  const j = await fsCall(`${BASE}/${COLP}/${s.id}?key=${FS.key}`);
+  const f = decodePatches(fromFs(j.fields), s.G || 32);
+  patchCache.set(s.id, f);
+  return f;
+}
+function gvecOf(f) {
+  const g = new Float32Array(D); let n = 0;
+  f.mask.forEach((m, i) => { if (!m) return; n++; for (let j = 0; j < D; j++) g[j] += f.P[i * D + j]; });
+  let s = 0; for (let j = 0; j < D; j++) s += g[j] * g[j]; s = Math.sqrt(s) || 1;
+  for (let j = 0; j < D; j++) g[j] /= s;
+  return g;
+}
+function dot(a, b) { let s = 0; for (let j = 0; j < D; j++) s += a[j] * b[j]; return s; }
+
+// ---------- camera ----------
+let stream = null, camTimer = null, camJob = null;
+const camS = { vid: $('vidS'), ov: $('ovS'), msg: $('msgS'), bar: $('barS'), idle: $('idleS') };
+const camA = { vid: $('vidA'), ov: $('ovA'), msg: $('msgA'), bar: $('barA'), idle: $('idleA') };
+
+async function startCam(ctx) {
+  if (!stream) {
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } }); }
+    catch (e) { toast('Нет доступа к камере. Разреши камеру для этого сайта в настройках Safari.', 5000); return false; }
+    try { const tr = stream.getVideoTracks()[0]; const caps = tr.getCapabilities ? tr.getCapabilities() : {}; if (caps.focusMode && caps.focusMode.includes('continuous')) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+  }
+  ctx.vid.srcObject = stream;
+  await ctx.vid.play().catch(() => {});
+  ctx.idle.style.display = 'none';
+  return true;
+}
+function stopCam() {
+  cancelCapture();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  for (const c of [camS, camA, camL]) { c.vid.srcObject = null; c.idle.style.display = ''; const g = c.ov.getContext('2d'); g.clearRect(0, 0, c.ov.width, c.ov.height); c.bar.style.width = '0'; }
+}
+function cancelCapture() { clearTimeout(camTimer); if (camJob) { const j = camJob; camJob = null; j(null); } }
+
+const det = document.createElement('canvas');
+function detectFrame(ctx, last) {
+  const vid = ctx.vid, vw = vid.videoWidth, vh = vid.videoHeight;
+  if (!vw) return null;
+  const W = 480, sc = W / vw;
+  det.width = W; det.height = Math.round(vh * sc);
+  det.getContext('2d').drawImage(vid, 0, 0, det.width, det.height);
+  const near = last ? { x: last.cx * sc, y: last.cy * sc } : null;   // stay on the stone we already follow
+  const b = findStoneByColour({ img: det, near });
+  if (!b) return null;
+  return { cx: b.cx / sc, cy: b.cy / sc, side: b.side / sc, angle: b.angle };
+}
+function cropFrame(ctx, box) {
+  const vid = ctx.vid, S = 900, side = box.side * 1.8, k = S / side;
+  const cv = document.createElement('canvas'); cv.width = cv.height = S;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#808080'; g.fillRect(0, 0, S, S);
+  let sx = box.cx - side / 2, sy = box.cy - side / 2, sw = side, sh = side, dx = 0, dy = 0;
+  if (sx < 0) { dx = -sx * k; sw += sx; sx = 0; }
+  if (sy < 0) { dy = -sy * k; sh += sy; sy = 0; }
+  sw = Math.min(sw, vid.videoWidth - sx); sh = Math.min(sh, vid.videoHeight - sy);
+  if (sw > 0 && sh > 0) g.drawImage(vid, sx, sy, sw, sh, dx, dy, sw * k, sh * k);
+  return cv;
+}
+function sharpness(cv) {
+  const n = 192, t = document.createElement('canvas'); t.width = t.height = n;
+  const g = t.getContext('2d'), m = cv.width * 0.22;
+  g.drawImage(cv, m, m, cv.width - 2 * m, cv.height - 2 * m, 0, 0, n, n);
+  const d = g.getImageData(0, 0, n, n).data, L = new Float32Array(n * n);
+  for (let i = 0; i < n * n; i++) L[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  let s = 0, s2 = 0, c = 0;
+  for (let y = 1; y < n - 1; y++) for (let x = 1; x < n - 1; x++) {
+    const i = y * n + x, v = 4 * L[i] - L[i - 1] - L[i + 1] - L[i - n] - L[i + n];
+    s += v; s2 += v * v; c++;
+  }
+  return s2 / c - (s / c) ** 2;
+}
+function drawOverlay(ctx, box, colour) {
+  const { vid, ov } = ctx, r = vid.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  ov.width = r.width * dpr; ov.height = r.height * dpr;
+  const g = ov.getContext('2d'); g.clearRect(0, 0, ov.width, ov.height);
+  if (!box) return;
+  const vw = vid.videoWidth, vh = vid.videoHeight;
+  const k = Math.max(ov.width / vw, ov.height / vh);
+  const ox = (ov.width - vw * k) / 2, oy = (ov.height - vh * k) / 2;
+  g.save(); g.translate(ox + box.cx * k, oy + box.cy * k); g.rotate(box.angle * Math.PI / 180);
+  const h = box.side / 1.12 / 2 * k, L = h * 0.32;
+  g.strokeStyle = colour; g.lineWidth = 4 * dpr; g.lineCap = 'round';
+  for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    g.beginPath(); g.moveTo(sx * h, sy * (h - L)); g.lineTo(sx * h, sy * h); g.lineTo(sx * (h - L), sy * h); g.stroke();
+  }
+  g.restore();
+}
+
+// find stone → right size → hold still → sharp → burst of 6 → keep the sharpest crop
+function captureStone(ctx) {
+  return new Promise(resolve => {
+    let last = null, burst = [], peak = 1;
+    camJob = resolve;
+    const step = () => {
+      if (camJob !== resolve) return;
+      const raw = detectFrame(ctx, last);
+      let box = raw;
+      if (raw && last && Math.hypot(raw.cx - last.cx, raw.cy - last.cy) < raw.side * 0.5) {
+        const a = 0.35;
+        box = { cx: last.cx + a * (raw.cx - last.cx), cy: last.cy + a * (raw.cy - last.cy), side: last.side + a * (raw.side - last.side), angle: raw.angle };
+      }
+      if (!box) { last = null; burst = []; drawOverlay(ctx, null); ctx.bar.style.width = '0'; ctx.msg.textContent = 'Наведи на камень'; camTimer = setTimeout(step, 100); return; }
+      const frac = box.side / 1.12 / Math.min(ctx.vid.videoWidth, ctx.vid.videoHeight);
+      const moved = last ? Math.hypot(box.cx - last.cx, box.cy - last.cy) / box.side + Math.abs(box.side / last.side - 1) : 1;
+      last = box;
+      const cv = cropFrame(ctx, box), sh = sharpness(cv);
+      peak = Math.max(peak * 0.995, sh);
+      const rel = sh / peak;
+      ctx.bar.style.width = Math.min(100, rel * 100) + '%';
+      ctx.bar.style.background = rel > 0.75 ? 'var(--jade)' : rel > 0.5 ? 'var(--warn)' : 'var(--bad)';
+      let msg = null;
+      if (frac < 0.22) msg = 'Ближе';
+      else if (frac > 0.75) msg = 'Дальше';
+      else if (moved > 0.1) msg = 'Держи ровно';
+      else if (rel < 0.4 && peak > 1) msg = 'Не в фокусе, чуть отодвинь';
+      if (msg) { if (moved > 0.1) burst = []; ctx.msg.textContent = msg; drawOverlay(ctx, box, '#e8c25a'); }
+      else {
+        burst.push({ cv, sharp: sh });
+        ctx.msg.textContent = `Снимаю ${'●'.repeat(Math.min(6, burst.length))}${'○'.repeat(Math.max(0, 6 - burst.length))}`;
+        drawOverlay(ctx, box, '#3fd8a2');
+      }
+      if (burst.length >= 6) {
+        const best = burst.reduce((a, b) => b.sharp > a.sharp ? b : a);
+        camJob = null; drawOverlay(ctx, null);
+        resolve(best.cv); return;
+      }
+      camTimer = setTimeout(step, 100);
+    };
+    step();
+  });
+}
+
+// ---------- identification ----------
+// returns { state: 'found'|'unknown'|'unsure'|'nostone'|'empty', stone, res, best }
+async function identify(cv, status = () => {}) {
+  if (!stones.length) return { state: 'empty' };
+  const cache = {};
+  const getQ = async q => { if (!(q in cache)) cache[q] = await stoneFeatures(cv, q, null); return cache[q]; };
+  status('Нахожу камень…'); await tick();
+  const q0 = await getQ(0);
+  if (!q0) return { state: 'nostone' };
+  const gq = gvecOf(q0.f);
+  // coarse prefilter by one mean vector, then the exact geometric check on the closest few
+  const ranked = stones.filter(s => s.gv).map(s => ({ s, sc: dot(gq, s.gv) })).sort((a, b) => b.sc - a.sc).slice(0, 4);
+  const rect = q0.b.rect > 0.9, mine = myIds();
+  let best = null;
+  for (const { s } of ranked) {
+    status('Сверяю с коллекцией…'); await tick();
+    let ref;
+    try { ref = await getPatches(s); } catch (e) { continue; }
+    const rots = rect ? [0, 90, 180, 270] : [0, 90, 180, 270, 45, 135, 225, 315];
+    let local = null;
+    for (const q of rots) {
+      const r = await getQ(q);
+      if (!r) continue;
+      const sc = scoreAgainst(ref, r.f); sc.angle = q;
+      if (!local || sc.ratio * sc.inl.length > local.ratio * local.inl.length) local = sc;
+      if (local.inl.length >= MIN_INLIERS * 1.5 && local.ratio >= MIN_RATIO * 1.5) break;
+      if (q === 270 && !rect && verdictOf(local) === 'yes') break;
+    }
+    if (!local) continue;
+    const entry = { stone: s, res: local, score: local.ratio * local.inl.length + (mine.has(s.id) || mine.has(s.of) ? 1 : 0) };
+    if (!best || entry.score > best.score) best = entry;
+    if (verdictOf(local) === 'yes' && local.inl.length >= MIN_INLIERS * 1.5) break;
+  }
+  if (!best) return { state: 'unknown' };
+  const v = verdictOf(best.res);
+  return { state: v === 'yes' ? 'found' : v === 'no' ? 'unknown' : 'unsure', stone: best.stone, res: best.res, q0 };
+}
+
+// ---------- sheet ----------
+function openLink(url) { if (/^(tel:|mailto:)/.test(url)) location.href = url; else window.open(url, '_blank'); }
+function sheet(html) { const s = $('sheet'); s.classList.remove('love', 'ny', 'tal'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
+function hideSheet() { $('sheet').classList.remove('on'); }
+function contactRows(c) {
+  const defs = [['phone', '📞', 'Телефон', v => 'tel:' + v], ['tg', '✈️', 'Telegram', v => 'https://t.me/' + v.replace('@', '')], ['email', '✉️', 'Email', v => 'mailto:' + v], ['site', '🔗', 'Сайт', v => /^https?:/.test(v) ? v : 'https://' + v]];
+  return defs.filter(d => c[d[0]]).map(d => `<button class="row" data-url="${esc(d[3](c[d[0]]))}"><span><small>${d[2]}</small><b>${esc(c[d[0]])}</b></span><span style="flex:none;color:var(--mute)">›</span></button>`).join('');
+}
+function bindRows() { document.querySelectorAll('#sheet .row[data-url]').forEach(b => b.onclick = () => openLink(b.dataset.url)); }
+
+function stoneCard(s, state, extra = '') {
+  const label = { found: 'Узнал', unknown: 'Не узнал', unsure: 'Не уверен', info: 'Камень' }[state] || '';
+  const cls = state === 'unknown' ? 'bad' : state === 'unsure' ? 'warn' : '';
+  return `<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state ${cls}">${label}</div><div class="sh-name">${esc(s.name)}</div>${s.jk ? `<span class="sh-jk">${esc(s.jk)}</span>` : ''}</div></div>${extra}`;
+}
+
+async function ownerLine(s) {
+  const m = /JK-\d+/i.exec(s.jk || (s.contacts && s.contacts.site) || '');
+  if (!m) return '';
+  try {
+    const works = await (await fetch('https://raw.githubusercontent.com/paninsergey1965-lgtm/jadekey-art/main/works.json')).json();
+    const jk = m[0].toUpperCase();
+    for (const k in works) if (works[k].works && works[k].works.includes(jk)) return works[k].name;
+  } catch (e) {}
+  return '';
+}
+
+// ---------- JadeKey Love (demo): a stone with a love profile opens the message of the day ----------
+const LOVE = {
+  tender: [
+    'Хочу напомнить: ты — лучшее, что есть в каждом моём дне.',
+    'Что бы ни принёс этот день — я рядом. Всегда.',
+    'Спасибо, что ты есть. С тобой даже обычный день становится тёплым.',
+    'Сегодня {days}-й день, как мы вместе. И мне всё ещё мало.',
+    'Улыбнись прямо сейчас. Мне нравится думать, что это из-за меня.',
+    'Твой голос — мой любимый звук. Позвони мне сегодня просто так.',
+    'Я думаю о тебе чаще, чем успеваю об этом сказать. Поэтому говорит камень.',
+    'С тобой мне спокойно. Это редкое чувство, и я его берегу.',
+    'Если день будет трудным — вспомни: вечером я тебя обниму.',
+    'Ты делаешь меня лучше. Каждый из этих {days} дней.',
+    'Мне нравится в тебе всё. Особенно то, что ты считаешь недостатками.',
+    'Сегодня без повода: я тебя люблю.',
+    'Этот камень один на свете. Как и ты.',
+    'Береги себя сегодня. Ты — самое важное, что у меня есть.'],
+  fun: [
+    'Официальная статистика: {days} дней вместе, жалоб не поступало.',
+    'Напоминание: ты прекрасно выглядишь. Да, даже сейчас. Да, это проверенная информация.',
+    'Сегодня в прогнозе: местами я, к вечеру — объятия.',
+    'Этот камень сканирует тебя, а не ты его. Результат: 100% любимый человек.',
+    'Если бы за мысли о тебе платили, можно было бы уже не работать.',
+    'Съешь сегодня что-нибудь вкусное. Это приказ. С любовью.',
+    'День {days}. Полёт нормальный. Экипаж влюблён.',
+    'Ты — мой любимый человек. Кот на втором месте, но он не должен об этом знать.',
+    'Сегодня у тебя есть право на одно желание. Мелким шрифтом: в пределах разумного.',
+    'Спасибо, что терпишь мои шутки. Вот ещё одна: я тебя люблю. А, нет, это правда.',
+    'Проверка связи: я тебя люблю. Приём.',
+    'Вечером с меня чай и плед. С тебя — ты.',
+    'Учёные выяснили: рядом с тобой время идёт быстрее. Требую продления.',
+    'Не забудь сегодня улыбнуться. Мне потом расскажут.'],
+  romantic: [
+    'Из всех дней моей жизни я выбираю те {days}, что с тобой.',
+    'Ты — мой дом. Где бы мы ни были.',
+    'Я влюбляюсь в тебя заново — тихо, каждый день.',
+    'Начнись всё сначала — мой выбор был бы тем же: ты.',
+    'В мире миллиарды людей. Мне нужен один человек — ты.',
+    'Пусть этот камень хранит то, что я чувствую, когда ты рядом.',
+    'Ты — моя самая красивая история. И она только начинается.',
+    'С тобой хочется жить медленнее, чтобы ничего не пропустить.',
+    'Сегодня {days}-й день нас. Я благодарю за каждый.',
+    'Твои глаза — первое, что я хочу видеть утром, и последнее — вечером.',
+    'Я не знаю, что будет завтра. Но знаю, с кем хочу это встретить.',
+    'Ты — причина, по которой обычная жизнь кажется чудом.',
+    'Моё сердце давно сделало выбор. Остальное — детали.',
+    'Камни живут тысячи лет. Мне хватит одной жизни — с тобой.']
+};
+let loveShift = 0;
+// music box: original tunes synthesised here (no files, no licences), played through <audio> so the iPhone mute switch does not silence them
+function wavUrl(samples, rate) {
+  const n = samples.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const W = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+  W(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); W(8, 'WAVE'); W(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); W(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+const loveAudio = new Audio(); loveAudio.preload = 'auto';
+const LOVE_SILENT = wavUrl(new Float32Array(2205), 22050);
+let loveUnlocked = false;
+function loveUnlock() {   // iOS lets a page play sound later only if the element was started by a tap first
+  if (loveUnlocked) return; loveUnlocked = true;
+  try { loveAudio.src = LOVE_SILENT; const p = loveAudio.play(); if (p && p.catch) p.catch(() => { loveUnlocked = false; }); } catch (e) { loveUnlocked = false; }
+}
+document.addEventListener('touchend', loveUnlock, true); document.addEventListener('click', loveUnlock, true);
+const LOVE_TUNES = [
+  [72, 76, 79, 84, 83, 81, 79, 76, 77, 81, 84, 81, 79, 76, 72],
+  [79, 81, 84, 88, 86, 84, 81, 79, 76, 79, 81, 84, 86, 84, 79],
+  [76, 79, 83, 84, 88, 86, 84, 83, 81, 84, 79, 76, 77, 74, 72],
+  [84, 79, 76, 79, 84, 88, 86, 83, 79, 83, 86, 84, 81, 77, 72]];
+const loveTuneCache = {};
+function loveTune(k) {
+  if (loveTuneCache[k]) return loveTuneCache[k];
+  const rate = 22050, notes = LOVE_TUNES[k], step = 0.34, out = new Float32Array(Math.ceil((notes.length * step + 2.8) * rate));
+  const add = (midi, t0, amp) => {
+    const f = 440 * Math.pow(2, (midi - 69) / 12), i0 = Math.floor(t0 * rate), len = Math.min(out.length - i0, Math.floor(2.5 * rate));
+    for (let i = 0; i < len; i++) { const t = i / rate, w = 2 * Math.PI * f * t; out[i0 + i] += amp * (Math.sin(w) * Math.exp(-t * 3.2) + 0.32 * Math.sin(2 * w) * Math.exp(-t * 5) + 0.12 * Math.sin(4.2 * w) * Math.exp(-t * 9)); }
+  };
+  notes.forEach((m, i) => {
+    const t = 0.05 + i * step;
+    add(m, t, 0.26); if (i % 4 === 0) add(m - 24, t, 0.14);
+    if (i === notes.length - 1) { add(m + 4, t + 0.03, 0.18); add(m + 7, t + 0.06, 0.18); }
+  });
+  return loveTuneCache[k] = wavUrl(out, rate);
+}
+const loveMuted = () => { try { return localStorage.getItem('jk2_mute') === '1'; } catch (e) { return false; } };
+function loveStop() { try { loveAudio.pause(); } catch (e) {} }
+function lovePlay(k) {
+  if (loveMuted()) return;
+  try { loveAudio.pause(); loveAudio.src = loveTune(k); const p = loveAudio.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+}
+const LOVE_PICS = ['🌹', '💌', '✨', '🌙', '☕', '🍓', '🕊️', '🎈', '🌷', '💫', '🍫', '🦋', '🌅', '🧸'];
+function loveRain() {
+  const box = document.createElement('div'); box.className = 'lv-rain';
+  const cols = ['#ff7fa8', '#ffb3c9', '#ff4f86', '#ffd9e4', '#e85d8f'];
+  for (let i = 0; i < 26; i++) {
+    const h = document.createElement('span'); h.textContent = i % 7 === 3 ? '✦' : '♥';
+    h.style.left = (Math.random() * 96) + '%'; h.style.fontSize = (14 + Math.random() * 26) + 'px';
+    h.style.color = cols[i % cols.length];
+    h.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px'); h.style.setProperty('--rot', (Math.random() * 80 - 40) + 'deg');
+    h.style.animationDuration = (2.6 + Math.random() * 2.4) + 's'; h.style.animationDelay = (Math.random() * 1.2) + 's';
+    box.appendChild(h);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 6500);
+}
+function showLove(s) {
+  const L = s.love, pool = LOVE[L.tone] || LOVE.tender;
+  const now = new Date(Date.now() + loveShift * 864e5);
+  const dayNo = Math.floor((now.getTime() - now.getTimezoneOffset() * 6e4) / 864e5);
+  let h = 0; for (const ch of s.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  let days = 0;
+  if (L.since) { const d0 = new Date(L.since + 'T00:00:00'); if (!isNaN(d0)) days = Math.max(1, Math.floor((now - d0) / 864e5) + 1); }
+  let msg = pool[(dayNo + h) % pool.length];
+  if (!days) msg = msg.replace(/\{days\}-й день/g, 'ещё один день').replace(/\{days\} /g, '');
+  if (days && days % 100 === 0) msg = `Сегодня ровно ${days} дней, как мы вместе. Пусть это будет только начало.`;
+  msg = msg.replace(/\{days\}/g, days);
+  const date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  const pic = LOVE_PICS[(dayNo + h * 7) % LOVE_PICS.length];
+  sheet(`<div class="lv-top"><span class="lv-heart">♥</span> JadeKey Love</div><div class="lv-pic">${pic}</div><div class="lv-to">${esc(L.to)},</div><div class="lv-msg">${esc(msg)}</div>${L.from ? `<div class="lv-from">— ${esc(L.from)}</div>` : ''}<div class="lv-meta"><span>${days ? 'День ' + days + ' вместе' : ''}</span><span>${date}</span></div><p class="sh-note">Новое послание появится завтра. Открыть его может только этот камень.</p><div class="btns"><button class="btn" id="lvSnd" style="flex:0 0 58px;padding-left:0;padding-right:0" title="Звук">${loveMuted() ? '🔇' : '🔊'}</button>${isAdmin ? '<button class="btn" id="lvNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('love'); loveRain();
+  const tuneNo = (dayNo + h) % LOVE_TUNES.length;
+  lovePlay(tuneNo);
+  $('lvSnd').onclick = () => {
+    const m = !loveMuted(); try { localStorage.setItem('jk2_mute', m ? '1' : '0'); } catch (e) {}
+    $('lvSnd').textContent = m ? '🔇' : '🔊'; if (m) loveStop(); else lovePlay(tuneNo);
+  };
+  $('again').onclick = () => { loveShift = 0; loveStop(); hideSheet(); };
+  if (isAdmin) $('lvNext').onclick = () => { loveShift++; showLove(s); };
+}
+async function showFound(r) {
+  let s = r.stone;
+  if (s.of) s = stones.find(x => x.id === s.of) || s;
+  if (s.mode) { await showLive(s); return; }
+  const pct = Math.round(r.res.ratio * 100);
+  if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
+  sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
+  bindRows(); $('again').onclick = hideSheet;
+  ownerLine(s).then(n => { if (n && $('ownerLn')) $('ownerLn').innerHTML = `<div class="sh-note" style="color:var(--fg)">Владелец: <b>${esc(n)}</b></div>`; });
+}
+function showUnknown(r, cv) {
+  const near = r.stone && isAdmin ? `Ближайший: «${esc(r.stone.name)}», но совпало только ${r.res.inl.length} участков, этого мало.` : '';
+  const dbg = r.res && isAdmin ? `<p class="sh-note" style="font-size:12px">Диагностика: ${backend}, участков камня ${r.res.fgA} / ${r.res.fgB}, поворот ${r.res.angle}°</p>` : '';
+  sheet(`<div class="sh-head"><div><div class="sh-state bad">Не узнал</div><div class="sh-name">Этого камня нет в коллекции</div></div></div><p class="sh-note">${near}</p>${dbg}<div class="btns"><button class="btn${isAdmin ? '' : ' main'}" id="again">Ещё раз</button>${isAdmin ? '<button class="btn main" id="toAdd">Добавить в коллекцию</button>' : ''}</div>`);
+  $('again').onclick = hideSheet;
+  if (isAdmin) $('toAdd').onclick = async () => { hideSheet(); lastScanCv = cv; await openAdd({ fromCv: cv }); };
+}
+let lastScanCv = null;
+
+// ---------- scan flow ----------
+let scanning = false;
+$('shutter').onclick = async () => {
+  if (scanning) { cancelCapture(); return; }
+  if (!extractor) { toast('Модель ещё загружается'); return; }
+  scanning = true; $('shutter').classList.add('busy'); hideSheet();
+  try {
+    if (Date.now() - lastLoad > 15000) loadStones();   // pick up stones added from other phones (runs while the camera starts)
+    if (!(await startCam(camS))) return;
+    let best = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      camS.msg.textContent = attempt === 1 ? 'Наведи на камень' : `Не уверен, пересниму (${attempt} из 3)`;
+      const cv = await captureStone(camS);
+      if (!cv) { best = null; return; }
+      camS.msg.textContent = 'Узнаю…';
+      const r = await identify(cv, t => camS.msg.textContent = t);
+      r.cv = cv;
+      if (r.state === 'empty') { sheet('<div class="sh-head"><div><div class="sh-state warn">Пусто</div><div class="sh-name">В коллекции нет камней</div></div></div><p class="sh-note">' + (isAdmin ? 'Сначала добавь хотя бы один камень на вкладке «Добавить».' : '') + '</p>'); return; }
+      if (r.state === 'nostone') { camS.msg.textContent = 'Камень на кадре не найден'; continue; }
+      if (!best || (r.res && (!best.res || r.res.ratio * r.res.inl.length > best.res.ratio * best.res.inl.length))) best = r;
+      if (r.state !== 'unsure') break;
+    }
+    if (!best) { camS.msg.textContent = 'Не получилось, попробуй ещё'; return; }
+    camS.msg.textContent = 'Готов';
+    if (best.state === 'found') showFound(best);
+    else if (best.state === 'unsure') showUnknown({ ...best }, best.cv);
+    else showUnknown(best, best.cv);
+    stopCam();
+  } catch (e) { toast('Ошибка: ' + e.message, 4500); }
+  finally { scanning = false; $('shutter').classList.remove('busy'); if (camS.msg.textContent !== 'Готов') camS.msg.textContent = 'Готов'; }
+};
+
+// ---------- collection view ----------
+function renderColl() {
+  const q = $('search').value.trim().toLowerCase();
+  const all = stones.filter(s => !s.of);
+  const list = all.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
+  $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)}` : 'Пока пусто. Добавь первый камень.';
+  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${s.mode ? '<i class="tag t-' + s.mode + '">' + LIVE_MODES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
+  $('grid').querySelectorAll('.card').forEach(b => b.onclick = () => showInfo(stones.find(s => s.id === b.dataset.id)));
+}
+$('search').oninput = renderColl;
+
+function showInfo(s) {
+  if (s.mode) {
+    const sides = stones.filter(x => x.of === s.id).length + 1;
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
+    $('again').onclick = hideSheet;
+    $('lvOpen').onclick = () => showLive(s);
+    $('del').onclick = async () => {
+      if (!(await ownerOk())) return;
+      if (!confirm(`Удалить живой камень «${s.name || ''}»? Послания перестанут открываться.`)) return;
+      veil('Удаляю…');
+      try { await deleteLive(s, await authToken()); await loadStones(); hideSheet(); } catch (e) { toast('Не удалось удалить: ' + e.message); }
+      veil();
+    };
+    return;
+  }
+  sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  bindRows();
+  $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
+  $('del').onclick = async () => {
+    if (!(await ownerOk())) return;
+    if (!confirm(`Удалить «${s.name}»?`)) return;
+    veil('Удаляю…');
+    try { await fsDelete(COLP, s.id); await fsDelete(COL, s.id); patchCache.delete(s.id); await loadStones(); hideSheet(); }
+    catch (e) { toast('Не удалось удалить: ' + e.message); }
+    veil();
+  };
+}
+
+// owner PIN (this device only)
+let owner = false;
+async function sha(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('jk2:' + t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+async function ownerOk() {
+  if (isAdmin && await authToken()) return true;
+  toast('Только для администратора'); return false;
+}
+async function ownerOkOld() {
+  if (owner) return true;
+  let h = null; try { h = localStorage.getItem('jk2_pin'); } catch (e) {}
+  if (!h) {
+    const p = prompt('Придумай PIN владельца (им защищены добавление, правка и удаление камней на этом телефоне)');
+    if (!p) return false;
+    try { localStorage.setItem('jk2_pin', await sha(p)); } catch (e) {}
+    owner = true; return true;
+  }
+  const p = prompt('PIN владельца');
+  if (p && await sha(p) === h) { owner = true; return true; }
+  toast('Неверный PIN'); return false;
+}
+
+// ---------- add / edit ----------
+let addShot = null, addCtx = {};
+const FIELDS = { fName: 'name', fJk: 'jk', fPhone: 'phone', fTg: 'tg', fMail: 'email', fSite: 'site' };
+function setAddMode(mode) {   // 'cam' | 'form'
+  $('camPart').style.display = mode === 'cam' ? '' : 'none';
+  $('shotPart').style.display = mode === 'form' && addShot ? '' : 'none';
+  $('formPart').style.display = mode === 'form' ? '' : 'none';
+}
+async function openAdd(ctx = {}) {
+  if (!(await ownerOk())) return;
+  addCtx = ctx; addShot = null;
+  for (const id in FIELDS) $(id).value = '';
+  $('fLoveTo').value = ''; $('fLoveFrom').value = ''; $('fLoveSince').value = ''; $('fLoveTone').value = 'tender';
+  if (ctx.edit && ctx.edit.love) { const L = ctx.edit.love; $('fLoveTo').value = L.to || ''; $('fLoveFrom').value = L.from || ''; $('fLoveSince').value = L.since || ''; $('fLoveTone').value = L.tone || 'tender'; }
+  const src = ctx.edit || ctx.legacy;
+  if (src) {
+    const c = ctx.edit ? src.contacts : (() => { try { return JSON.parse(src.contacts || '{}'); } catch (e) { return {}; } })();
+    $('fName').value = src.name || ''; $('fJk').value = src.jk || (/JK-\d+/i.exec(c.site || '') || [''])[0].toUpperCase();
+    $('fPhone').value = c.phone || ''; $('fTg').value = c.tg || ''; $('fMail').value = c.email || ''; $('fSite').value = c.site || '';
+  }
+  $('addTitle').textContent = ctx.edit ? 'Изменить' : ctx.legacy ? 'Переснять камень' : 'Новый камень';
+  tab('add');
+  if (ctx.edit) { setAddMode('form'); $('shotPart').style.display = 'none'; $('btnSave').textContent = 'Сохранить'; return; }
+  $('btnSave').textContent = 'Сохранить в коллекцию';
+  if (ctx.fromCv) { await processShot(ctx.fromCv); return; }
+  setAddMode('cam');
+}
+async function processShot(cv) {
+  if (!extractor) { toast('Модель ещё загружается'); setAddMode('cam'); return; }
+  veil('Запоминаю камень…'); await tick();
+  try {
+    const r = await stoneFeatures(cv, 0, null);
+    if (!r) { toast('Камень на кадре не найден, попробуй ещё'); setAddMode('cam'); return; }
+    const n = r.f.mask.filter(Boolean).length;
+    const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(r.f.cv, 0, 0, 240, 240);
+    addShot = { cv, f: r.f, thumb: t.toDataURL('image/jpeg', 0.8), n, hue: r.b.hue };
+    $('shotImg').src = addShot.thumb;
+    $('shotInfo').textContent = `${n} участков рисунка`;
+    setAddMode('form');
+  } catch (e) { toast('Ошибка: ' + e.message); setAddMode('cam'); }
+  veil();
+}
+$('btnShoot').onclick = async () => {
+  if (scanning) { cancelCapture(); return; }
+  if (!extractor) { toast('Модель ещё загружается'); return; }
+  scanning = true; $('btnShoot').textContent = 'Стоп';
+  try {
+    if (!(await startCam(camA))) return;
+    const cv = await captureStone(camA);
+    if (cv) { stopCam(); await processShot(cv); }
+  } finally { scanning = false; $('btnShoot').textContent = 'Снять камень'; }
+};
+$('fileAdd').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const p = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(f); });
+  const S = 2000, sc = Math.min(1, S / Math.max(p.width, p.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(p.width * sc); cv.height = Math.round(p.height * sc);
+  cv.getContext('2d').drawImage(p, 0, 0, cv.width, cv.height);
+  await processShot(cv);
+};
+$('btnRetake').onclick = () => { addShot = null; setAddMode('cam'); };
+$('btnCancel').onclick = () => { stopCam(); addShot = null; tab('coll'); };
+
+$('btnSave').onclick = async () => {
+  const name = $('fName').value.trim();
+  if (!name) { toast('Введи название'); return; }
+  const contacts = {};
+  for (const [id, k] of [['fPhone', 'phone'], ['fTg', 'tg'], ['fMail', 'email'], ['fSite', 'site']]) { const v = $(id).value.trim(); if (v) contacts[k] = v; }
+  const jk = $('fJk').value.trim().toUpperCase();
+  const loveTo = $('fLoveTo').value.trim();
+  const love = loveTo ? JSON.stringify({ to: loveTo, from: $('fLoveFrom').value.trim(), since: $('fLoveSince').value, tone: $('fLoveTone').value }) : '';
+  veil('Сохраняю…');
+  try {
+    if (addCtx.edit) {
+      await fsPatch(COL, addCtx.edit.id, { name, jk, contacts: JSON.stringify(contacts), love });
+    } else {
+      if (!addShot) { toast('Сначала сними камень'); veil(); return; }
+      if (stones.length) {   // do not register the same stone twice
+        veil('Проверяю, нет ли такого камня…');
+        const r = await identify(addShot.cv, t => veil(t));
+        if (r.state === 'found' && !confirm(`Похоже, этот камень уже есть: «${r.stone.name}» (${r.res.inl.length} совпадений). Всё равно добавить?`)) { veil(); return; }
+        veil('Сохраняю…');
+      }
+      const enc = encodePatches(addShot.f);
+      const g = f32B64(gvecOf(addShot.f));
+      const doc = await fsCreate(COL, { name, jk, contacts: JSON.stringify(contacts), love, created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
+      const id = doc.name.split('/').pop();
+      try { await fsCreate(COLP, { idx: enc.idx, p: enc.p, sc: enc.sc }, id); }
+      catch (e) { await fsDelete(COL, id); throw e; }
+    }
+    await loadStones();
+    addShot = null; stopCam();
+    tab('coll'); toast('Сохранено');
+  } catch (e) { toast('Не сохранилось: ' + e.message, 5500); }
+  veil();
+};
+
+
+// =====================================================================
+//  Живые камни: покупатель сам оживляет камень, получатель открывает по ссылке
+// =====================================================================
+const COLV = 'jk2_private';
+const LIVE_MODES = { love: 'Love', ny: 'Новый год', tal: 'Талисман' };
+const LIVE_DESC = {
+  love: 'Каждый день новое послание от дарителя, с именами и счётчиком дней вместе.',
+  ny: 'Каждый день декабря открывается окошко с сюрпризом, а в полночь Нового года — главное поздравление.',
+  tal: 'Каждый день пожелание, слово дня и маленький ритуал.'
+};
+const ls = {
+  get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+  list: k => { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) { return []; } }
+};
+const strHash = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+const dayNum = d => Math.floor((d.getTime() - d.getTimezoneOffset() * 6e4) / 864e5);
+const plural = (n, a, b, c) => n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c;
+const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
+// ?date=2026-12-05 lets the admin preview another day
+const NOW = () => { const q = new URLSearchParams(location.search).get('date'); if (q && isAdmin) { const d = new Date(q + 'T' + new Date().toTimeString().slice(0, 8)); if (!isNaN(d)) return d; } return new Date(); };
+
+// ---------- phone identity (Firebase anonymous sign-in) ----------
+const ANON = { id: null, exp: 0, uid: null };
+async function anonToken(create = true) {
+  if (ANON.id && Date.now() < ANON.exp) return ANON.id;
+  const rt = ls.get('jk2_anon_rt');
+  if (rt) {
+    const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.id_token) {
+      ANON.id = j.id_token; ANON.exp = Date.now() + (Number(j.expires_in || 3600) - 120) * 1000; ANON.uid = j.user_id;
+      ls.set('jk2_anon_rt', j.refresh_token); ls.set('jk2_anon_uid', j.user_id);
+      return ANON.id;
+    }
+  }
+  if (!create) return null;
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.idToken) throw new Error('телефон не зарегистрировался (' + ((j.error && j.error.message) || r.status) + ')');
+  ANON.id = j.idToken; ANON.exp = Date.now() + (Number(j.expiresIn || 3600) - 120) * 1000; ANON.uid = j.localId;
+  ls.set('jk2_anon_rt', j.refreshToken); ls.set('jk2_anon_uid', j.localId);
+  return ANON.id;
+}
+const myUid = () => ANON.uid || ls.get('jk2_anon_uid');
+async function readToken() {
+  if (isAdmin) { const t = await authToken(); if (t) return t; }
+  try { return await anonToken(false); } catch (e) { return null; }
+}
+async function fsReq(method, path, token, data, mask) {
+  const url = `${BASE}/${path}${path.includes('?') ? '&' : '?'}key=${FS.key}${(mask || []).map(k => '&updateMask.fieldPaths=' + k).join('')}`;
+  const h = { 'Content-Type': 'application/json' }; if (token) h.Authorization = 'Bearer ' + token;
+  const r = await fetch(url, { method, headers: h, body: data ? JSON.stringify(fsFields(data)) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) { const e = new Error((j.error && (j.error.message || j.error.status)) || ('HTTP ' + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+async function readPriv(id) {
+  try {
+    const j = await fsReq('GET', `${COLV}/${id}`, await readToken());
+    const p = fromFs(j.fields);
+    try { p.profile = JSON.parse(p.profile || '{}'); } catch (e) { p.profile = {}; }
+    return p;
+  } catch (e) { if (e.status === 403 || e.status === 404 || e.status === 401) return null; throw e; }
+}
+function remember(id, kind) { const k = 'jk2_mine_' + kind, a = ls.list(k); if (!a.includes(id)) { a.push(id); ls.set(k, JSON.stringify(a)); } }
+function myIds() {
+  const a = new Set(ls.list('jk2_mine_own').concat(ls.list('jk2_mine_got'))), u = myUid();
+  if (u) stones.forEach(s => { if (s.owner === u && !s.of) a.add(s.id); });
+  return a;
+}
+const giftLink = (id, claim) => `${location.origin}${location.pathname}?g=${id}.${claim}`;
+
+// ---------- sounds (synthesised, no files) ----------
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+const synthCache = {};
+function synthWav(kind) {
+  if (synthCache[kind]) return synthCache[kind];
+  const rate = 22050;
+  let out;
+  const add = (f, t0, amp, dec, parts) => {
+    const i0 = Math.floor(t0 * rate), len = Math.min(out.length - i0, Math.floor(dec * 5 * rate));
+    for (let i = 0; i < len; i++) { const t = i / rate; let v = 0; for (const [k, g, d] of parts) v += g * Math.sin(2 * Math.PI * f * k * t) * Math.exp(-t / (dec * d)); out[i0 + i] += amp * v; }
+  };
+  if (kind === 'bells') {
+    out = new Float32Array(Math.floor(rate * 4.4));
+    [83, 88, 90, 88, 86, 83, 86, 88, 91, 88].forEach((m, i) => add(mf(m), 0.05 + i * 0.26, 0.2, 0.5, [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.18, 0.25]]));
+    for (let b = 0; b < 22; b++) { const i0 = Math.floor((0.05 + b * 0.13) * rate), L = Math.floor(rate * 0.07); for (let i = 0; i < L && i0 + i < out.length; i++) out[i0 + i] += (Math.random() * 2 - 1) * 0.07 * (1 - i / L); }
+  } else if (kind === 'bowl') {
+    out = new Float32Array(rate * 7);
+    add(196, 0.05, 0.32, 1.6, [[1, 1, 1], [1.004, 0.8, 1], [2.71, 0.35, 0.6], [5.15, 0.15, 0.35]]);
+  } else {   // fireworks
+    out = new Float32Array(rate * 4);
+    for (let k = 0; k < 8; k++) {
+      const i0 = Math.floor((0.1 + k * 0.4 + Math.random() * 0.15) * rate); let lp = 0;
+      for (let i = 0; i < rate * 0.6 && i0 + i < out.length; i++) { lp += ((Math.random() * 2 - 1) - lp) * 0.3; out[i0 + i] += lp * 0.5 * Math.exp(-i / (rate * 0.15)); }
+      add(mf(84 + (k * 5) % 12), 0.15 + k * 0.4, 0.08, 0.4, [[1, 1, 1], [2.76, 0.3, 0.5]]);
+    }
+  }
+  return synthCache[kind] = wavUrl(out, rate);
+}
+function playWav(url) { if (loveMuted()) return; try { loveAudio.pause(); loveAudio.src = url; const p = loveAudio.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+const sndBtn = () => `<button class="btn" id="lvSnd" style="flex:0 0 58px;padding-left:0;padding-right:0" title="Звук">${loveMuted() ? '🔇' : '🔊'}</button>`;
+function bindSnd(src) {
+  const b = $('lvSnd'); if (!b) return;
+  b.onclick = () => { const m = !loveMuted(); ls.set('jk2_mute', m ? '1' : '0'); b.textContent = m ? '🔇' : '🔊'; if (m) loveStop(); else playWav(src()); };
+}
+
+// ---------- effects ----------
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fxRise(chars, cols, n) {
+  if (calm()) return;
+  const box = document.createElement('div'); box.className = 'lv-rain';
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement('span'); h.textContent = chars[i % chars.length];
+    h.style.left = (Math.random() * 96) + '%'; h.style.fontSize = (10 + Math.random() * 22) + 'px'; h.style.color = cols[i % cols.length];
+    h.style.setProperty('--dx', (Math.random() * 100 - 50) + 'px'); h.style.setProperty('--rot', (Math.random() * 80 - 40) + 'deg');
+    h.style.animationDuration = (3.4 + Math.random() * 3) + 's'; h.style.animationDelay = (Math.random() * 1.5) + 's';
+    box.appendChild(h);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 8500);
+}
+function fxSnow() {
+  if (calm()) return;
+  const box = document.createElement('div'); box.className = 'lv-rain fx-snow';
+  for (let i = 0; i < 44; i++) {
+    const s = document.createElement('span'); s.textContent = i % 5 ? '•' : '❄';
+    s.style.left = (Math.random() * 100) + '%'; s.style.fontSize = (8 + Math.random() * 16) + 'px'; s.style.color = '#fff';
+    s.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+    s.style.animationDuration = (4 + Math.random() * 4) + 's'; s.style.animationDelay = (Math.random() * 3) + 's';
+    box.appendChild(s);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 11500);
+}
+function fxFireworks() {
+  if (calm()) return;
+  const c = document.createElement('canvas'); c.className = 'fw'; document.body.appendChild(c);
+  const W = c.width = innerWidth, H = c.height = innerHeight, g = c.getContext('2d'), bs = [];
+  for (let k = 0; k < 7; k++) setTimeout(() => {
+    const x = 40 + Math.random() * (W - 80), y = 80 + Math.random() * H * 0.4, p = [];
+    for (let i = 0; i < 50; i++) { const a = i / 50 * Math.PI * 2, v = 1.5 + Math.random() * 2.5; p.push([x, y, Math.cos(a) * v, Math.sin(a) * v]); }
+    bs.push({ h: Math.random() * 360, p, t: 0 });
+  }, k * 380);
+  let t = 0;
+  const loop = () => {
+    g.clearRect(0, 0, W, H);
+    for (const b of bs) { b.t++; g.fillStyle = `hsla(${b.h},90%,65%,${Math.max(0, 1 - b.t / 90)})`; for (const q of b.p) { q[0] += q[2]; q[1] += q[3]; q[3] += 0.04; g.beginPath(); g.arc(q[0], q[1], 2.2, 0, 7); g.fill(); } }
+    if (++t < 340) requestAnimationFrame(loop); else c.remove();
+  };
+  loop();
+}
+
+// ---------- texts ----------
+const NY_ADULT = [
+  'Сегодня разреши себе ничего не успевать.', 'Загадай желание. Вечером расскажешь, какое.', 'Купи мандарины. Это обязательная часть плана.',
+  'Включи музыку и потанцуй ровно одну песню.', 'Напиши тому, по кому скучаешь.', 'Сегодня вечер пледа и кино.',
+  'Вспомни три лучших момента этого года.', 'Ты справилась с этим годом. Это много.', 'Сделай фото в зимней шапке и пришли мне.',
+  'Выпей горячий шоколад, остальное подождёт.', 'Сегодня хороший день, чтобы украсить дом.', 'Выйди на улицу и поймай снежинку.',
+  'Напиши список того, что хочешь взять в новый год.', 'Сегодня можно лечь спать пораньше. Это подарок себе.', 'Улыбнись: до праздника всё ближе.',
+  'Подари кому-нибудь маленькую радость без повода.', 'Вспомни, о чём ты мечтала год назад. Многое сбылось.', 'Сегодня — время для любимой новогодней песни.',
+  'Скажи себе спасибо за этот год.', 'Зажги вечером свечу и помолчи пять минут.', 'Сегодня тебя ждёт что-то хорошее. Посмотри внимательнее.',
+  'Испеки или купи что-нибудь с корицей.', 'Позвони родным просто так.', 'Выбери, где встретишь первый рассвет нового года.',
+  'Подумай, кого хочешь обнять в новогоднюю ночь.', 'Сегодня можно всё отложить на завтра.', 'Проверь, есть ли у тебя бенгальские огни.',
+  'Напиши себе письмо в следующий декабрь.', 'Ещё чуть-чуть, и начнётся новая глава.', 'Завтра последнее окошко. Не забудь про полночь.'];
+const NY_KID = [
+  'Дед Мороз прочитал твоё письмо и улыбнулся.', 'Задание от эльфов: нарисуй снеговика.', 'Снеговики передают тебе привет.',
+  'Олень Рудольф спрашивает: ты помогал сегодня маме?', 'Загадка: зимой и летом одним цветом. Что это?', 'Сегодня можно лечь спать на десять минут позже.',
+  'Эльфы уже упаковывают подарки. С бантиками!', 'Слепи из пластилина ёлку.', 'Снегурочка говорит, что ты очень добрый.',
+  'Посчитай, сколько огоньков на твоей ёлке.', 'Дед Мороз уже готовит сани.', 'Помоги сегодня украсить дом.',
+  'Выучи короткий стишок для Деда Мороза.', 'Нарисуй, какой подарок ты ждёшь.', 'Белки в лесу тоже наряжают ёлку. Шишками!',
+  'Сегодня день добрых дел: сделай одно.', 'Слепи снежок и загадай желание.', 'Эльфы проверяют списки. Ты в списке хороших!',
+  'Сделай снежинку из бумаги.', 'Спой новогоднюю песенку.', 'Дед Мороз проверяет карту, чтобы не заблудиться.',
+  'Обними сегодня всех, кого любишь.', 'Посмотри мультик про зиму.', 'Сани почти готовы, олени тренируются.',
+  'Повесь на ёлку игрушку, которую сделал сам.', 'Дед Мороз уже выехал из Великого Устюга!', 'Слушайся сегодня взрослых — эльфы всё видят.',
+  'Положи под ёлку записку для Деда Мороза.', 'Скоро праздник! Осталось чуть-чуть.', 'Завтра последнее окошко. Самое главное — в полночь!'];
+const TAL_W = [
+  'Сегодня всё идёт своим чередом. Не торопи ни одно событие.', 'Сделай сегодня один шаг, который откладывал. Только один.', 'Скажи сегодня то, что давно хотел сказать. Простыми словами.',
+  'Будь к себе так же добр, как к лучшему другу.', 'Тихий день — тоже победа.', 'Удача любит тех, кто начинает.', 'Перемены уже начались. Позволь им идти.',
+  'Сегодня хороший день, чтобы чему-то научиться.', 'Опирайся на то, что у тебя уже есть. Этого больше, чем кажется.', 'Ясность приходит, когда перестаёшь спешить.',
+  'Сделай сегодня что-нибудь только для себя.', 'Ты сильнее, чем думаешь. Сегодня это будет видно.', 'Отпусти то, что не можешь изменить.',
+  'Сегодня стоит сказать кому-то спасибо.', 'Маленький порядок вокруг — большой порядок внутри.', 'Доверься первому впечатлению.',
+  'Сегодня день, чтобы закончить начатое.', 'Улыбнись незнакомцу. Это вернётся.', 'Не сравнивай себя ни с кем, кроме себя вчерашнего.',
+  'Хорошие новости уже в пути.', 'Сегодня можно позволить себе отдых без чувства вины.'];
+const TAL_WORD = ['Опора', 'Смелость', 'Ясность', 'Забота', 'Покой', 'Удача', 'Рост', 'Свет', 'Тепло', 'Доверие', 'Лёгкость', 'Сила', 'Радость', 'Терпение'];
+const TAL_SIGN = ['Улыбка незнакомца', 'Зелёный свет', 'Солнечный луч', 'Старая песня', 'Тёплый ветер', 'Случайная встреча', 'Чистое небо', 'Белое перо', 'Знакомый запах', 'Красная машина', 'Звонок старого друга'];
+const TAL_RIT = [
+  'подержи камень в ладони десять секунд и сделай три медленных вдоха.', 'перед важным разговором коснись камня.', 'посмотри на камень минуту и запиши одну мысль, которая придёт.',
+  'положи камень у кровати и вспомни перед сном одно хорошее событие дня.', 'поставь камень у окна на весь день.', 'возьми камень с собой и вспомни о нём в полдень.',
+  'загадай на сегодня одно маленькое желание.', 'проведи пальцем по рисунку камня и подумай, за что ты благодарен.', 'утром скажи камню, какой день ты себе желаешь.'];
+
+// ---------- mode screens ----------
+let nyTimer = null, talShift = 0;
+function showNY(s, P) {
+  const now = NOW(), y = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const dec1 = new Date(y, 11, 1), ny = new Date(y + 1, 0, 1), end = new Date(y + 1, 0, 8);
+  const pool = P.kid ? NY_KID : NY_ADULT, h = strHash(s.id), to = esc(P.to || ''), sign = P.kid ? 'Дед Мороз' : esc(P.from || '');
+  let body;
+  if (now >= ny) {
+    body = `<div class="ny-k">✦ 1 января ${y + 1}</div><div class="ny-big">С Новым годом${to ? ', ' + to : ''}!</div><div class="ny-msg">${esc(P.midnight || (P.kid ? 'Ты молодец! Пусть этот год будет полон чудес.' : 'Пусть этот год будет самым тёплым из всех.'))}</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}${now >= end ? '<p class="sh-note">Праздники позади, но поздравление остаётся с тобой.</p>' : ''}`;
+  } else if (now >= dec1) {
+    const d = now.getDate();
+    const grid = Array.from({ length: 31 }, (_, i) => `<span class="${i + 1 < d ? 'o' : i + 1 === d ? 't' : ''}">${i + 1}</span>`).join('');
+    const msg = d === 31 ? 'Сегодня последнее окошко. В полночь камень откроет главное поздравление.' : pool[(d - 1 + h) % pool.length];
+    body = `<div class="ny-k">✦ До Нового года</div><div class="ny-cd" id="nyCd"></div>${to ? `<div class="lv-to" style="color:#ffe3a1">${to},</div>` : ''}<div class="ny-msg">${esc(msg)}</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}<div class="adv">${grid}</div><p class="sh-note">Каждый день декабря открывается новое окошко. Главное поздравление — в полночь.</p>`;
+  } else {
+    body = `<div class="ny-k">✦ Новогодний камень</div>${to ? `<div class="lv-to" style="color:#ffe3a1">${to},</div>` : ''}<div class="ny-msg">Первое окошко откроется 1 декабря. До самого Нового года здесь каждый день будет новый сюрприз.</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}<div class="ny-k">До первого окошка</div><div class="ny-cd" id="nyCd"></div>`;
+  }
+  sheet(body + `<div class="btns">${sndBtn()}<button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('ny'); fxSnow();
+  const target = now < dec1 ? dec1 : ny, shift = now.getTime() - Date.now();
+  clearInterval(nyTimer);
+  const upd = () => {
+    const e = $('nyCd'); if (!e || !$('sheet').classList.contains('on')) { clearInterval(nyTimer); return; }
+    const t = Math.max(0, target - (Date.now() + shift)), dd = Math.floor(t / 864e5), hh = Math.floor(t / 36e5) % 24, mm = Math.floor(t / 6e4) % 60, ss = Math.floor(t / 1e3) % 60;
+    e.textContent = `${dd} ${plural(dd, 'день', 'дня', 'дней')} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    if (t === 0) { clearInterval(nyTimer); setTimeout(() => showNY(s, P), 800); }
+  };
+  if ($('nyCd')) { upd(); nyTimer = setInterval(upd, 1000); }
+  if (now >= ny && now < end) { fxFireworks(); playWav(synthWav('fireworks')); setTimeout(() => { if ($('sheet').classList.contains('ny')) playWav(synthWav('bells')); }, 3600); }
+  else playWav(synthWav('bells'));
+  bindSnd(() => synthWav('bells'));
+  $('again').onclick = () => { loveStop(); clearInterval(nyTimer); hideSheet(); };
+}
+function showTal(s, P) {
+  const now = new Date(NOW().getTime() + talShift * 864e5), dn = dayNum(now), h = strHash(s.id);
+  const md = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const bday = P.bday && P.bday.slice(5) === md;
+  const wish = bday ? `С днём рождения${P.name ? ', ' + P.name : ''}! Пусть этот год принесёт всё, о чём ты мечтаешь.` : TAL_W[(dn + h) % TAL_W.length];
+  const date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  sheet(`<div class="tl-k">✦ Твой талисман</div><img class="tl-img" src="${s.thumb || ''}" alt=""><div class="sh-name" style="text-align:center">${esc(P.name || '')}</div><div class="tl-k" style="margin-top:12px">${bday ? 'Особый день' : 'Пожелание на ' + date}</div><div class="tl-wish">${esc(wish)}</div><div class="tl-row"><span>Слово дня<b>${TAL_WORD[(dn + h) % TAL_WORD.length]}</b></span><span style="text-align:right">Знак дня<b>${TAL_SIGN[(dn + h * 3) % TAL_SIGN.length]}</b></span></div><div class="tl-rit">Ритуал: ${TAL_RIT[(dn + h * 5) % TAL_RIT.length]}</div><p class="sh-note" style="text-align:center">Новое пожелание появится завтра.</p><div class="btns">${sndBtn()}${isAdmin ? '<button class="btn" id="tlNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('tal'); fxRise(['✦', '·', '✧'], ['#ffe9b0', '#d5c6ff', '#ffffff'], 24);
+  playWav(synthWav('bowl')); bindSnd(() => synthWav('bowl'));
+  $('again').onclick = () => { talShift = 0; loveStop(); hideSheet(); };
+  if (isAdmin) $('tlNext').onclick = () => { talShift++; showTal(s, P); };
+}
+function showTeaser(s) {
+  const days = Math.max(1, Math.floor((Date.now() - (s.created || Date.now())) / 864e5) + 1);
+  sheet(`<div style="text-align:center"><div class="sh-state">✦ Живой камень</div><img class="tz-img" src="${s.thumb || ''}" alt=""><div class="sh-name">${s.name ? 'Камень · ' + esc(s.name) : 'Чужой живой камень'}</div><div class="tz-lock">🔒 Послания видит только хозяин камня</div><div class="tz-facts"><span><b>${days}</b>${plural(days, 'день', 'дня', 'дней')} живёт</span><span><b>${LIVE_MODES[s.mode] || ''}</b>режим</span></div></div><p class="sh-note" style="text-align:center">Камень узнан, но он принадлежит другому человеку. Свой живой камень можно сделать за пару минут.</p><div class="btns"><button class="btn" id="again">Закрыть</button><button class="btn main" id="want">Хочу такой же</button></div>`);
+  $('again').onclick = hideSheet;
+  $('want').onclick = () => { hideSheet(); tab('live'); liveHome(); };
+}
+async function showLive(s) {
+  veil('Открываю…');
+  let p = null; try { p = await readPriv(s.id); } catch (e) {}
+  veil();
+  if (!p) { showTeaser(s); return; }
+  if (myUid() && p.recipient === myUid()) remember(s.id, 'got');
+  const P = p.profile || {};
+  if (s.mode === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: P.to || '', from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
+  else if (s.mode === 'ny') showNY(s, P);
+  else showTal(s, P);
+}
+
+// ---------- gift link: ?g=<stone>.<claim> ----------
+async function openGift(id, claim) {
+  veil('Открываю подарок…');
+  try {
+    await loadStones();
+    const s = stones.find(x => x.id === id);
+    if (!s) { veil(); sheet('<div class="sh-head"><div><div class="sh-state bad">Подарок не найден</div><div class="sh-name">Этого камня больше нет</div></div></div><p class="sh-note">Возможно, его удалили. Попроси дарителя прислать новую ссылку.</p><div class="btns"><button class="btn main" id="again">Понятно</button></div>'); $('again').onclick = hideSheet; return; }
+    await anonToken();
+    let p = await readPriv(id);
+    if (!p) {
+      try { await fsReq('PATCH', `${COLV}/${id}`, await anonToken(), { recipient: myUid(), claimTry: claim }, ['recipient', 'claimTry']); p = await readPriv(id); }
+      catch (e) { p = null; }
+    }
+    veil();
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    if (!p) { sheet('<div class="sh-head"><div><div class="sh-state warn">Подарок уже открыт</div><div class="sh-name">Он привязан к другому телефону</div></div></div><p class="sh-note">Послания открываются только на телефоне, где ссылку открыли впервые. Если это был твой старый телефон, попроси дарителя прислать новую ссылку.</p><div class="btns"><button class="btn main" id="again">Понятно</button></div>'); $('again').onclick = hideSheet; return; }
+    const P = p.profile || {}, mine = p.owner === myUid();
+    if (!mine) remember(id, 'got');
+    const title = mine ? 'Это твой камень' : s.mode === 'tal' ? `${esc(P.name || 'Тебе')}, это твой талисман` : s.mode === 'ny' && P.kid ? 'Тебе подарок от Деда Мороза' : P.from ? `${esc(P.from)} дарит тебе живой камень` : 'Тебе подарили живой камень';
+    const home = inApp ? '' : ' Удобнее всего добавить её на экран телефона: «Поделиться» → «На экран „Домой“».';
+    sheet(`<div style="text-align:center"><div class="sh-state">✦ Живой камень</div><img class="tz-img" src="${s.thumb || ''}" alt=""><div class="sh-name">${title}</div><p class="sh-note">${LIVE_DESC[s.mode] || ''}</p><p class="sh-note">Открыть его можно только с этого телефона и только с самим камнем. В следующий раз просто открой эту страницу.${home}</p></div><div class="btns"><button class="btn main" id="goScan">Навести на камень</button></div>`);
+    $('goScan').onclick = () => { hideSheet(); tab('scan'); $('shutter').click(); };
+  } catch (e) { veil(); toast('Не удалось открыть подарок: ' + e.message, 6000); }
+}
+
+// ---------- buyer: bring a stone to life ----------
+const camL = { vid: $('vidL'), ov: $('ovL'), msg: $('msgL'), bar: $('barL'), idle: $('idleL') };
+const LV = { step: 0, a: null, b: null, hidden: false, mode: 'love', p: {}, busy: false };
+function stoneStats(cv) {
+  const n = 64, t = document.createElement('canvas'); t.width = t.height = n;
+  const g = t.getContext('2d'), m = cv.width * 0.25;
+  g.drawImage(cv, m, m, cv.width - 2 * m, cv.height - 2 * m, 0, 0, n, n);
+  const d = g.getImageData(0, 0, n, n).data; let s = 0, s2 = 0;
+  for (let i = 0; i < n * n; i++) { const v = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]; s += v; s2 += v * v; }
+  const mean = s / (n * n); return { mean, std: Math.sqrt(Math.max(0, s2 / (n * n) - mean * mean)) };
+}
+function lvQ(o) {
+  if (!o) { $('lvQ').innerHTML = ''; return; }
+  const mark = v => v === undefined ? '…' : v ? '✓' : '✕', cls = v => v === undefined ? '' : v ? 'ok' : 'no';
+  $('lvQ').innerHTML = `<span class="${o.frames >= 2 ? 'ok' : ''}">Кадры ${'●'.repeat(o.frames || 0)}${'○'.repeat(2 - (o.frames || 0))}</span><span class="${cls(o.light)}">Свет ${mark(o.light)}</span><span class="${cls(o.pat)}">Рисунок ${mark(o.pat)}</span>`;
+}
+function lvVerdict(kind, text) { const v = $('lvV'); v.className = 'verdict' + (kind ? ' ' + kind : ''); v.textContent = text || ''; }
+async function liveCapture(side) {
+  if (!extractor) { toast('Модель ещё загружается, подожди немного'); return; }
+  LV.busy = true; lvQ({ frames: 0 }); lvVerdict('', ''); lvNav();
+  const fail = t => { lvVerdict('no', t); return null; };
+  try {
+    if (!(await startCam(camL))) return;
+    const frames = [];
+    for (let k = 0; k < 2; k++) {
+      if (k) { camL.msg.textContent = 'Ещё кадр: чуть наклони телефон'; await new Promise(r => setTimeout(r, 600)); }
+      const cv = await captureStone(camL);
+      if (!cv) return;
+      frames.push(cv); lvQ({ frames: k + 1 });
+    }
+    stopCam(); veil('Проверяю камень…'); await tick();
+    const A = await stoneFeatures(frames[0], 0, null);
+    if (!A) return fail('Камень на кадре не найден. Положи его на однотонный фон и сними ещё раз.');
+    const st = stoneStats(A.f.cv), n = A.f.mask.filter(Boolean).length;
+    let self = null;
+    for (const q of [0, 90, 180, 270]) {
+      const B = await stoneFeatures(frames[1], q, A.b.hue);
+      if (!B) continue;
+      const r = scoreAgainst(A.f, B.f);
+      if (!self || r.inl.length > self.inl.length) self = r;
+      if (verdictOf(r) === 'yes' && r.inl.length >= MIN_INLIERS * 1.5) break;
+    }
+    const okLight = st.mean > 22 && st.mean < 225, okPat = st.std >= 9 && !!self && verdictOf(self) === 'yes' && n >= 120;
+    lvQ({ frames: 2, light: okLight, pat: okPat });
+    if (n < 120) return fail('Камень слишком мелкий в кадре. Поднеси телефон ближе.');
+    if (!okLight) return fail(st.mean <= 22 ? 'Слишком темно. Включи свет или подойди к окну.' : 'Слишком ярко или блик. Убери камень из-под прямого света.');
+    if (!okPat) return fail('У камня слишком мало рисунка: сканер не отличит его от похожих. Возьми камень с узором — агат, яшму, малахит, лазурит.');
+    if (side === 'B' && LV.a && verdictOf(scoreAgainst(LV.a.f, A.f)) === 'yes') return fail('Похоже, это та же сторона. Переверни камень и сними снова.');
+    if (stones.length) {
+      veil('Проверяю, нет ли такого камня…');
+      const r = await identify(frames[0], t => veil(t));
+      if (r.state === 'found') { const m = r.stone.of || r.stone.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже кто-то оживил. Возьми другой камень.'); }
+    }
+    const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(A.f.cv, 0, 0, 240, 240);
+    LV[side === 'A' ? 'a' : 'b'] = { f: A.f, hue: A.b.hue, thumb: t.toDataURL('image/jpeg', 0.8) };
+    lvVerdict('ok', side === 'A' ? 'Сторона А готова. Теперь переверни камень.' : 'Обе стороны готовы. Камень узнаётся любой стороной.');
+  } catch (e) { fail('Ошибка: ' + e.message); }
+  finally { veil(); LV.busy = false; stopCam(); lvNav(); }
+}
+function lvNav() {
+  const st = LV.step, nx = $('lvNext'), sh = $('lvShoot');
+  $('lvBack').textContent = st === 0 ? 'Отмена' : 'Назад';
+  $('lvNavBox').style.display = st === 3 ? 'none' : '';
+  sh.textContent = LV.busy ? 'Стоп' : ((st === 0 ? LV.a : LV.b) ? 'Переснять' : 'Снять');
+  nx.disabled = LV.busy || (st === 0 && !LV.a) || (st === 1 && !LV.b && !LV.hidden);
+  nx.textContent = st === 2 ? 'Оживить камень' : 'Далее';
+  $('lvBack').disabled = LV.busy;
+}
+function liveRender() {
+  const st = LV.step;
+  $('lvSteps').innerHTML = [0, 1, 2, 3].map(i => `<i class="${i <= st ? 'on' : ''}"></i>`).join('');
+  $('lvCam').style.display = st <= 1 ? '' : 'none';
+  $('lvForm').style.display = st === 2 ? '' : 'none';
+  $('lvDone').style.display = st === 3 ? '' : 'none';
+  $('lvHiddenBox').style.display = st === 1 ? '' : 'none';
+  $('lvH').textContent = ['Сторона А', 'Переверни камень', 'Кому и чем станет камень', 'Камень ожил'][st];
+  $('lvSub').textContent = ['Положи камень на однотонный фон при хорошем свете. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', 'Режим можно будет поменять позже.', ''][st];
+  lvQ(null); lvVerdict('', '');
+  if (st === 0 && LV.a) lvVerdict('ok', 'Сторона А готова. Теперь переверни камень.');
+  if (st === 1 && LV.b) lvVerdict('ok', 'Обе стороны готовы.');
+  if (st === 1 && LV.hidden) lvVerdict('ok', 'Хватит одной стороны.');
+  if (st === 2) liveForm();
+  lvNav();
+}
+function fld(id, label, v, type = 'text') { return `<label class="lbl" for="${id}">${label}</label><input class="fld" id="${id}" type="${type}" value="${esc(v || '')}" autocomplete="off">`; }
+function liveCollect() {
+  const P = LV.p;
+  for (const [id, k] of [['lvName', 'name'], ['lvBday', 'bday'], ['lvTo', 'to'], ['lvFrom', 'from'], ['lvSince', 'since'], ['lvMid', 'midnight']]) { const e = $(id); if (e) P[k] = e.value.trim(); }
+}
+function liveForm() {
+  const m = LV.mode, P = LV.p;
+  let f = '';
+  if (m === 'tal') f = fld('lvName', 'Имя владельца', P.name) + fld('lvBday', 'День рождения, по желанию', P.bday, 'date');
+  else {
+    f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
+    if (m === 'love') f += fld('lvSince', 'Вместе с, по желанию', P.since, 'date') + `<label class="lbl">Тон посланий</label><div class="seg" id="lvTone">${[['tender', 'Нежно'], ['fun', 'С юмором'], ['romantic', 'Романтично']].map(([k, n]) => `<button class="${(P.tone || 'tender') === k ? 'on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>`;
+    else f += `<label class="lbl">Кому подарок</label><div class="seg" id="lvKid"><button class="${!P.kid ? 'on' : ''}" data-k="0">Взрослому</button><button class="${P.kid ? 'on' : ''}" data-k="1">Ребёнку</button></div><p class="sub" style="margin:6px 0 0">${P.kid ? 'Окошки будут от Деда Мороза.' : ''}</p><label class="lbl" for="lvMid">Поздравление в полночь</label><textarea class="fld" id="lvMid" rows="3" placeholder="Например: пусть этот год будет самым тёплым из всех">${esc(P.midnight || '')}</textarea>`;
+  }
+  $('lvForm').innerHTML = `<div class="seg" id="lvMode">${Object.entries(LIVE_MODES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${f}`;
+  $('lvForm').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { liveCollect(); LV.mode = b.dataset.m; liveForm(); });
+  $('lvForm').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { liveCollect(); P.tone = b.dataset.t; liveForm(); });
+  $('lvForm').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { liveCollect(); P.kid = b.dataset.k === '1'; liveForm(); });
+}
+async function liveSave() {
+  liveCollect();
+  const P = LV.p, m = LV.mode;
+  if (m === 'tal' ? !P.name : !P.to) { toast('Впиши имя'); return; }
+  const prof = m === 'love' ? { to: P.to, from: P.from || '', since: P.since || '', tone: P.tone || 'tender' }
+    : m === 'ny' ? { to: P.to, from: P.from || '', kid: !!P.kid, midnight: P.midnight || '' } : { name: P.name, bday: P.bday || '' };
+  const pubName = m === 'tal' ? P.name : P.to;
+  LV.busy = true; lvNav(); veil('Оживляю камень…');
+  const made = [];
+  try {
+    const tok = await anonToken(), uid = myUid();
+    if (!isAdmin && stones.filter(s => s.owner === uid && !s.of).length >= 3) throw new Error('на одном телефоне можно оживить до трёх камней');
+    const side = async (S, of) => {
+      const enc = encodePatches(S.f);
+      const doc = await fsReq('POST', COL, tok, { name: pubName, mode: m, owner: uid, of: of || '', created: Date.now(), thumb: S.thumb, g: f32B64(gvecOf(S.f)), G: S.f.G, hue: S.hue ?? 0, n: enc.n });
+      const id = doc.name.split('/').pop(); made.push([COL, id]);
+      await fsReq('POST', `${COLP}?documentId=${id}`, tok, { idx: enc.idx, p: enc.p, sc: enc.sc }); made.push([COLP, id]);
+      return id;
+    };
+    const id = await side(LV.a, '');
+    if (LV.b && !LV.hidden) await side(LV.b, id);
+    const claim = rnd(14);
+    await fsReq('POST', `${COLV}?documentId=${id}`, tok, { owner: uid, recipient: '', claim, claimTry: '', share: false, profile: JSON.stringify(prof), created: Date.now() });
+    remember(id, 'own');
+    Object.assign(LV, { link: giftLink(id, claim), id, toName: pubName });
+    await loadStones();
+    LV.step = 3; LV.busy = false; liveRender(); liveDone();
+  } catch (e) {
+    for (const [c, id] of made.reverse()) { try { await fsReq('DELETE', `${c}/${id}`, await anonToken()); } catch (x) {} }
+    toast('Не получилось оживить: ' + e.message, 6000);
+  } finally { veil(); LV.busy = false; lvNav(); }
+}
+function shareButtons(link, text) {
+  const u = encodeURIComponent(link), tx = encodeURIComponent(text);
+  return { html: `<div class="lvlink">${esc(link)}</div><div class="btns"><button class="btn main" id="shTg">Telegram</button><button class="btn main" id="shWa">WhatsApp</button></div><div class="btns">${navigator.share ? '<button class="btn" id="shAny">Поделиться…</button>' : ''}<button class="btn" id="shCopy">Скопировать</button></div>`,
+    bind: () => {
+      $('shTg').onclick = () => openLink(`https://t.me/share/url?url=${u}&text=${tx}`);
+      $('shWa').onclick = () => openLink(`https://wa.me/?text=${tx}%20${u}`);
+      if ($('shAny')) $('shAny').onclick = async () => { try { await navigator.share({ title: 'JadeKey', text, url: link }); } catch (e) {} };
+      $('shCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); } catch (e) { toast('Не удалось скопировать'); } };
+    } };
+}
+function giftText(mode, name) { return mode === 'tal' ? `${name}, это твой талисман. Открой ссылку и наведи телефон на камень.` : `${name}, тебе подарили живой камень. Открой ссылку и наведи телефон на камень.`; }
+function liveDone() {
+  const sb = shareButtons(LV.link, giftText(LV.mode, LV.toName));
+  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Отправь ссылку тому, кому даришь камень. Послания откроются только на телефоне, где ссылку откроют первой, и только с самим камнем.</p>${sb.html}<div class="btns"><button class="btn" id="lvHome">Готово</button></div>`;
+  sb.bind(); $('lvHome').onclick = liveHome;
+}
+async function liveHome() {
+  stopCam(); LV.busy = false;
+  $('lvHomeBox').style.display = ''; $('lvWiz').style.display = 'none';
+  if (Date.now() - lastLoad > 15000) await loadStones();
+  const uid = myUid(), got = new Set(ls.list('jk2_mine_got'));
+  const own = stones.filter(s => !s.of && s.mode && uid && s.owner === uid), recv = stones.filter(s => !s.of && s.mode && got.has(s.id) && s.owner !== uid);
+  const row = (s, k) => `<button class="mine" data-id="${s.id}" data-k="${k}"><img src="${s.thumb || ''}" alt=""><span><b>${esc(s.name || 'Камень')}</b><small>${k === 'own' ? 'Ты оживил' : 'Подарен тебе'}</small></span><span class="tag t-${s.mode}">${LIVE_MODES[s.mode] || ''}</span></button>`;
+  $('lvMine').innerHTML = own.length + recv.length ? own.map(s => row(s, 'own')).join('') + recv.map(s => row(s, 'got')).join('') : '<p class="sub">Здесь появятся камни, которые ты оживишь или получишь в подарок.</p>';
+  $('lvMine').querySelectorAll('.mine').forEach(b => b.onclick = () => mineSheet(stones.find(s => s.id === b.dataset.id), b.dataset.k));
+}
+async function mineSheet(s, kind) {
+  if (!s) return;
+  veil('Открываю…'); const p = await readPriv(s.id).catch(() => null); veil();
+  if (kind === 'got' || !p || p.owner !== myUid()) { showFound({ stone: s }); return; }
+  const sides = stones.filter(x => x.of === s.id).length + 1, link = giftLink(s.id, p.claim);
+  const sb = shareButtons(link, giftText(s.mode, s.name || ''));
+  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
+    <div class="h2">Ссылка для получателя</div>${sb.html}
+    <div class="rows"><button class="row" id="mOpen"><span><b>Открыть камень</b><small>Посмотреть, что видит получатель</small></span></button><button class="row" id="mShare"><span><b>${p.share ? 'Послания видят все, кто отсканирует' : 'Послания видит только получатель'}</b><small>Нажми, чтобы переключить</small></span></button><button class="row" id="mNew"><span><b>Новая ссылка</b><small>Старая перестанет работать, камень привяжется к новому телефону</small></span></button></div>
+    <div class="btns"><button class="btn danger" id="mDel">Удалить камень</button><button class="btn main" id="again">Закрыть</button></div>`);
+  sb.bind();
+  $('again').onclick = hideSheet;
+  $('mOpen').onclick = () => showLive(s);
+  $('mShare').onclick = async () => { try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { share: !p.share }, ['share']); mineSheet(s, kind); } catch (e) { toast('Не получилось: ' + e.message); } };
+  $('mNew').onclick = async () => {
+    if (!confirm('Сделать новую ссылку? Старая перестанет работать, а камень отвяжется от телефона получателя.')) return;
+    try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { recipient: '', claim: rnd(14), claimTry: '' }, ['recipient', 'claim', 'claimTry']); toast('Новая ссылка готова'); mineSheet(s, kind); } catch (e) { toast('Не получилось: ' + e.message); }
+  };
+  $('mDel').onclick = async () => {
+    if (!confirm(`Удалить камень «${s.name || ''}»? Послания перестанут открываться.`)) return;
+    veil('Удаляю…');
+    try { await deleteLive(s, await anonToken()); hideSheet(); await loadStones(); liveHome(); }
+    catch (e) { toast('Не удалось удалить: ' + e.message); }
+    veil();
+  };
+}
+async function deleteLive(s, tok) {
+  const del = async path => { try { await fsReq('DELETE', path, tok); } catch (e) { if (e.status !== 404) throw e; } };
+  await del(`${COLV}/${s.id}`);
+  for (const x of stones.filter(x => x.of === s.id)) { await del(`${COLP}/${x.id}`); await del(`${COL}/${x.id}`); patchCache.delete(x.id); }
+  await del(`${COLP}/${s.id}`); await del(`${COL}/${s.id}`); patchCache.delete(s.id);
+}
+
+$('lvStart').onclick = () => {
+  Object.assign(LV, { step: 0, a: null, b: null, hidden: false, mode: 'love', p: {}, busy: false });
+  $('lvHomeBox').style.display = 'none'; $('lvWiz').style.display = '';
+  liveRender();
+};
+$('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
+$('lvHidden').onclick = () => { if (LV.busy) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
+$('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; liveRender(); };
+$('lvNext').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; liveRender(); };
+
+// ---------- tabs ----------
+function tab(name) {
+  hideSheet();
+  if (name !== 'scan' && name !== 'add') stopCam();
+  if (name === 'scan') { try { stopCam(); } catch (e) {} }
+  for (const [n, v, b] of [['scan', 'vScan', 'nScan'], ['coll', 'vColl', 'nColl'], ['add', 'vAdd', 'nAdd'], ['live', 'vLive', 'nLive']]) {
+    $(v).classList.toggle('on', n === name); $(b).classList.toggle('on', n === name);
+  }
+}
+$('nScan').onclick = () => tab('scan');
+$('nLive').onclick = () => { tab('live'); liveHome(); };
+(() => {
+  const w = document.querySelector('#vScan .word'); if (!w) return;
+  let t = null;
+  const start = () => { t = setTimeout(() => { t = null; isAdmin ? adminLogout() : adminLogin(); }, 1500); };
+  const stop = () => { if (t) { clearTimeout(t); t = null; } };
+  w.addEventListener('touchstart', start, { passive: true }); w.addEventListener('touchend', stop); w.addEventListener('touchmove', stop);
+  w.addEventListener('mousedown', start); w.addEventListener('mouseup', stop); w.addEventListener('mouseleave', stop);
+  w.style.webkitUserSelect = 'none'; w.style.userSelect = 'none'; w.style.webkitTouchCallout = 'none';
+  // 5 quick taps also open admin login (long press is eaten by the iOS text loupe in the app)
+  let taps = 0, tt = null;
+  w.addEventListener('click', () => {
+    taps++; clearTimeout(tt); tt = setTimeout(() => { taps = 0; }, 1500);
+    if (taps >= 5) { taps = 0; if (t) { clearTimeout(t); t = null; } setTimeout(() => (isAdmin ? adminLogout() : adminLogin()), 50); }
+  });
+  w.addEventListener('touchcancel', stop);
+  w.addEventListener('contextmenu', e => e.preventDefault());
+  document.documentElement.style.webkitUserSelect = 'none';
+  document.documentElement.style.webkitTouchCallout = 'none';
+  document.querySelectorAll('input,textarea').forEach(x => { x.style.webkitUserSelect = 'text'; });
+})();
+try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
+if (new URLSearchParams(location.search).has('love')) {
+  document.body.classList.add('love');
+  const w = document.querySelector('#vScan .word'); if (w) w.innerHTML = 'Jade<i>Key</i> <i>♥</i>';
+  const i = $('idleS');
+  if (i) { const g = i.querySelector('.gem'); if (g) { g.setAttribute('viewBox', '0 0 64 64'); g.innerHTML = '<path d="M32 54S8 40 8 23a12 12 0 0 1 24-4 12 12 0 0 1 24 4c0 17-24 31-24 31z"/><path d="M32 19v35" opacity=".35"/>'; g.style.animation = 'lvbeat 1.6s ease-in-out infinite'; } const h = i.querySelector('h2'), t = i.querySelector('p'); if (h) h.textContent = 'Наведи на свой камень'; if (t) t.textContent = 'Положи кулон при хорошем свете и нажми кнопку. Камень откроет послание дня — оно только для тебя.'; }
+  document.title = 'JadeKey Love';
+}
+$('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
+$('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({}); };
+$('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
+
+// ---------- NFC: native plugin in the iOS app, Web NFC in Chrome on Android ----------
+const Cap = window.Capacitor;
+const inApp = !!(Cap && (typeof Cap.isNativePlatform === 'function' ? Cap.isNativePlatform()
+  : (typeof Cap.getPlatform === 'function' && Cap.getPlatform() !== 'web')));
+let JadeNfc = !inApp ? null : (typeof Cap.registerPlugin === 'function' ? Cap.registerPlugin('JadeNfc')
+  : Object.fromEntries(['isAvailable', 'scan', 'writeUrl', 'enableCounter'].map(m => [m, (o = {}) => Cap.nativePromise('JadeNfc', m, o)])));
+const NFC_URL = 'https://jadekey.tech/scan.html';
+// Web NFC (Chrome on Android): same interface as the native plugin, fewer details (no counter / signature)
+function nfcWait(text) {
+  return new Promise(res => {
+    sheet(`<div class="sh-head"><div><div class="sh-state">NFC</div><div class="sh-name">${text}</div></div></div>
+      <p class="sh-note">Держи метку у задней крышки телефона, ближе к центру, 1–2 секунды.</p>
+      <div class="btns"><button class="btn" id="nfcCancel">Отмена</button></div>`);
+    $('nfcCancel').onclick = () => res('cancel');
+  });
+}
+function makeWebNfc() {
+  const dec = new TextDecoder();
+  const hex = sn => (sn || '').replace(/:/g, '').toUpperCase();
+  const withSheet = async (text, work) => {
+    const ctl = new AbortController();
+    const cancel = nfcWait(text).then(() => { ctl.abort(); throw new Error('Отменено'); });
+    try { return await Promise.race([work(ctl.signal), cancel]); }
+    finally { ctl.abort(); hideSheet(); }
+  };
+  return {
+    web: true,
+    isAvailable: async () => ({ available: true }),
+    scan: () => withSheet('Поднеси метку к телефону', signal => new Promise((res, rej) => {
+      const r = new NDEFReader();
+      r.onreading = e => {
+        const ndef = [];
+        for (const rec of e.message.records) {
+          try {
+            if (rec.recordType === 'url' || rec.recordType === 'absolute-url' || rec.recordType === 'text')
+              ndef.push(dec.decode(rec.data));
+            else ndef.push('[' + rec.recordType + ']');
+          } catch (x) {}
+        }
+        res({ uid: hex(e.serialNumber), family: 'web', chip: 'NFC-метка', ndef });
+      };
+      r.onreadingerror = () => rej(new Error('Не удалось прочитать, попробуй ещё'));
+      r.scan({ signal }).catch(rej);
+    })),
+    writeUrl: ({ url }) => withSheet('Поднеси метку для записи', async signal => {
+      const r = new NDEFReader();
+      await r.write({ records: [{ recordType: 'url', data: url }] }, { signal, overwrite: true });
+      return { written: url };
+    }),
+  };
+}
+if (!JadeNfc && 'NDEFReader' in window) JadeNfc = makeWebNfc();
+// Android app: native plugin has no system sheet — show ours, with a working Cancel
+if (JadeNfc && inApp && typeof Cap.getPlatform === 'function' && Cap.getPlatform() === 'android') {
+  const p = JadeNfc;
+  const w = (fn, text) => async (o = {}) => {
+    const cancel = nfcWait(text).then(() => { p.cancel().catch(() => {}); throw new Error('Отменено'); });
+    try { return await Promise.race([p[fn](o), cancel]); } finally { hideSheet(); }
+  };
+  JadeNfc = { isAvailable: o => p.isAvailable(o), scan: w('scan', 'Поднеси метку к телефону'),
+    writeUrl: w('writeUrl', 'Поднеси метку для записи'), enableCounter: w('enableCounter', 'Поднеси метку для настройки счётчика') };
+}
+function nfcErr(e) { const m = (e && (e.message || e.errorMessage)) || String(e); if (!/Отменено|cancel/i.test(m)) toast('NFC: ' + m, 4000); }
+function nfcRow(label, value) { return `<div class="row"><span><small>${label}</small><b style="word-break:break-all">${esc(value)}</b></span></div>`; }
+function nfcSheet(r, title) {
+  const rows = [nfcRow('Чип', r.chip || r.family || '—'), nfcRow('UID', r.uid || '—')];
+  if (r.family !== 'web') rows.push(nfcRow('Счётчик касаний', r.counter == null ? 'выключен' : String(r.counter)));
+  if (r.ndef && r.ndef.length) rows.push(nfcRow('Записано в чипе', r.ndef.join(' · ')));
+  if (r.signature) rows.push(nfcRow('Подпись NXP', r.signature.slice(0, 16) + '…'));
+  const canSetup = r.family === 'ultralight' || r.family === 'web';
+  sheet(`<div class="sh-head"><div><div class="sh-state">${title}</div><div class="sh-name">Чип брелока</div></div></div>
+    <div class="rows">${rows.join('')}</div>
+    ${canSetup ? `<div class="btns">${r.counter == null && r.family !== 'web' ? '<button class="btn" id="nfcCnt">Включить счётчик</button>' : ''}<button class="btn" id="nfcUrl">Записать ссылку</button></div>` : ''}
+    <div class="btns"><button class="btn main" id="nfcAgain">Прочитать ещё</button></div>`);
+  $('nfcAgain').onclick = nfcScan;
+  if ($('nfcCnt')) $('nfcCnt').onclick = async () => { try { await JadeNfc.enableCounter(); toast('Счётчик включён'); nfcScan(); } catch (e) { nfcErr(e); } };
+  if ($('nfcUrl')) $('nfcUrl').onclick = () => nfcWriteForm(r);
+}
+function nfcNormalize(v) {
+  v = v.trim();
+  if (!v) return '';
+  if (/^(https?:|tel:|mailto:|sms:|geo:)/i.test(v)) return v;
+  if (/^\+?[\d\s()-]{6,}$/.test(v)) return 'tel:' + v.replace(/[\s()-]/g, '');
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return 'mailto:' + v;
+  if (/^@?[A-Za-z0-9_]{4,}$/.test(v) && v.startsWith('@')) return 'https://t.me/' + v.slice(1);
+  return 'https://' + v.replace(/^\/+/, '');
+}
+function nfcWriteForm(r) {
+  const cur = (r && r.ndef && r.ndef[0]) || NFC_URL;
+  const presets = [['Сканер JadeKey', NFC_URL], ['Сайт', 'https://jadekey.tech'], ['Мой Telegram', '@direkto']];
+  sheet(`<div class="sh-head"><div><div class="sh-state">Запись в чип</div><div class="sh-name">Что записать?</div></div></div>
+    <p class="sh-note">Ссылка, телефон, почта или @telegram. Старая запись сотрётся.</p>
+    <input id="nfcIn" value="${esc(cur)}" autocapitalize="off" autocorrect="off" spellcheck="false"
+      style="width:100%;margin-top:12px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);font-size:16px">
+    <div class="btns">${presets.map((p, i) => `<button class="btn" data-p="${i}">${p[0]}</button>`).join('')}</div>
+    <p class="sh-note" id="nfcPrev"></p>
+    <div class="btns"><button class="btn" id="nfcBack">Назад</button><button class="btn main" id="nfcGo">Записать</button></div>`);
+  const upd = () => { $('nfcPrev').textContent = 'Будет записано: ' + (nfcNormalize($('nfcIn').value) || '—'); };
+  $('nfcIn').oninput = upd; upd();
+  document.querySelectorAll('#sheet [data-p]').forEach(b => b.onclick = () => { $('nfcIn').value = presets[+b.dataset.p][1]; upd(); });
+  $('nfcBack').onclick = () => nfcSheet(r, 'Прочитан');
+  $('nfcGo').onclick = async () => {
+    const url = nfcNormalize($('nfcIn').value);
+    if (!url) { toast('Пусто'); return; }
+    if (url.length > 120) { toast('Слишком длинно для этого чипа (макс ~120 символов)', 4000); return; }
+    try { await JadeNfc.writeUrl({ url }); toast('Записано'); nfcScan(); } catch (e) { nfcErr(e); }
+  };
+}
+async function nfcScan() {
+  hideSheet();
+  try { const r = await JadeNfc.scan({}); nfcSheet(r, 'Прочитан'); }
+  catch (e) {
+    const m = (e && (e.message || e.errorMessage)) || String(e);
+    if (/not implemented|UNIMPLEMENTED/i.test(m)) toast('NFC: обнови приложение в TestFlight до сборки 19+', 5000);
+    else if (/NotAllowed|permission/i.test(m)) toast('NFC: разреши доступ к NFC для сайта и включи NFC в настройках телефона', 6000);
+    else nfcErr(e);
+  }
+}
+if (JadeNfc || /Android/i.test(navigator.userAgent)) {
+  $('nNfc').style.display = '';
+  $('nNfc').onclick = JadeNfc ? nfcScan : () => {
+    const why = !window.isSecureContext ? 'Сайт открыт без https. Открой https://jadekey.tech/scan.html'
+      : !/Chrome\//.test(navigator.userAgent) || /SamsungBrowser|MiuiBrowser|YaBrowser|OPR\//.test(navigator.userAgent)
+        ? 'NFC в браузере работает только в Google Chrome. Открой эту страницу в Chrome'
+        : 'Этот Chrome не поддерживает NFC. Обнови Chrome в Play Маркете и включи NFC в настройках телефона';
+    sheet(`<div class="sh-head"><div><div class="sh-state warn">NFC недоступен</div><div class="sh-name">Нужен Chrome</div></div></div>
+      <p class="sh-note">${esc(why)}</p><p class="sh-note" style="font-size:11px;opacity:.6">${esc(navigator.userAgent)}</p>
+      <div class="btns"><button class="btn main" id="nfcOk">Понятно</button></div>`);
+    $('nfcOk').onclick = hideSheet;
+  };
+}
+
+loadStones();
+loadModel();
+if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showTeaser, showLove, LV, liveRender, liveDone };
+(function liveInit() {
+  const g = new URLSearchParams(location.search).get('g');
+  if (g && /^[\w-]+\.[a-z0-9]+$/.test(g)) { const [id, claim] = g.split('.'); openGift(id, claim); }
+  else if (new URLSearchParams(location.search).has('live')) { tab('live'); liveHome(); }
+})();
+</script>
+</body>
+</html>
