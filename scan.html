@@ -2,6 +2,13 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JadeKey">
 <script>
 // Android: turn on multi-core CPU for the scanner via a service worker (one reload on first visit)
 window.__coi = new Promise(res => {
@@ -271,6 +278,7 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
       <h1>Живой камень</h1>
       <div class="sub">Купил камень с рисунком? Оживи его за пару минут и подари: камень будет каждый день открывать послание.</div>
       <button class="btn main" id="lvStart">Оживить камень</button>
+      <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
       <div id="lvMine"></div>
     </div>
@@ -2066,6 +2074,12 @@ $('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.
 $('lvHidden').onclick = () => { if (LV.busy) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
 $('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; liveRender(); };
 $('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; liveRender(); };
+
+// install as an app (Chrome on Android)
+let installEv = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; $('lvInstall').style.display = ''; });
+window.addEventListener('appinstalled', () => { installEv = null; $('lvInstall').style.display = 'none'; toast('JadeKey появился на экране телефона'); });
+$('lvInstall').onclick = async () => { if (!installEv) return; installEv.prompt(); try { await installEv.userChoice; } catch (e) {} installEv = null; $('lvInstall').style.display = 'none'; };
 
 // ---------- tabs ----------
 function tab(name) {
