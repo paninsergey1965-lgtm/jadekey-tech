@@ -1841,7 +1841,7 @@ async function openGift(id, claim) {
     const P = p.profile || {}, mine = p.owner === myUid();
     if (!mine) remember(id, 'got');
     const title = mine ? 'Это твой камень' : s.mode === 'tal' ? `${esc(P.name || 'Тебе')}, это твой талисман` : s.mode === 'ny' && P.kid ? 'Тебе подарок от Деда Мороза' : P.from ? `${esc(P.from)} дарит тебе живой камень` : 'Тебе подарили живой камень';
-    const home = inApp ? '' : ' Удобнее всего добавить её на экран телефона: «Поделиться» → «На экран „Домой“».';
+    const home = inApp ? '' : /Android/i.test(navigator.userAgent) ? ' Удобнее всего добавить её на экран телефона: меню ⋮ → «Добавить на главный экран».' : ' Удобнее всего добавить её на экран телефона: «Поделиться» → «На экран „Домой“».';
     sheet(`<div style="text-align:center"><div class="sh-state">✦ Живой камень</div><img class="tz-img" src="${s.thumb || ''}" alt=""><div class="sh-name">${title}</div><p class="sh-note">${LIVE_DESC[s.mode] || ''}</p><p class="sh-note">Открыть его можно только с этого телефона и только с самим камнем. В следующий раз просто открой эту страницу.${home}</p></div><div class="btns"><button class="btn main" id="goScan">Навести на камень</button></div>`);
     $('goScan').onclick = () => { hideSheet(); tab('scan'); $('shutter').click(); };
   } catch (e) { veil(); toast('Не удалось открыть подарок: ' + e.message, 6000); }
