@@ -243,7 +243,7 @@ body.love .gem{stroke:#ff8fb1}
     'Сначала добавь хотя бы один камень на вкладке «Добавить».': 'First add at least one stone on the «Add» tab.',
     'Камень на кадре не найден': 'No stone found in the frame', 'Не получилось, попробуй ещё': "Didn't work, try again",
     'Пока пусто. Добавь первый камень.': 'Empty so far. Add your first stone.',
-    'Пароль администратора': 'Admin password', 'Вход…': 'Signing in…', 'Режим администратора включён': 'Admin mode on', 'Режим администратора выключен': 'Admin mode off', 'Выйти из режима администратора?': 'Leave admin mode?', 'Только для администратора': 'Admin only', 'Изменить': 'Edit', 'Удалить': 'Delete', 'Удаляю…': 'Deleting…', 'Неверный PIN': 'Wrong PIN', 'PIN владельца': 'Owner PIN',
+    'Пароль администратора': 'Admin password', 'Вход…': 'Signing in…', 'Режим администратора включён': 'Admin mode on', 'Режим администратора выключен': 'Admin mode off', 'Выйти из режима администратора?': 'Leave admin mode?', 'Только для администратора': 'Admin only', 'Сверяю с коллекцией…': 'Checking the collection…', 'Изменить': 'Edit', 'Удалить': 'Delete', 'Удаляю…': 'Deleting…', 'Неверный PIN': 'Wrong PIN', 'PIN владельца': 'Owner PIN',
     'Придумай PIN владельца (им защищены добавление, правка и удаление камней на этом телефоне)':
       'Create an owner PIN (it protects adding, editing and deleting stones on this phone)',
     'Переснять камень': 'Retake stone', 'Запоминаю камень…': 'Memorising the stone…',
@@ -1094,7 +1094,7 @@ async function identify(cv, status = () => {}) {
   const rect = q0.b.rect > 0.9;
   let best = null;
   for (const { s } of ranked) {
-    status(`Сверяю с «${s.name}»…`); await tick();
+    status('Сверяю с коллекцией…'); await tick();
     let ref;
     try { ref = await getPatches(s); } catch (e) { continue; }
     const rots = rect ? [0, 90, 180, 270] : [0, 90, 180, 270, 45, 135, 225, 315];
