@@ -6,7 +6,7 @@ self.addEventListener('fetch', e => {
   if (r.cache === 'only-if-cached' && r.mode !== 'same-origin') return;
   const u = new URL(r.url);
   if (u.origin !== self.location.origin) return;
-  if (r.mode === 'navigate' && !/\/live\.html$/.test(u.pathname)) return;   // only live.html becomes isolated
+  if (r.mode === 'navigate' && !/\/(live|scan)\.html$/.test(u.pathname)) return;   // only live.html becomes isolated
   e.respondWith(fetch(r).then(res => {
     if (!res || res.status === 0 || res.type === 'opaque') return res;
     const h = new Headers(res.headers);

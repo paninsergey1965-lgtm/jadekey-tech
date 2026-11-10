@@ -2,6 +2,20 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<script>
+// Android: turn on multi-core CPU for the scanner via a service worker (one reload on first visit)
+window.__coi = new Promise(res => {
+  try {
+    if (!/Android/i.test(navigator.userAgent) || window.crossOriginIsolated || !('serviceWorker' in navigator) || !window.isSecureContext || /[?&]nocoi/.test(location.search)) return res();
+    const tried = sessionStorage.getItem('jk_coi');
+    navigator.serviceWorker.register('coi-sw.js', { scope: './' }).then(() => {
+      if (tried) return res();
+      const go = () => { sessionStorage.setItem('jk_coi', '1'); location.reload(); };
+      if (navigator.serviceWorker.controller) go(); else { navigator.serviceWorker.addEventListener('controllerchange', go); setTimeout(res, 4000); }
+    }).catch(() => res());
+  } catch (e) { res(); }
+});
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <meta name="theme-color" content="#0a1310">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -125,6 +139,56 @@ body.love .gem{stroke:#ff8fb1}
 .veil.on{display:flex}
 .ring{width:40px;height:40px;border:3px solid #3fd8a233;border-top-color:var(--jade);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- live stones ---------- */
+nav{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:1fr}
+input,textarea{-webkit-user-select:text;user-select:text}
+.steps{display:flex;gap:4px;margin:2px 0 14px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--jade)}
+.qrow{display:flex;gap:14px;justify-content:center;font-size:13px;color:var(--mute);margin:10px 0 0;min-height:18px}
+.qrow .ok{color:var(--jade)} .qrow .no{color:var(--bad)}
+.verdict{border-radius:14px;padding:12px 14px;margin:12px 0 0;font-weight:600;font-size:14px;display:none}
+.verdict.ok{display:block;background:#3fd8a222;color:#7ff0c4}
+.verdict.no{display:block;background:#ff7a6622;color:#ffb3a6}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:11px 6px;border-radius:12px;border:1px solid var(--line);font-size:14px;font-weight:600;color:var(--mute)}
+.seg button.on{border-color:var(--jade);color:var(--jade)}
+.lvlink{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:12px;font-size:13px;word-break:break-all;margin:12px 0 0}
+.mine{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.mine img{width:52px;height:52px;border-radius:12px;object-fit:cover;flex:none;background:#0006}
+.mine span{flex:1;min-width:0}
+.mine b{display:block;font-family:var(--serif);font-weight:400;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mine small{color:var(--mute);font-size:12px}
+.tag{flex:none !important;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.t-love{background:#ff8fb122;color:#ffaecb} .t-ny{background:#f2c45a22;color:#ffd987} .t-tal{background:#b79cff22;color:#d5c6ff}
+.sheet.ny{background:linear-gradient(180deg,#132650,#0a1530);border-top-color:#2f4d86}
+.ny-k{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#f2c45a;margin:6px 0 8px}
+.ny-cd{font-family:var(--serif);font-size:34px;font-variant-numeric:tabular-nums;color:#fff;margin:0 0 12px}
+.adv{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:12px 0 4px}
+.adv span{aspect-ratio:1;border-radius:9px;background:#ffffff0d;border:1px solid #2a3d66;color:#7f93bd;font-weight:700;font-size:12px;display:grid;place-items:center}
+.adv span.o{background:linear-gradient(160deg,#c9322f,#7d1715);border-color:#e0504c;color:#ffe7b0}
+.adv span.t{background:linear-gradient(160deg,#f2c45a,#c98a1c);border-color:#ffe3a1;color:#2a1600}
+.ny-msg{font-family:var(--serif);font-size:25px;line-height:1.28;color:#fff;margin:6px 0 10px}
+.ny-big{font-family:var(--serif);font-size:40px;line-height:1.1;color:#ffe3a1;margin:4px 0}
+.sheet.ny .sh-note{color:#9fb3dc} .sheet.ny .btn.main{background:#f2c45a;color:#2a1600}
+.sheet.tal{background:linear-gradient(180deg,#3b2a5e,#140d24);border-top-color:#5b4590}
+.tl-k{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:#cdb8ff;margin:6px 0 8px;text-align:center}
+.tl-img{width:110px;height:110px;border-radius:50%;object-fit:cover;display:block;margin:4px auto 10px;box-shadow:0 0 0 1px #ffffff30,0 0 40px #b79cff55}
+.tl-wish{font-family:var(--serif);font-size:25px;line-height:1.28;color:#fff;text-align:center;margin:6px 0 12px}
+.tl-row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #ffffff22;padding-top:10px;font-size:13px;color:#cdb8ff}
+.tl-row b{display:block;font-family:var(--serif);font-weight:400;font-size:19px;color:#fff}
+.tl-rit{margin-top:10px;font-size:14px;color:#e6dcff;background:#ffffff10;border-radius:12px;padding:10px 12px}
+.sheet.tal .btn.main{background:#fff;color:#1a1030} .sheet.tal .sh-note{color:#b9a8dd}
+.tz-img{width:150px;height:150px;border-radius:50%;object-fit:cover;display:block;margin:8px auto 14px;box-shadow:0 0 0 1px #ffffff30,0 0 50px #3fd8a244;background:#0006}
+.tz-lock{display:inline-block;background:#ffffff14;border-radius:999px;padding:7px 14px;font-size:13px;margin:8px 0 10px}
+.tz-facts{display:flex;justify-content:center;gap:24px;font-size:12px;color:var(--mute);margin:6px 0 4px}
+.tz-facts b{display:block;font-family:var(--serif);font-weight:400;font-size:24px;color:var(--fg)}
+.lv-rain.fx-snow span{bottom:auto;top:-30px;animation-name:lvfall}
+@keyframes lvfall{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.9}100%{transform:translateY(108vh) translateX(var(--dx));opacity:.15}}
+canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:61}
+.fld[type=date]{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;text-align:left}
+
 </style>
 </head>
 <body>
@@ -199,10 +263,45 @@ body.love .gem{stroke:#ff8fb1}
   </div>
 </section>
 
+
+<!-- ============ LIVE STONES ============ -->
+<section class="view" id="vLive">
+  <div class="page">
+    <div id="lvHomeBox">
+      <h1>Живой камень</h1>
+      <div class="sub">Купил камень с рисунком? Оживи его за пару минут и подари: камень будет каждый день открывать послание.</div>
+      <button class="btn main" id="lvStart">Оживить камень</button>
+      <div class="h2">Мои камни</div>
+      <div id="lvMine"></div>
+    </div>
+    <div id="lvWiz" style="display:none">
+      <div class="steps" id="lvSteps"></div>
+      <h1 id="lvH">Сторона А</h1>
+      <div class="sub" id="lvSub"></div>
+      <div id="lvCam">
+        <div class="cambox">
+          <video id="vidL" playsinline muted autoplay></video>
+          <canvas class="ov" id="ovL"></canvas>
+          <div class="idle" id="idleL" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Положи камень на однотонный фон при хорошем свете и нажми «Снять»</p></div>
+          <div class="hud"><div class="msg" id="msgL">Готов</div><div class="sharp"><i id="barL"></i></div></div>
+        </div>
+        <div class="qrow" id="lvQ"></div>
+        <div class="verdict" id="lvV"></div>
+        <div class="btns"><button class="btn main" id="lvShoot">Снять</button></div>
+        <div class="btns" id="lvHiddenBox"><button class="btn" id="lvHidden">Вторая сторона закрыта оправой</button></div>
+      </div>
+      <div id="lvForm" style="display:none"></div>
+      <div id="lvDone" style="display:none"></div>
+      <div class="btns" id="lvNavBox"><button class="btn" id="lvBack">Отмена</button><button class="btn main" id="lvNext">Далее</button></div>
+    </div>
+  </div>
+</section>
+
 <nav>
   <button id="nScan" class="on"><svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 12h8"/></svg>Сканер</button>
   <button id="nColl" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 3 20 9l-3 11H7L4 9z"/><path d="M4 9h16"/></svg>Коллекция</button>
   <button id="nAdd" style="display:none"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Добавить</button>
+  <button id="nLive"><svg viewBox="0 0 24 24"><path d="M12 3 19 8l-2.5 11h-9L5 8z"/><path d="M12 9.5c1.2-1.6 3.6-.6 2.9 1.3-.5 1.4-2.9 3-2.9 3s-2.4-1.6-2.9-3c-.7-1.9 1.7-2.9 2.9-1.3z"/></svg>Живой</button>
   <button id="nNfc" style="display:none"><svg viewBox="0 0 24 24"><path d="M6 8.5a5 5 0 0 1 0 7"/><path d="M9.5 6a9 9 0 0 1 0 12"/><path d="M13 3.5a13 13 0 0 1 0 17"/></svg>NFC</button>
 </nav>
 
@@ -347,6 +446,8 @@ env.backends.onnx.wasm.wasmPaths = {
   wasm: new URL('./vendor/ort-wasm-simd-threaded.jsep.wasm', location.href).href,
 };
 env.remotePathTemplate = '{model}/';
+const THREADS = (q => q ? Math.max(1, +q || 1) : window.crossOriginIsolated ? Math.max(1, Math.min(4, navigator.hardwareConcurrency || 4)) : 1)(new URLSearchParams(location.search).get('thr'));
+env.backends.onnx.wasm.numThreads = THREADS;
 
 // the two small config files are built in, so only model.onnx is fetched
 const BUILTIN = {
@@ -812,7 +913,7 @@ async function loadModel() {
       extractor = await withTimeout(pipeline('image-feature-extraction', 'dinov2', { dtype: 'fp32', subfolder: '', progress_callback }), 180000);
       fixProc(extractor);
     }
-    chip('Готов · ' + (backend === 'GPU' ? 'GPU' : 'CPU'), 'ok');
+    chip('Готов · ' + (backend === 'GPU' ? 'GPU' : THREADS > 1 ? 'CPU×' + THREADS : 'CPU'), 'ok');
   } catch (err) {
     chip('Модель не загрузилась · нажми', 'err');
     $('chip').onclick = () => { $('chip').onclick = null; loadModel(); };
@@ -977,7 +1078,7 @@ function stopCam() {
   cancelCapture();
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null;
-  for (const c of [camS, camA]) { c.vid.srcObject = null; c.idle.style.display = ''; const g = c.ov.getContext('2d'); g.clearRect(0, 0, c.ov.width, c.ov.height); c.bar.style.width = '0'; }
+  for (const c of [camS, camA, camL]) { c.vid.srcObject = null; c.idle.style.display = ''; const g = c.ov.getContext('2d'); g.clearRect(0, 0, c.ov.width, c.ov.height); c.bar.style.width = '0'; }
 }
 function cancelCapture() { clearTimeout(camTimer); if (camJob) { const j = camJob; camJob = null; j(null); } }
 
@@ -1091,7 +1192,7 @@ async function identify(cv, status = () => {}) {
   const gq = gvecOf(q0.f);
   // coarse prefilter by one mean vector, then the exact geometric check on the closest few
   const ranked = stones.filter(s => s.gv).map(s => ({ s, sc: dot(gq, s.gv) })).sort((a, b) => b.sc - a.sc).slice(0, 4);
-  const rect = q0.b.rect > 0.9;
+  const rect = q0.b.rect > 0.9, mine = myIds();
   let best = null;
   for (const { s } of ranked) {
     status('Сверяю с коллекцией…'); await tick();
@@ -1108,7 +1209,7 @@ async function identify(cv, status = () => {}) {
       if (q === 270 && !rect && verdictOf(local) === 'yes') break;
     }
     if (!local) continue;
-    const entry = { stone: s, res: local, score: local.ratio * local.inl.length };
+    const entry = { stone: s, res: local, score: local.ratio * local.inl.length + (mine.has(s.id) || mine.has(s.of) ? 1 : 0) };
     if (!best || entry.score > best.score) best = entry;
     if (verdictOf(local) === 'yes' && local.inl.length >= MIN_INLIERS * 1.5) break;
   }
@@ -1119,7 +1220,7 @@ async function identify(cv, status = () => {}) {
 
 // ---------- sheet ----------
 function openLink(url) { if (/^(tel:|mailto:)/.test(url)) location.href = url; else window.open(url, '_blank'); }
-function sheet(html) { const s = $('sheet'); s.classList.remove('love'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
+function sheet(html) { const s = $('sheet'); s.classList.remove('love', 'ny', 'tal'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
 function hideSheet() { $('sheet').classList.remove('on'); }
 function contactRows(c) {
   const defs = [['phone', '📞', 'Телефон', v => 'tel:' + v], ['tg', '✈️', 'Telegram', v => 'https://t.me/' + v.replace('@', '')], ['email', '✉️', 'Email', v => 'mailto:' + v], ['site', '🔗', 'Сайт', v => /^https?:/.test(v) ? v : 'https://' + v]];
@@ -1274,8 +1375,11 @@ function showLove(s) {
   $('again').onclick = () => { loveShift = 0; loveStop(); hideSheet(); };
   if (isAdmin) $('lvNext').onclick = () => { loveShift++; showLove(s); };
 }
-function showFound(r) {
-  const s = r.stone, pct = Math.round(r.res.ratio * 100);
+async function showFound(r) {
+  let s = r.stone;
+  if (s.of) s = stones.find(x => x.id === s.of) || s;
+  if (s.mode) { await showLive(s); return; }
+  const pct = Math.round(r.res.ratio * 100);
   if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
   sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
   bindRows(); $('again').onclick = hideSheet;
@@ -1325,14 +1429,29 @@ $('shutter').onclick = async () => {
 // ---------- collection view ----------
 function renderColl() {
   const q = $('search').value.trim().toLowerCase();
-  const list = stones.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
-  $('collSub').textContent = stones.length ? `${stones.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(stones.length)}` : 'Пока пусто. Добавь первый камень.';
-  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${esc(s.jk || '')}</span></div></button>`).join('');
+  const all = stones.filter(s => !s.of);
+  const list = all.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
+  $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)}` : 'Пока пусто. Добавь первый камень.';
+  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${s.mode ? '<i class="tag t-' + s.mode + '">' + LIVE_MODES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
   $('grid').querySelectorAll('.card').forEach(b => b.onclick = () => showInfo(stones.find(s => s.id === b.dataset.id)));
 }
 $('search').oninput = renderColl;
 
 function showInfo(s) {
+  if (s.mode) {
+    const sides = stones.filter(x => x.of === s.id).length + 1;
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
+    $('again').onclick = hideSheet;
+    $('lvOpen').onclick = () => showLive(s);
+    $('del').onclick = async () => {
+      if (!(await ownerOk())) return;
+      if (!confirm(`Удалить живой камень «${s.name || ''}»? Послания перестанут открываться.`)) return;
+      veil('Удаляю…');
+      try { await deleteLive(s, await authToken()); await loadStones(); hideSheet(); } catch (e) { toast('Не удалось удалить: ' + e.message); }
+      veil();
+    };
+    return;
+  }
   sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
@@ -1465,16 +1584,500 @@ $('btnSave').onclick = async () => {
   veil();
 };
 
+
+// =====================================================================
+//  Живые камни: покупатель сам оживляет камень, получатель открывает по ссылке
+// =====================================================================
+const COLV = 'jk2_private';
+const LIVE_MODES = { love: 'Love', ny: 'Новый год', tal: 'Талисман' };
+const LIVE_DESC = {
+  love: 'Каждый день новое послание от дарителя, с именами и счётчиком дней вместе.',
+  ny: 'Каждый день декабря открывается окошко с сюрпризом, а в полночь Нового года — главное поздравление.',
+  tal: 'Каждый день пожелание, слово дня и маленький ритуал.'
+};
+const ls = {
+  get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+  list: k => { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) { return []; } }
+};
+const strHash = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+const dayNum = d => Math.floor((d.getTime() - d.getTimezoneOffset() * 6e4) / 864e5);
+const plural = (n, a, b, c) => n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c;
+const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
+// ?date=2026-12-05 lets the admin preview another day
+const NOW = () => { const q = new URLSearchParams(location.search).get('date'); if (q && isAdmin) { const d = new Date(q + 'T' + new Date().toTimeString().slice(0, 8)); if (!isNaN(d)) return d; } return new Date(); };
+
+// ---------- phone identity (Firebase anonymous sign-in) ----------
+const ANON = { id: null, exp: 0, uid: null };
+async function anonToken(create = true) {
+  if (ANON.id && Date.now() < ANON.exp) return ANON.id;
+  const rt = ls.get('jk2_anon_rt');
+  if (rt) {
+    const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.id_token) {
+      ANON.id = j.id_token; ANON.exp = Date.now() + (Number(j.expires_in || 3600) - 120) * 1000; ANON.uid = j.user_id;
+      ls.set('jk2_anon_rt', j.refresh_token); ls.set('jk2_anon_uid', j.user_id);
+      return ANON.id;
+    }
+  }
+  if (!create) return null;
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.idToken) throw new Error('телефон не зарегистрировался (' + ((j.error && j.error.message) || r.status) + ')');
+  ANON.id = j.idToken; ANON.exp = Date.now() + (Number(j.expiresIn || 3600) - 120) * 1000; ANON.uid = j.localId;
+  ls.set('jk2_anon_rt', j.refreshToken); ls.set('jk2_anon_uid', j.localId);
+  return ANON.id;
+}
+const myUid = () => ANON.uid || ls.get('jk2_anon_uid');
+async function readToken() {
+  if (isAdmin) { const t = await authToken(); if (t) return t; }
+  try { return await anonToken(false); } catch (e) { return null; }
+}
+async function fsReq(method, path, token, data, mask) {
+  const url = `${BASE}/${path}${path.includes('?') ? '&' : '?'}key=${FS.key}${(mask || []).map(k => '&updateMask.fieldPaths=' + k).join('')}`;
+  const h = { 'Content-Type': 'application/json' }; if (token) h.Authorization = 'Bearer ' + token;
+  const r = await fetch(url, { method, headers: h, body: data ? JSON.stringify(fsFields(data)) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) { const e = new Error((j.error && (j.error.message || j.error.status)) || ('HTTP ' + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+async function readPriv(id) {
+  try {
+    const j = await fsReq('GET', `${COLV}/${id}`, await readToken());
+    const p = fromFs(j.fields);
+    try { p.profile = JSON.parse(p.profile || '{}'); } catch (e) { p.profile = {}; }
+    return p;
+  } catch (e) { if (e.status === 403 || e.status === 404 || e.status === 401) return null; throw e; }
+}
+function remember(id, kind) { const k = 'jk2_mine_' + kind, a = ls.list(k); if (!a.includes(id)) { a.push(id); ls.set(k, JSON.stringify(a)); } }
+function myIds() {
+  const a = new Set(ls.list('jk2_mine_own').concat(ls.list('jk2_mine_got'))), u = myUid();
+  if (u) stones.forEach(s => { if (s.owner === u && !s.of) a.add(s.id); });
+  return a;
+}
+const giftLink = (id, claim) => `${location.origin}${location.pathname}?g=${id}.${claim}`;
+
+// ---------- sounds (synthesised, no files) ----------
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+const synthCache = {};
+function synthWav(kind) {
+  if (synthCache[kind]) return synthCache[kind];
+  const rate = 22050;
+  let out;
+  const add = (f, t0, amp, dec, parts) => {
+    const i0 = Math.floor(t0 * rate), len = Math.min(out.length - i0, Math.floor(dec * 5 * rate));
+    for (let i = 0; i < len; i++) { const t = i / rate; let v = 0; for (const [k, g, d] of parts) v += g * Math.sin(2 * Math.PI * f * k * t) * Math.exp(-t / (dec * d)); out[i0 + i] += amp * v; }
+  };
+  if (kind === 'bells') {
+    out = new Float32Array(Math.floor(rate * 4.4));
+    [83, 88, 90, 88, 86, 83, 86, 88, 91, 88].forEach((m, i) => add(mf(m), 0.05 + i * 0.26, 0.2, 0.5, [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.18, 0.25]]));
+    for (let b = 0; b < 22; b++) { const i0 = Math.floor((0.05 + b * 0.13) * rate), L = Math.floor(rate * 0.07); for (let i = 0; i < L && i0 + i < out.length; i++) out[i0 + i] += (Math.random() * 2 - 1) * 0.07 * (1 - i / L); }
+  } else if (kind === 'bowl') {
+    out = new Float32Array(rate * 7);
+    add(196, 0.05, 0.32, 1.6, [[1, 1, 1], [1.004, 0.8, 1], [2.71, 0.35, 0.6], [5.15, 0.15, 0.35]]);
+  } else {   // fireworks
+    out = new Float32Array(rate * 4);
+    for (let k = 0; k < 8; k++) {
+      const i0 = Math.floor((0.1 + k * 0.4 + Math.random() * 0.15) * rate); let lp = 0;
+      for (let i = 0; i < rate * 0.6 && i0 + i < out.length; i++) { lp += ((Math.random() * 2 - 1) - lp) * 0.3; out[i0 + i] += lp * 0.5 * Math.exp(-i / (rate * 0.15)); }
+      add(mf(84 + (k * 5) % 12), 0.15 + k * 0.4, 0.08, 0.4, [[1, 1, 1], [2.76, 0.3, 0.5]]);
+    }
+  }
+  return synthCache[kind] = wavUrl(out, rate);
+}
+function playWav(url) { if (loveMuted()) return; try { loveAudio.pause(); loveAudio.src = url; const p = loveAudio.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+const sndBtn = () => `<button class="btn" id="lvSnd" style="flex:0 0 58px;padding-left:0;padding-right:0" title="Звук">${loveMuted() ? '🔇' : '🔊'}</button>`;
+function bindSnd(src) {
+  const b = $('lvSnd'); if (!b) return;
+  b.onclick = () => { const m = !loveMuted(); ls.set('jk2_mute', m ? '1' : '0'); b.textContent = m ? '🔇' : '🔊'; if (m) loveStop(); else playWav(src()); };
+}
+
+// ---------- effects ----------
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fxRise(chars, cols, n) {
+  if (calm()) return;
+  const box = document.createElement('div'); box.className = 'lv-rain';
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement('span'); h.textContent = chars[i % chars.length];
+    h.style.left = (Math.random() * 96) + '%'; h.style.fontSize = (10 + Math.random() * 22) + 'px'; h.style.color = cols[i % cols.length];
+    h.style.setProperty('--dx', (Math.random() * 100 - 50) + 'px'); h.style.setProperty('--rot', (Math.random() * 80 - 40) + 'deg');
+    h.style.animationDuration = (3.4 + Math.random() * 3) + 's'; h.style.animationDelay = (Math.random() * 1.5) + 's';
+    box.appendChild(h);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 8500);
+}
+function fxSnow() {
+  if (calm()) return;
+  const box = document.createElement('div'); box.className = 'lv-rain fx-snow';
+  for (let i = 0; i < 44; i++) {
+    const s = document.createElement('span'); s.textContent = i % 5 ? '•' : '❄';
+    s.style.left = (Math.random() * 100) + '%'; s.style.fontSize = (8 + Math.random() * 16) + 'px'; s.style.color = '#fff';
+    s.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+    s.style.animationDuration = (4 + Math.random() * 4) + 's'; s.style.animationDelay = (Math.random() * 3) + 's';
+    box.appendChild(s);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 11500);
+}
+function fxFireworks() {
+  if (calm()) return;
+  const c = document.createElement('canvas'); c.className = 'fw'; document.body.appendChild(c);
+  const W = c.width = innerWidth, H = c.height = innerHeight, g = c.getContext('2d'), bs = [];
+  for (let k = 0; k < 7; k++) setTimeout(() => {
+    const x = 40 + Math.random() * (W - 80), y = 80 + Math.random() * H * 0.4, p = [];
+    for (let i = 0; i < 50; i++) { const a = i / 50 * Math.PI * 2, v = 1.5 + Math.random() * 2.5; p.push([x, y, Math.cos(a) * v, Math.sin(a) * v]); }
+    bs.push({ h: Math.random() * 360, p, t: 0 });
+  }, k * 380);
+  let t = 0;
+  const loop = () => {
+    g.clearRect(0, 0, W, H);
+    for (const b of bs) { b.t++; g.fillStyle = `hsla(${b.h},90%,65%,${Math.max(0, 1 - b.t / 90)})`; for (const q of b.p) { q[0] += q[2]; q[1] += q[3]; q[3] += 0.04; g.beginPath(); g.arc(q[0], q[1], 2.2, 0, 7); g.fill(); } }
+    if (++t < 340) requestAnimationFrame(loop); else c.remove();
+  };
+  loop();
+}
+
+// ---------- texts ----------
+const NY_ADULT = [
+  'Сегодня разреши себе ничего не успевать.', 'Загадай желание. Вечером расскажешь, какое.', 'Купи мандарины. Это обязательная часть плана.',
+  'Включи музыку и потанцуй ровно одну песню.', 'Напиши тому, по кому скучаешь.', 'Сегодня вечер пледа и кино.',
+  'Вспомни три лучших момента этого года.', 'Ты справилась с этим годом. Это много.', 'Сделай фото в зимней шапке и пришли мне.',
+  'Выпей горячий шоколад, остальное подождёт.', 'Сегодня хороший день, чтобы украсить дом.', 'Выйди на улицу и поймай снежинку.',
+  'Напиши список того, что хочешь взять в новый год.', 'Сегодня можно лечь спать пораньше. Это подарок себе.', 'Улыбнись: до праздника всё ближе.',
+  'Подари кому-нибудь маленькую радость без повода.', 'Вспомни, о чём ты мечтала год назад. Многое сбылось.', 'Сегодня — время для любимой новогодней песни.',
+  'Скажи себе спасибо за этот год.', 'Зажги вечером свечу и помолчи пять минут.', 'Сегодня тебя ждёт что-то хорошее. Посмотри внимательнее.',
+  'Испеки или купи что-нибудь с корицей.', 'Позвони родным просто так.', 'Выбери, где встретишь первый рассвет нового года.',
+  'Подумай, кого хочешь обнять в новогоднюю ночь.', 'Сегодня можно всё отложить на завтра.', 'Проверь, есть ли у тебя бенгальские огни.',
+  'Напиши себе письмо в следующий декабрь.', 'Ещё чуть-чуть, и начнётся новая глава.', 'Завтра последнее окошко. Не забудь про полночь.'];
+const NY_KID = [
+  'Дед Мороз прочитал твоё письмо и улыбнулся.', 'Задание от эльфов: нарисуй снеговика.', 'Снеговики передают тебе привет.',
+  'Олень Рудольф спрашивает: ты помогал сегодня маме?', 'Загадка: зимой и летом одним цветом. Что это?', 'Сегодня можно лечь спать на десять минут позже.',
+  'Эльфы уже упаковывают подарки. С бантиками!', 'Слепи из пластилина ёлку.', 'Снегурочка говорит, что ты очень добрый.',
+  'Посчитай, сколько огоньков на твоей ёлке.', 'Дед Мороз уже готовит сани.', 'Помоги сегодня украсить дом.',
+  'Выучи короткий стишок для Деда Мороза.', 'Нарисуй, какой подарок ты ждёшь.', 'Белки в лесу тоже наряжают ёлку. Шишками!',
+  'Сегодня день добрых дел: сделай одно.', 'Слепи снежок и загадай желание.', 'Эльфы проверяют списки. Ты в списке хороших!',
+  'Сделай снежинку из бумаги.', 'Спой новогоднюю песенку.', 'Дед Мороз проверяет карту, чтобы не заблудиться.',
+  'Обними сегодня всех, кого любишь.', 'Посмотри мультик про зиму.', 'Сани почти готовы, олени тренируются.',
+  'Повесь на ёлку игрушку, которую сделал сам.', 'Дед Мороз уже выехал из Великого Устюга!', 'Слушайся сегодня взрослых — эльфы всё видят.',
+  'Положи под ёлку записку для Деда Мороза.', 'Скоро праздник! Осталось чуть-чуть.', 'Завтра последнее окошко. Самое главное — в полночь!'];
+const TAL_W = [
+  'Сегодня всё идёт своим чередом. Не торопи ни одно событие.', 'Сделай сегодня один шаг, который откладывал. Только один.', 'Скажи сегодня то, что давно хотел сказать. Простыми словами.',
+  'Будь к себе так же добр, как к лучшему другу.', 'Тихий день — тоже победа.', 'Удача любит тех, кто начинает.', 'Перемены уже начались. Позволь им идти.',
+  'Сегодня хороший день, чтобы чему-то научиться.', 'Опирайся на то, что у тебя уже есть. Этого больше, чем кажется.', 'Ясность приходит, когда перестаёшь спешить.',
+  'Сделай сегодня что-нибудь только для себя.', 'Ты сильнее, чем думаешь. Сегодня это будет видно.', 'Отпусти то, что не можешь изменить.',
+  'Сегодня стоит сказать кому-то спасибо.', 'Маленький порядок вокруг — большой порядок внутри.', 'Доверься первому впечатлению.',
+  'Сегодня день, чтобы закончить начатое.', 'Улыбнись незнакомцу. Это вернётся.', 'Не сравнивай себя ни с кем, кроме себя вчерашнего.',
+  'Хорошие новости уже в пути.', 'Сегодня можно позволить себе отдых без чувства вины.'];
+const TAL_WORD = ['Опора', 'Смелость', 'Ясность', 'Забота', 'Покой', 'Удача', 'Рост', 'Свет', 'Тепло', 'Доверие', 'Лёгкость', 'Сила', 'Радость', 'Терпение'];
+const TAL_SIGN = ['Улыбка незнакомца', 'Зелёный свет', 'Солнечный луч', 'Старая песня', 'Тёплый ветер', 'Случайная встреча', 'Чистое небо', 'Белое перо', 'Знакомый запах', 'Красная машина', 'Звонок старого друга'];
+const TAL_RIT = [
+  'подержи камень в ладони десять секунд и сделай три медленных вдоха.', 'перед важным разговором коснись камня.', 'посмотри на камень минуту и запиши одну мысль, которая придёт.',
+  'положи камень у кровати и вспомни перед сном одно хорошее событие дня.', 'поставь камень у окна на весь день.', 'возьми камень с собой и вспомни о нём в полдень.',
+  'загадай на сегодня одно маленькое желание.', 'проведи пальцем по рисунку камня и подумай, за что ты благодарен.', 'утром скажи камню, какой день ты себе желаешь.'];
+
+// ---------- mode screens ----------
+let nyTimer = null, talShift = 0;
+function showNY(s, P) {
+  const now = NOW(), y = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const dec1 = new Date(y, 11, 1), ny = new Date(y + 1, 0, 1), end = new Date(y + 1, 0, 8);
+  const pool = P.kid ? NY_KID : NY_ADULT, h = strHash(s.id), to = esc(P.to || ''), sign = P.kid ? 'Дед Мороз' : esc(P.from || '');
+  let body;
+  if (now >= ny) {
+    body = `<div class="ny-k">✦ 1 января ${y + 1}</div><div class="ny-big">С Новым годом${to ? ', ' + to : ''}!</div><div class="ny-msg">${esc(P.midnight || (P.kid ? 'Ты молодец! Пусть этот год будет полон чудес.' : 'Пусть этот год будет самым тёплым из всех.'))}</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}${now >= end ? '<p class="sh-note">Праздники позади, но поздравление остаётся с тобой.</p>' : ''}`;
+  } else if (now >= dec1) {
+    const d = now.getDate();
+    const grid = Array.from({ length: 31 }, (_, i) => `<span class="${i + 1 < d ? 'o' : i + 1 === d ? 't' : ''}">${i + 1}</span>`).join('');
+    const msg = d === 31 ? 'Сегодня последнее окошко. В полночь камень откроет главное поздравление.' : pool[(d - 1 + h) % pool.length];
+    body = `<div class="ny-k">✦ До Нового года</div><div class="ny-cd" id="nyCd"></div>${to ? `<div class="lv-to" style="color:#ffe3a1">${to},</div>` : ''}<div class="ny-msg">${esc(msg)}</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}<div class="adv">${grid}</div><p class="sh-note">Каждый день декабря открывается новое окошко. Главное поздравление — в полночь.</p>`;
+  } else {
+    body = `<div class="ny-k">✦ Новогодний камень</div>${to ? `<div class="lv-to" style="color:#ffe3a1">${to},</div>` : ''}<div class="ny-msg">Первое окошко откроется 1 декабря. До самого Нового года здесь каждый день будет новый сюрприз.</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}<div class="ny-k">До первого окошка</div><div class="ny-cd" id="nyCd"></div>`;
+  }
+  sheet(body + `<div class="btns">${sndBtn()}<button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('ny'); fxSnow();
+  const target = now < dec1 ? dec1 : ny, shift = now.getTime() - Date.now();
+  clearInterval(nyTimer);
+  const upd = () => {
+    const e = $('nyCd'); if (!e || !$('sheet').classList.contains('on')) { clearInterval(nyTimer); return; }
+    const t = Math.max(0, target - (Date.now() + shift)), dd = Math.floor(t / 864e5), hh = Math.floor(t / 36e5) % 24, mm = Math.floor(t / 6e4) % 60, ss = Math.floor(t / 1e3) % 60;
+    e.textContent = `${dd} ${plural(dd, 'день', 'дня', 'дней')} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    if (t === 0) { clearInterval(nyTimer); setTimeout(() => showNY(s, P), 800); }
+  };
+  if ($('nyCd')) { upd(); nyTimer = setInterval(upd, 1000); }
+  if (now >= ny && now < end) { fxFireworks(); playWav(synthWav('fireworks')); setTimeout(() => { if ($('sheet').classList.contains('ny')) playWav(synthWav('bells')); }, 3600); }
+  else playWav(synthWav('bells'));
+  bindSnd(() => synthWav('bells'));
+  $('again').onclick = () => { loveStop(); clearInterval(nyTimer); hideSheet(); };
+}
+function showTal(s, P) {
+  const now = new Date(NOW().getTime() + talShift * 864e5), dn = dayNum(now), h = strHash(s.id);
+  const md = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const bday = P.bday && P.bday.slice(5) === md;
+  const wish = bday ? `С днём рождения${P.name ? ', ' + P.name : ''}! Пусть этот год принесёт всё, о чём ты мечтаешь.` : TAL_W[(dn + h) % TAL_W.length];
+  const date = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  sheet(`<div class="tl-k">✦ Твой талисман</div><img class="tl-img" src="${s.thumb || ''}" alt=""><div class="sh-name" style="text-align:center">${esc(P.name || '')}</div><div class="tl-k" style="margin-top:12px">${bday ? 'Особый день' : 'Пожелание на ' + date}</div><div class="tl-wish">${esc(wish)}</div><div class="tl-row"><span>Слово дня<b>${TAL_WORD[(dn + h) % TAL_WORD.length]}</b></span><span style="text-align:right">Знак дня<b>${TAL_SIGN[(dn + h * 3) % TAL_SIGN.length]}</b></span></div><div class="tl-rit">Ритуал: ${TAL_RIT[(dn + h * 5) % TAL_RIT.length]}</div><p class="sh-note" style="text-align:center">Новое пожелание появится завтра.</p><div class="btns">${sndBtn()}${isAdmin ? '<button class="btn" id="tlNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('tal'); fxRise(['✦', '·', '✧'], ['#ffe9b0', '#d5c6ff', '#ffffff'], 24);
+  playWav(synthWav('bowl')); bindSnd(() => synthWav('bowl'));
+  $('again').onclick = () => { talShift = 0; loveStop(); hideSheet(); };
+  if (isAdmin) $('tlNext').onclick = () => { talShift++; showTal(s, P); };
+}
+function showTeaser(s) {
+  const days = Math.max(1, Math.floor((Date.now() - (s.created || Date.now())) / 864e5) + 1);
+  sheet(`<div style="text-align:center"><div class="sh-state">✦ Живой камень</div><img class="tz-img" src="${s.thumb || ''}" alt=""><div class="sh-name">${s.name ? 'Камень · ' + esc(s.name) : 'Чужой живой камень'}</div><div class="tz-lock">🔒 Послания видит только хозяин камня</div><div class="tz-facts"><span><b>${days}</b>${plural(days, 'день', 'дня', 'дней')} живёт</span><span><b>${LIVE_MODES[s.mode] || ''}</b>режим</span></div></div><p class="sh-note" style="text-align:center">Камень узнан, но он принадлежит другому человеку. Свой живой камень можно сделать за пару минут.</p><div class="btns"><button class="btn" id="again">Закрыть</button><button class="btn main" id="want">Хочу такой же</button></div>`);
+  $('again').onclick = hideSheet;
+  $('want').onclick = () => { hideSheet(); tab('live'); liveHome(); };
+}
+async function showLive(s) {
+  veil('Открываю…');
+  let p = null; try { p = await readPriv(s.id); } catch (e) {}
+  veil();
+  if (!p) { showTeaser(s); return; }
+  if (myUid() && p.recipient === myUid()) remember(s.id, 'got');
+  const P = p.profile || {};
+  if (s.mode === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: P.to || '', from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
+  else if (s.mode === 'ny') showNY(s, P);
+  else showTal(s, P);
+}
+
+// ---------- gift link: ?g=<stone>.<claim> ----------
+async function openGift(id, claim) {
+  veil('Открываю подарок…');
+  try {
+    await loadStones();
+    const s = stones.find(x => x.id === id);
+    if (!s) { veil(); sheet('<div class="sh-head"><div><div class="sh-state bad">Подарок не найден</div><div class="sh-name">Этого камня больше нет</div></div></div><p class="sh-note">Возможно, его удалили. Попроси дарителя прислать новую ссылку.</p><div class="btns"><button class="btn main" id="again">Понятно</button></div>'); $('again').onclick = hideSheet; return; }
+    await anonToken();
+    let p = await readPriv(id);
+    if (!p) {
+      try { await fsReq('PATCH', `${COLV}/${id}`, await anonToken(), { recipient: myUid(), claimTry: claim }, ['recipient', 'claimTry']); p = await readPriv(id); }
+      catch (e) { p = null; }
+    }
+    veil();
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    if (!p) { sheet('<div class="sh-head"><div><div class="sh-state warn">Подарок уже открыт</div><div class="sh-name">Он привязан к другому телефону</div></div></div><p class="sh-note">Послания открываются только на телефоне, где ссылку открыли впервые. Если это был твой старый телефон, попроси дарителя прислать новую ссылку.</p><div class="btns"><button class="btn main" id="again">Понятно</button></div>'); $('again').onclick = hideSheet; return; }
+    const P = p.profile || {}, mine = p.owner === myUid();
+    if (!mine) remember(id, 'got');
+    const title = mine ? 'Это твой камень' : s.mode === 'tal' ? `${esc(P.name || 'Тебе')}, это твой талисман` : s.mode === 'ny' && P.kid ? 'Тебе подарок от Деда Мороза' : P.from ? `${esc(P.from)} дарит тебе живой камень` : 'Тебе подарили живой камень';
+    const home = inApp ? '' : /Android/i.test(navigator.userAgent) ? ' Удобнее всего добавить её на экран телефона: меню ⋮ → «Добавить на главный экран».' : ' Удобнее всего добавить её на экран телефона: «Поделиться» → «На экран „Домой“».';
+    sheet(`<div style="text-align:center"><div class="sh-state">✦ Живой камень</div><img class="tz-img" src="${s.thumb || ''}" alt=""><div class="sh-name">${title}</div><p class="sh-note">${LIVE_DESC[s.mode] || ''}</p><p class="sh-note">Открыть его можно только с этого телефона и только с самим камнем. В следующий раз просто открой эту страницу.${home}</p></div><div class="btns"><button class="btn main" id="goScan">Навести на камень</button></div>`);
+    $('goScan').onclick = () => { hideSheet(); tab('scan'); $('shutter').click(); };
+  } catch (e) { veil(); toast('Не удалось открыть подарок: ' + e.message, 6000); }
+}
+
+// ---------- buyer: bring a stone to life ----------
+const camL = { vid: $('vidL'), ov: $('ovL'), msg: $('msgL'), bar: $('barL'), idle: $('idleL') };
+const LV = { step: 0, a: null, b: null, hidden: false, mode: 'love', p: {}, busy: false };
+function stoneStats(cv) {
+  const n = 64, t = document.createElement('canvas'); t.width = t.height = n;
+  const g = t.getContext('2d'), m = cv.width * 0.25;
+  g.drawImage(cv, m, m, cv.width - 2 * m, cv.height - 2 * m, 0, 0, n, n);
+  const d = g.getImageData(0, 0, n, n).data; let s = 0, s2 = 0;
+  for (let i = 0; i < n * n; i++) { const v = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]; s += v; s2 += v * v; }
+  const mean = s / (n * n); return { mean, std: Math.sqrt(Math.max(0, s2 / (n * n) - mean * mean)) };
+}
+function lvQ(o) {
+  if (!o) { $('lvQ').innerHTML = ''; return; }
+  const mark = v => v === undefined ? '…' : v ? '✓' : '✕', cls = v => v === undefined ? '' : v ? 'ok' : 'no';
+  $('lvQ').innerHTML = `<span class="${o.frames >= 2 ? 'ok' : ''}">Кадры ${'●'.repeat(o.frames || 0)}${'○'.repeat(2 - (o.frames || 0))}</span><span class="${cls(o.light)}">Свет ${mark(o.light)}</span><span class="${cls(o.pat)}">Рисунок ${mark(o.pat)}</span>`;
+}
+function lvVerdict(kind, text) { const v = $('lvV'); v.className = 'verdict' + (kind ? ' ' + kind : ''); v.textContent = text || ''; }
+async function liveCapture(side) {
+  if (!extractor) { toast('Модель ещё загружается, подожди немного'); return; }
+  LV.busy = true; lvQ({ frames: 0 }); lvVerdict('', ''); lvNav();
+  const fail = t => { lvVerdict('no', t); return null; };
+  try {
+    if (!(await startCam(camL))) return;
+    const frames = [];
+    for (let k = 0; k < 2; k++) {
+      if (k) { camL.msg.textContent = 'Ещё кадр: чуть наклони телефон'; await new Promise(r => setTimeout(r, 600)); }
+      const cv = await captureStone(camL);
+      if (!cv) return;
+      frames.push(cv); lvQ({ frames: k + 1 });
+    }
+    stopCam(); veil('Проверяю камень…'); await tick();
+    const A = await stoneFeatures(frames[0], 0, null);
+    if (!A) return fail('Камень на кадре не найден. Положи его на однотонный фон и сними ещё раз.');
+    const st = stoneStats(A.f.cv), n = A.f.mask.filter(Boolean).length;
+    let self = null;
+    for (const q of [0, 90, 180, 270]) {
+      const B = await stoneFeatures(frames[1], q, A.b.hue);
+      if (!B) continue;
+      const r = scoreAgainst(A.f, B.f);
+      if (!self || r.inl.length > self.inl.length) self = r;
+      if (verdictOf(r) === 'yes' && r.inl.length >= MIN_INLIERS * 1.5) break;
+    }
+    const okLight = st.mean > 22 && st.mean < 225, okPat = st.std >= 9 && !!self && verdictOf(self) === 'yes' && n >= 120;
+    lvQ({ frames: 2, light: okLight, pat: okPat });
+    if (n < 120) return fail('Камень слишком мелкий в кадре. Поднеси телефон ближе.');
+    if (!okLight) return fail(st.mean <= 22 ? 'Слишком темно. Включи свет или подойди к окну.' : 'Слишком ярко или блик. Убери камень из-под прямого света.');
+    if (!okPat) return fail('У камня слишком мало рисунка: сканер не отличит его от похожих. Возьми камень с узором — агат, яшму, малахит, лазурит.');
+    if (side === 'B' && LV.a && verdictOf(scoreAgainst(LV.a.f, A.f)) === 'yes') return fail('Похоже, это та же сторона. Переверни камень и сними снова.');
+    if (stones.length) {
+      veil('Проверяю, нет ли такого камня…');
+      const r = await identify(frames[0], t => veil(t));
+      if (r.state === 'found') { const m = r.stone.of || r.stone.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже кто-то оживил. Возьми другой камень.'); }
+    }
+    const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(A.f.cv, 0, 0, 240, 240);
+    LV[side === 'A' ? 'a' : 'b'] = { f: A.f, hue: A.b.hue, thumb: t.toDataURL('image/jpeg', 0.8) };
+    lvVerdict('ok', side === 'A' ? 'Сторона А готова. Теперь переверни камень.' : 'Обе стороны готовы. Камень узнаётся любой стороной.');
+  } catch (e) { fail('Ошибка: ' + e.message); }
+  finally { veil(); LV.busy = false; stopCam(); lvNav(); }
+}
+function lvNav() {
+  const st = LV.step, nx = $('lvNext'), sh = $('lvShoot');
+  $('lvBack').textContent = st === 0 ? 'Отмена' : 'Назад';
+  $('lvNavBox').style.display = st === 3 ? 'none' : '';
+  sh.textContent = LV.busy ? 'Стоп' : ((st === 0 ? LV.a : LV.b) ? 'Переснять' : 'Снять');
+  nx.disabled = LV.busy || (st === 0 && !LV.a) || (st === 1 && !LV.b && !LV.hidden);
+  nx.textContent = st === 2 ? 'Оживить камень' : 'Далее';
+  $('lvBack').disabled = LV.busy;
+}
+function liveRender() {
+  const st = LV.step;
+  $('lvSteps').innerHTML = [0, 1, 2, 3].map(i => `<i class="${i <= st ? 'on' : ''}"></i>`).join('');
+  $('lvCam').style.display = st <= 1 ? '' : 'none';
+  $('lvForm').style.display = st === 2 ? '' : 'none';
+  $('lvDone').style.display = st === 3 ? '' : 'none';
+  $('lvHiddenBox').style.display = st === 1 ? '' : 'none';
+  $('lvH').textContent = ['Сторона А', 'Переверни камень', 'Кому и чем станет камень', 'Камень ожил'][st];
+  $('lvSub').textContent = ['Положи камень на однотонный фон при хорошем свете. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', 'Режим можно будет поменять позже.', ''][st];
+  lvQ(null); lvVerdict('', '');
+  if (st === 0 && LV.a) lvVerdict('ok', 'Сторона А готова. Теперь переверни камень.');
+  if (st === 1 && LV.b) lvVerdict('ok', 'Обе стороны готовы.');
+  if (st === 1 && LV.hidden) lvVerdict('ok', 'Хватит одной стороны.');
+  if (st === 2) liveForm();
+  lvNav();
+}
+function fld(id, label, v, type = 'text') { return `<label class="lbl" for="${id}">${label}</label><input class="fld" id="${id}" type="${type}" value="${esc(v || '')}" autocomplete="off">`; }
+function liveCollect() {
+  const P = LV.p;
+  for (const [id, k] of [['lvName', 'name'], ['lvBday', 'bday'], ['lvTo', 'to'], ['lvFrom', 'from'], ['lvSince', 'since'], ['lvMid', 'midnight']]) { const e = $(id); if (e) P[k] = e.value.trim(); }
+}
+function liveForm() {
+  const m = LV.mode, P = LV.p;
+  let f = '';
+  if (m === 'tal') f = fld('lvName', 'Имя владельца', P.name) + fld('lvBday', 'День рождения, по желанию', P.bday, 'date');
+  else {
+    f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
+    if (m === 'love') f += fld('lvSince', 'Вместе с, по желанию', P.since, 'date') + `<label class="lbl">Тон посланий</label><div class="seg" id="lvTone">${[['tender', 'Нежно'], ['fun', 'С юмором'], ['romantic', 'Романтично']].map(([k, n]) => `<button class="${(P.tone || 'tender') === k ? 'on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>`;
+    else f += `<label class="lbl">Кому подарок</label><div class="seg" id="lvKid"><button class="${!P.kid ? 'on' : ''}" data-k="0">Взрослому</button><button class="${P.kid ? 'on' : ''}" data-k="1">Ребёнку</button></div><p class="sub" style="margin:6px 0 0">${P.kid ? 'Окошки будут от Деда Мороза.' : ''}</p><label class="lbl" for="lvMid">Поздравление в полночь</label><textarea class="fld" id="lvMid" rows="3" placeholder="Например: пусть этот год будет самым тёплым из всех">${esc(P.midnight || '')}</textarea>`;
+  }
+  $('lvForm').innerHTML = `<div class="seg" id="lvMode">${Object.entries(LIVE_MODES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${f}`;
+  $('lvForm').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { liveCollect(); LV.mode = b.dataset.m; liveForm(); });
+  $('lvForm').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { liveCollect(); P.tone = b.dataset.t; liveForm(); });
+  $('lvForm').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { liveCollect(); P.kid = b.dataset.k === '1'; liveForm(); });
+}
+async function liveSave() {
+  liveCollect();
+  const P = LV.p, m = LV.mode;
+  if (m === 'tal' ? !P.name : !P.to) { toast('Впиши имя'); return; }
+  const prof = m === 'love' ? { to: P.to, from: P.from || '', since: P.since || '', tone: P.tone || 'tender' }
+    : m === 'ny' ? { to: P.to, from: P.from || '', kid: !!P.kid, midnight: P.midnight || '' } : { name: P.name, bday: P.bday || '' };
+  const pubName = m === 'tal' ? P.name : P.to;
+  LV.busy = true; lvNav(); veil('Оживляю камень…');
+  const made = [];
+  try {
+    const tok = await anonToken(), uid = myUid();
+    if (!isAdmin && stones.filter(s => s.owner === uid && !s.of).length >= 3) throw new Error('на одном телефоне можно оживить до трёх камней');
+    const side = async (S, of) => {
+      const enc = encodePatches(S.f);
+      const doc = await fsReq('POST', COL, tok, { name: pubName, mode: m, owner: uid, of: of || '', created: Date.now(), thumb: S.thumb, g: f32B64(gvecOf(S.f)), G: S.f.G, hue: S.hue ?? 0, n: enc.n });
+      const id = doc.name.split('/').pop(); made.push([COL, id]);
+      await fsReq('POST', `${COLP}?documentId=${id}`, tok, { idx: enc.idx, p: enc.p, sc: enc.sc }); made.push([COLP, id]);
+      return id;
+    };
+    const id = await side(LV.a, '');
+    if (LV.b && !LV.hidden) await side(LV.b, id);
+    const claim = rnd(14);
+    await fsReq('POST', `${COLV}?documentId=${id}`, tok, { owner: uid, recipient: '', claim, claimTry: '', share: false, profile: JSON.stringify(prof), created: Date.now() });
+    remember(id, 'own');
+    Object.assign(LV, { link: giftLink(id, claim), id, toName: pubName });
+    await loadStones();
+    LV.step = 3; LV.busy = false; liveRender(); liveDone();
+  } catch (e) {
+    for (const [c, id] of made.reverse()) { try { await fsReq('DELETE', `${c}/${id}`, await anonToken()); } catch (x) {} }
+    toast('Не получилось оживить: ' + e.message, 6000);
+  } finally { veil(); LV.busy = false; lvNav(); }
+}
+function shareButtons(link, text) {
+  const u = encodeURIComponent(link), tx = encodeURIComponent(text);
+  return { html: `<div class="lvlink">${esc(link)}</div><div class="btns"><button class="btn main" id="shTg">Telegram</button><button class="btn main" id="shWa">WhatsApp</button></div><div class="btns">${navigator.share ? '<button class="btn" id="shAny">Поделиться…</button>' : ''}<button class="btn" id="shCopy">Скопировать</button></div>`,
+    bind: () => {
+      $('shTg').onclick = () => openLink(`https://t.me/share/url?url=${u}&text=${tx}`);
+      $('shWa').onclick = () => openLink(`https://wa.me/?text=${tx}%20${u}`);
+      if ($('shAny')) $('shAny').onclick = async () => { try { await navigator.share({ title: 'JadeKey', text, url: link }); } catch (e) {} };
+      $('shCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); } catch (e) { toast('Не удалось скопировать'); } };
+    } };
+}
+function giftText(mode, name) { return mode === 'tal' ? `${name}, это твой талисман. Открой ссылку и наведи телефон на камень.` : `${name}, тебе подарили живой камень. Открой ссылку и наведи телефон на камень.`; }
+function liveDone() {
+  const sb = shareButtons(LV.link, giftText(LV.mode, LV.toName));
+  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Отправь ссылку тому, кому даришь камень. Послания откроются только на телефоне, где ссылку откроют первой, и только с самим камнем.</p>${sb.html}<div class="btns"><button class="btn" id="lvHome">Готово</button></div>`;
+  sb.bind(); $('lvHome').onclick = liveHome;
+}
+async function liveHome() {
+  stopCam(); LV.busy = false;
+  $('lvHomeBox').style.display = ''; $('lvWiz').style.display = 'none';
+  if (Date.now() - lastLoad > 15000) await loadStones();
+  const uid = myUid(), got = new Set(ls.list('jk2_mine_got'));
+  const own = stones.filter(s => !s.of && s.mode && uid && s.owner === uid), recv = stones.filter(s => !s.of && s.mode && got.has(s.id) && s.owner !== uid);
+  const row = (s, k) => `<button class="mine" data-id="${s.id}" data-k="${k}"><img src="${s.thumb || ''}" alt=""><span><b>${esc(s.name || 'Камень')}</b><small>${k === 'own' ? 'Ты оживил' : 'Подарен тебе'}</small></span><span class="tag t-${s.mode}">${LIVE_MODES[s.mode] || ''}</span></button>`;
+  $('lvMine').innerHTML = own.length + recv.length ? own.map(s => row(s, 'own')).join('') + recv.map(s => row(s, 'got')).join('') : '<p class="sub">Здесь появятся камни, которые ты оживишь или получишь в подарок.</p>';
+  $('lvMine').querySelectorAll('.mine').forEach(b => b.onclick = () => mineSheet(stones.find(s => s.id === b.dataset.id), b.dataset.k));
+}
+async function mineSheet(s, kind) {
+  if (!s) return;
+  veil('Открываю…'); const p = await readPriv(s.id).catch(() => null); veil();
+  if (kind === 'got' || !p || p.owner !== myUid()) { showFound({ stone: s }); return; }
+  const sides = stones.filter(x => x.of === s.id).length + 1, link = giftLink(s.id, p.claim);
+  const sb = shareButtons(link, giftText(s.mode, s.name || ''));
+  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
+    <div class="h2">Ссылка для получателя</div>${sb.html}
+    <div class="rows"><button class="row" id="mOpen"><span><b>Открыть камень</b><small>Посмотреть, что видит получатель</small></span></button><button class="row" id="mShare"><span><b>${p.share ? 'Послания видят все, кто отсканирует' : 'Послания видит только получатель'}</b><small>Нажми, чтобы переключить</small></span></button><button class="row" id="mNew"><span><b>Новая ссылка</b><small>Старая перестанет работать, камень привяжется к новому телефону</small></span></button></div>
+    <div class="btns"><button class="btn danger" id="mDel">Удалить камень</button><button class="btn main" id="again">Закрыть</button></div>`);
+  sb.bind();
+  $('again').onclick = hideSheet;
+  $('mOpen').onclick = () => showLive(s);
+  $('mShare').onclick = async () => { try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { share: !p.share }, ['share']); mineSheet(s, kind); } catch (e) { toast('Не получилось: ' + e.message); } };
+  $('mNew').onclick = async () => {
+    if (!confirm('Сделать новую ссылку? Старая перестанет работать, а камень отвяжется от телефона получателя.')) return;
+    try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { recipient: '', claim: rnd(14), claimTry: '' }, ['recipient', 'claim', 'claimTry']); toast('Новая ссылка готова'); mineSheet(s, kind); } catch (e) { toast('Не получилось: ' + e.message); }
+  };
+  $('mDel').onclick = async () => {
+    if (!confirm(`Удалить камень «${s.name || ''}»? Послания перестанут открываться.`)) return;
+    veil('Удаляю…');
+    try { await deleteLive(s, await anonToken()); hideSheet(); await loadStones(); liveHome(); }
+    catch (e) { toast('Не удалось удалить: ' + e.message); }
+    veil();
+  };
+}
+async function deleteLive(s, tok) {
+  const del = async path => { try { await fsReq('DELETE', path, tok); } catch (e) { if (e.status !== 404) throw e; } };
+  await del(`${COLV}/${s.id}`);
+  for (const x of stones.filter(x => x.of === s.id)) { await del(`${COLP}/${x.id}`); await del(`${COL}/${x.id}`); patchCache.delete(x.id); }
+  await del(`${COLP}/${s.id}`); await del(`${COL}/${s.id}`); patchCache.delete(s.id);
+}
+
+$('lvStart').onclick = () => {
+  Object.assign(LV, { step: 0, a: null, b: null, hidden: false, mode: 'love', p: {}, busy: false });
+  $('lvHomeBox').style.display = 'none'; $('lvWiz').style.display = '';
+  liveRender();
+};
+$('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
+$('lvHidden').onclick = () => { if (LV.busy) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
+$('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; liveRender(); };
+$('lvNext').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; liveRender(); };
+
 // ---------- tabs ----------
 function tab(name) {
   hideSheet();
   if (name !== 'scan' && name !== 'add') stopCam();
   if (name === 'scan') { try { stopCam(); } catch (e) {} }
-  for (const [n, v, b] of [['scan', 'vScan', 'nScan'], ['coll', 'vColl', 'nColl'], ['add', 'vAdd', 'nAdd']]) {
+  for (const [n, v, b] of [['scan', 'vScan', 'nScan'], ['coll', 'vColl', 'nColl'], ['add', 'vAdd', 'nAdd'], ['live', 'vLive', 'nLive']]) {
     $(v).classList.toggle('on', n === name); $(b).classList.toggle('on', n === name);
   }
 }
 $('nScan').onclick = () => tab('scan');
+$('nLive').onclick = () => { tab('live'); liveHome(); };
 (() => {
   const w = document.querySelector('#vScan .word'); if (!w) return;
   let t = null;
@@ -1627,7 +2230,6 @@ async function nfcScan() {
 }
 if (JadeNfc || /Android/i.test(navigator.userAgent)) {
   $('nNfc').style.display = '';
-  document.querySelector('nav').style.gridTemplateColumns = 'repeat(4,1fr)';
   $('nNfc').onclick = JadeNfc ? nfcScan : () => {
     const why = !window.isSecureContext ? 'Сайт открыт без https. Открой https://jadekey.tech/scan.html'
       : !/Chrome\//.test(navigator.userAgent) || /SamsungBrowser|MiuiBrowser|YaBrowser|OPR\//.test(navigator.userAgent)
@@ -1641,7 +2243,13 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 }
 
 loadStones();
-loadModel();
+window.__coi.then(() => { loadModel(); liveInit(); });
+if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showTeaser, showLove, LV, liveRender, liveDone };
+function liveInit() {
+  const g = new URLSearchParams(location.search).get('g');
+  if (g && /^[\w-]+\.[a-z0-9]+$/.test(g)) { const [id, claim] = g.split('.'); openGift(id, claim); }
+  else if (new URLSearchParams(location.search).has('live')) { tab('live'); liveHome(); }
+}
 </script>
 </body>
 </html>
