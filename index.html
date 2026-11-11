@@ -1,369 +1,249 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JadeKey — живые камни</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="/icons/icon-180.png">
 <link rel="canonical" href="https://jadekey.tech/">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"JadeKey","url":"https://jadekey.tech/","logo":"https://jadekey.tech/icons/icon-512.png","email":"jadekey1965@gmail.com"}</script>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>JadeKey — живые камни</title>
 <meta name="description" content="JadeKey — природный камень, который каждый день открывает послание от того, кто его подарил. Камень узнаётся по рисунку, как отпечаток пальца.">
 <meta property="og:title" content="JadeKey — живые камни">
 <meta property="og:description" content="Камень, который каждый день открывает послание от того, кто его подарил.">
-<meta property="og:image" content="https://jadekey.tech/img/hero-phone.jpg">
-<meta name="theme-color" content="#0a1310">
+<meta property="og:image" content="https://jadekey.tech/img/hero-love.jpg">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
 <style>
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:300;font-display:swap;src:url(/fonts/cormorant-garamond-latin-300-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:300;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-300-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-style:italic;font-weight:300;font-display:swap;src:url(/fonts/cormorant-garamond-latin-300-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Cormorant Garamond";font-style:italic;font-weight:300;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-300-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/cormorant-garamond-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/cormorant-garamond-latin-400-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Cormorant Garamond";font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-400-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/cormorant-garamond-latin-500-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-garamond-latin-500-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Cormorant Garamond";font-style:italic;font-weight:500;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-500-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/manrope-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/manrope-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/manrope-latin-500-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/manrope-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/manrope-latin-600-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/manrope-cyrillic-600-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 :root{
-  --bg:#0a1310; --deep:#0d1813; --surf:#112019; --panel2:#16291f;
-  --border:#223a2e;
-  --gold:#3fd8a2; --gold-l:#3fd8a2; --sand:#d8b45c;
-  --white:#e9f3ee; --text:#a9c2b6; --muted:#86a396;
-  --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  --acc:#3fd8a2;
+  --paper:#ffffff; --stone:#f6f3ef; --ink:#1b1918; --mute:#857b72; --line:#e7e1d9;
+  --red:#9b1b30; --red-deep:#7a1426;
+  --serif:"Cormorant Garamond", "Times New Roman", serif;
+  --sans:"Manrope", -apple-system, "Segoe UI", sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--white);font-family:var(--sans);font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-::selection{background:#3fd8a244}
+body{background:var(--paper);color:var(--ink);font:400 15px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
 a{color:inherit}
-:focus-visible{outline:1px solid var(--gold-l);outline-offset:4px}
+:focus-visible{outline:1.5px solid var(--red);outline-offset:3px}
 
-/* preloader */
-#pre{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1s}
-#pre b{font-family:var(--serif);font-weight:400;font-size:64px;color:var(--gold);letter-spacing:.04em}
-#pre i{display:block;width:60px;height:2px;border-radius:2px;background:#3fd8a266;margin:22px 0 18px}
-#pre span{font-size:10px;letter-spacing:.42em;color:var(--muted)}
-
-/* nav */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:16px 22px;background:linear-gradient(#0a1310f2 0%,transparent 100%)}
-.nav-logo{font-family:var(--serif);font-size:18px;letter-spacing:.32em;color:var(--white);text-transform:uppercase;text-decoration:none}.nav-logo b{font-weight:400;color:var(--gold)}
-.nav-link{font-size:14px;font-weight:500;color:var(--white);text-decoration:none;background:var(--surf);border:1px solid var(--border);border-radius:999px;padding:8px 14px}
-.nav-link:hover{color:var(--gold-l)}
-
-/* sections */
-section{padding:96px 24px;border-top:1px solid var(--border)}
-.in{max-width:560px;margin:0 auto}
-.wide{max-width:1000px;margin:0 auto}
-.label{font-size:12px;letter-spacing:.26em;color:var(--gold);text-transform:uppercase;margin-bottom:16px}
-.h2{font-family:var(--serif);font-size:clamp(32px,7vw,54px);font-weight:400;line-height:1.1;color:var(--white)}
-.h2 em{font-style:normal;color:var(--gold)}
-.center{text-align:center}
-.body-text{font-size:16px;line-height:1.7;color:var(--text);margin-top:22px}
+/* header */
+.top{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:auto;height:64px;padding:0 22px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.mark{font:400 22px/1 var(--serif);letter-spacing:.42em;text-decoration:none;padding-left:.42em}
+.top nav{display:flex;gap:28px;font-size:13px}
+.top nav a{text-decoration:none;color:var(--mute)}
+.top nav a:hover{color:var(--ink)}
+.top .cta-s{justify-self:end;font-size:13px;text-decoration:none;color:var(--red);font-weight:500}
+@media(max-width:760px){.top nav{display:none}.top-in{grid-template-columns:auto 1fr}.mark{justify-self:start;padding-left:0;font-size:19px}}
 
 /* hero */
-#hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:96px 24px 72px;position:relative;overflow:hidden;border-top:none}
-#hero::before{content:'';position:absolute;top:34%;left:50%;transform:translate(-50%,-50%);width:90vw;height:90vw;max-width:620px;max-height:620px;background:radial-gradient(circle,color-mix(in srgb,var(--acc) 16%,transparent) 0%,transparent 70%);pointer-events:none;transition:background 1s}
-.hero-photo{display:block;width:min(400px,88vw);height:auto;border-radius:28px;margin:0 auto 10px;box-shadow:0 40px 80px -20px #000c,0 0 0 1px #223a2e;animation:float 7s ease-in-out infinite}
-.stone{position:relative;width:min(340px,78vw);aspect-ratio:1;margin-bottom:34px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;color:inherit;font:inherit;animation:float 6s ease-in-out infinite}
-.stone canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 30px 50px rgba(0,0,0,.7))}
-.beam{position:absolute;left:6%;right:6%;height:16%;top:-10%;background:linear-gradient(180deg,transparent,var(--acc),transparent);mix-blend-mode:screen;opacity:0;pointer-events:none;border-radius:50%}
-.stone.scanning .beam{animation:beam 1.1s ease-in-out}
-@keyframes beam{0%{top:-6%;opacity:0}15%{opacity:.55}85%{opacity:.55}100%{top:90%;opacity:0}}
-.note{position:absolute;left:50%;bottom:-22px;width:min(290px,86vw);transform:translate(-50%,12px);padding:16px 20px 14px;background:#112019f2;border:1px solid color-mix(in srgb,var(--acc) 45%,transparent);border-radius:20px;box-shadow:0 24px 50px rgba(0,0,0,.6);text-align:center;opacity:0;transition:opacity .5s,transform .5s,border-color 1s;pointer-events:none}
-.note.on{opacity:1;transform:translate(-50%,0)}
-.note .who{display:block;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--acc);transition:color 1s}
-.note .txt{display:block;font-family:var(--serif);font-size:21px;line-height:1.3;color:var(--white);margin:8px 0 4px}
-.note .sig{display:block;font-family:var(--serif);font-size:15px;color:var(--text)}
-.tap{margin-top:30px;font-size:13px;color:var(--muted);min-height:1em;transition:opacity .4s}
-.hero-title{font-family:var(--serif);font-size:clamp(44px,11vw,84px);font-weight:400;line-height:1;color:var(--white);margin:30px 0 18px}
-.hero-title em{font-style:normal;color:var(--gold)}
-.hero-sub{font-size:17px;line-height:1.6;color:var(--text);max-width:460px}
-.hero-micro{font-size:12px;letter-spacing:.26em;color:var(--gold);text-transform:uppercase;margin:16px 0 40px}
-.cta-btns{display:flex;flex-direction:column;gap:12px;align-items:center;width:100%}
-.cta-btn{display:inline-flex;align-items:center;justify-content:center;height:54px;padding:0 28px;border:1px solid var(--border);border-radius:16px;color:var(--white);text-decoration:none;font-size:16px;font-weight:600;width:100%;max-width:340px;transition:background .3s,color .3s;background:var(--panel2);cursor:pointer}
-.cta-btn.solid{background:var(--gold);border-color:var(--gold);color:#04150e}
-.cta-btn:hover{filter:brightness(1.1)}
+.hero{max-width:1240px;margin:auto;display:grid;grid-template-columns:1.05fr 1fr;min-height:calc(100svh - 64px)}
+.hero-img{position:relative;overflow:hidden;background:#111}
+.hero-img img{width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+.hero-txt{display:flex;flex-direction:column;justify-content:center;padding:64px clamp(28px,6vw,96px)}
+.hero h1{font:300 clamp(56px,8.4vw,112px)/.92 var(--serif);letter-spacing:-.01em}
+.hero h1 i{font-style:italic;color:var(--red)}
+.rule{width:56px;height:1px;background:var(--ink);margin:34px 0 26px}
+.lead{font:400 clamp(21px,2.1vw,26px)/1.4 var(--serif);max-width:24ch}
+.btns{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin-top:40px}
+.btn{display:inline-block;background:var(--red);color:#fff;text-decoration:none;font:500 14px/1 var(--sans);letter-spacing:.04em;padding:18px 34px;transition:background .2s}
+.btn:hover{background:var(--red-deep)}
+.link{font-size:14px;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px}
+@media(max-width:860px){
+  .hero{grid-template-columns:1fr;min-height:0}
+  .hero-img{aspect-ratio:3/4}
+  .hero-txt{padding:44px 24px 64px;text-align:center;align-items:center}
+  .rule{margin:28px auto 22px}
+  .btns{justify-content:center}
+}
 
-/* steps */
-#how{background:var(--deep)}
-.steps{display:flex;flex-direction:column;gap:36px;margin-top:48px}
-.step{background:var(--surf);border:1px solid var(--border);border-radius:22px;padding:22px}
-.step-num{font-family:var(--serif);font-size:44px;font-weight:400;color:var(--gold);line-height:1;margin-bottom:8px}
-.step h3{font-family:var(--serif);font-weight:400;font-size:24px;color:var(--white);margin-bottom:6px}
-.step p{font-size:15px;line-height:1.7;color:var(--text)}
+/* sections */
+section{padding:clamp(80px,11vw,150px) 22px}
+.wrap{max-width:1140px;margin:auto}
+.kicker{font:italic 400 19px/1 var(--serif);color:var(--red);margin-bottom:18px}
+h2{font:300 clamp(40px,5.4vw,68px)/1.02 var(--serif);letter-spacing:-.005em}
+.center{text-align:center}
+.center .sub{margin-left:auto;margin-right:auto}
+.sub{color:var(--mute);max-width:46ch;margin-top:22px}
+
+/* collection */
+.coll{background:var(--stone)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:56px 32px;margin-top:72px}
+.piece figure{background:#0e0e0e;aspect-ratio:1;overflow:hidden}
+.piece img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.piece:hover img{transform:scale(1.04)}
+.piece h3{font:400 22px/1.2 var(--serif);text-align:center;margin-top:20px}
+.piece p{font-size:13px;color:var(--mute);text-align:center;margin-top:4px}
+@media(max-width:760px){.grid{grid-template-columns:1fr 1fr;gap:36px 14px}.piece h3{font-size:19px}}
 
 /* modes */
-#modes{background:var(--bg)}
-.modes-grid{display:grid;grid-template-columns:1fr;gap:44px;align-items:center;margin-top:40px}
-.tabs{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
-.tab{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:11px 16px;font:600 15px var(--sans);color:var(--muted);cursor:pointer;transition:color .3s,border-color .3s}
-.tab[aria-selected=true]{color:var(--gold);border-color:var(--gold)}
-.mdesc{font-size:17px;line-height:1.65;color:var(--text);text-align:center;max-width:460px;margin:22px auto 0;min-height:4.8em}
-.phone{justify-self:center;position:relative;width:min(320px,80vw);aspect-ratio:71.6/147.6;border-radius:17%/8.3%;padding:3.3%;
-  background:linear-gradient(135deg,#8a8f96 0%,#d9dde2 18%,#6c7178 36%,#b7bcc2 58%,#5b6066 80%,#c9ced3 100%);
-  box-shadow:inset 0 0 0 1px #ffffff55,inset 0 0 6px #0008,0 2px 0 #fff3,0 50px 90px -20px #000c,0 30px 50px -30px #3fd8a233;transform:perspective(1400px) rotateY(-9deg) rotateX(3deg);transition:transform .6s}
-.phone:hover{transform:perspective(1400px) rotateY(-4deg) rotateX(1deg)}
-.phone .btnL,.phone .btnR{position:absolute;width:3px;border-radius:2px;background:linear-gradient(90deg,#5b6066,#c9ced3)}
-.phone .btnL{left:-3px;top:18%;height:5%;box-shadow:0 52px 0 0 #8a8f96,0 104px 0 0 #8a8f96}
-.phone .btnR{right:-3px;top:27%;height:11%}
-.glass{position:absolute;inset:3.3%;border-radius:14%/6.8%;background:#000;overflow:hidden;box-shadow:0 0 0 2px #0a0a0a}
-.screen{position:absolute;inset:1.6%;border-radius:13%/6.3%;overflow:hidden;background:#0a1310;color:#e9f3ee;font-family:-apple-system,system-ui,sans-serif}
-.island{position:absolute;top:1.6%;left:50%;width:31%;height:3.9%;transform:translateX(-50%);background:#000;border-radius:99px;z-index:4}
-.sbar{position:absolute;top:0;left:0;right:0;height:7%;display:flex;justify-content:space-between;align-items:center;padding:0 9% 0 11%;font-weight:600;font-size:13px;z-index:3}
-.sbar svg{height:11px;fill:#e9f3ee}
-.apphead{position:absolute;top:8.5%;left:6%;right:6%;display:flex;justify-content:space-between;align-items:center}
-.apphead .wm{font-family:ui-serif,"New York",Georgia,serif;font-size:13px;letter-spacing:.3em}
-.apphead .wm b{font-weight:400;color:#3fd8a2}
-.apphead .chip{font-size:9.5px;color:#3fd8a2;background:#112019;border:1px solid #223a2e;border-radius:99px;padding:3px 7px}
-.camview{position:absolute;top:14%;left:0;right:0;height:40%;background:radial-gradient(60% 60% at 50% 55%,#1a2a22,#0a1310)}
-.camview img{position:absolute;left:50%;top:52%;width:58%;transform:translate(-50%,-50%) rotate(-8deg);border-radius:46% 54% 50% 50%/52% 46% 54% 48%;box-shadow:0 14px 30px #0009;opacity:.9}
-.sheet{position:absolute;left:0;right:0;bottom:0;padding:16px 16px 0;border-radius:22px 22px 0 0;border-top:1px solid #6b2f45;background:linear-gradient(180deg,#3a1626,#1d0d15);transition:background .5s,border-color .5s}
-.sheet .grab{width:34px;height:4px;border-radius:2px;background:#ffffff33;margin:0 auto 10px}
-.s-top{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:#ff9fbd}
-.s-pic{font-size:38px;line-height:1;margin:8px 0 2px;display:inline-block;animation:pop 3.6s ease-in-out infinite}
-.s-to{font-family:ui-serif,"New York",Georgia,serif;font-size:16px;color:#ffd9e4}
-.s-msg{font-family:ui-serif,"New York",Georgia,serif;font-size:19px;line-height:1.26;color:#fff;margin:6px 0 8px}
-.s-from{font-family:ui-serif,"New York",Georgia,serif;font-size:14px;color:#ffd9e4;text-align:right}
-.s-meta{margin-top:10px;padding-top:8px;border-top:1px solid #5a2a3c;font-size:10px;color:#d9a3b5;display:flex;justify-content:space-between}
-.s-btns{display:flex;gap:7px;margin:12px 0 0}
-.s-btns i{font-style:normal;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
-.s-btns i:first-child{width:42px;background:#1b2a22}
-.s-btns i:last-child{flex:1;background:#ff8fb1;color:#2a0b16}
-.tabbar{display:flex;justify-content:space-around;padding:9px 0 22px;margin:12px -16px 0;background:#0d1813;border-top:1px solid #223a2e;font-size:9px;color:#86a396}
-.tabbar span.on{color:#3fd8a2}
-.homeind{position:absolute;bottom:1.3%;left:50%;width:34%;height:4px;border-radius:3px;background:#e9f3eecc;transform:translateX(-50%);z-index:5}
-.shine{position:absolute;inset:0;background:linear-gradient(115deg,#ffffff1f 0%,#ffffff08 28%,transparent 42%);pointer-events:none;z-index:6;border-radius:inherit}
-.floaters{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
-.floaters span{position:absolute;bottom:-20px;animation:rise linear infinite;opacity:0}
-@keyframes rise{0%{transform:translateY(0) rotate(0);opacity:0}10%{opacity:.85}100%{transform:translateY(-560px) translateX(var(--dx)) rotate(var(--r));opacity:0}}
-@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.12) rotate(-6deg)}}
-.paper{background:#fff8ea;color:#3a1a0c;border-radius:6px;padding:10px 12px;margin-top:8px}
-.paper .s-msg{color:#3a1a0c;font-size:16px;margin:0 0 8px;text-align:center}
-.nums{display:flex;justify-content:center;gap:4px}
-.nums b{font:600 10px system-ui;color:#b3261e;border:1px solid #b3261e66;border-radius:999px;padding:1px 6px}
-.hz{font-size:34px;line-height:1;color:#ffd987}
-.adv{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:8px}
-.adv i{font-style:normal;font-size:8px;text-align:center;padding:3px 0;border-radius:4px;background:#ffffff14;color:#9fb3dc}
-.adv i.o{background:#ffffff2e;color:#fff}.adv i.t{background:#f2c45a;color:#2a1600;font-weight:700}
-@media (prefers-reduced-motion:reduce){.phone{transform:none}}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);margin-top:72px}
+.mode{padding:40px 28px 8px;border-right:1px solid var(--line)}
+.mode:last-child{border-right:0}
+.mode h3{font:400 30px/1.1 var(--serif)}
+.mode .when{font-size:13px;color:var(--mute);margin:6px 0 26px}
+.mode blockquote{font:italic 300 21px/1.4 var(--serif)}
+@media(max-width:900px){.modes{grid-template-columns:1fr 1fr}.mode:nth-child(2){border-right:0}.mode{border-bottom:1px solid var(--line);padding-bottom:36px}}
+@media(max-width:560px){.modes{grid-template-columns:1fr}.mode{border-right:0;padding:34px 4px}}
 
-/* gallery */
-#gallery{background:var(--deep)}
-.gallery-mins{margin-top:14px;font-size:15px;color:var(--muted)}
-.stones-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:36px}
-.stone-card{position:relative;overflow:hidden;aspect-ratio:1;background:var(--surf);border-radius:18px;border:1px solid var(--border)}
-.stone-card img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.85)}
-.stone-label{position:absolute;bottom:0;left:0;right:0;padding:24px 12px 10px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:13px;font-weight:500;color:var(--white)}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;margin-top:72px}
+.step .n{font:300 64px/1 var(--serif);color:var(--red)}
+.step h3{font:400 26px/1.2 var(--serif);margin:18px 0 12px}
+.step p{color:var(--mute)}
+@media(max-width:760px){.steps{grid-template-columns:1fr;gap:44px}.step{text-align:center}}
 
 /* why */
-#why{background:var(--bg)}
-.why-rows{margin-top:32px}
-.why-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:17px 0;border-bottom:1px solid var(--border)}
-.why-row-text{font-size:16px;color:var(--text)}
-.why-row-text small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
-.why-row-text.last{color:var(--gold);font-family:var(--serif);font-size:20px}
-.why-x{color:var(--muted);font-size:16px;flex-shrink:0}
-.why-check{color:var(--gold);font-size:16px;flex-shrink:0}
-.why-sub{margin-top:32px;font-family:var(--serif);font-size:20px;color:var(--white);line-height:1.6}
+.why{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,7vw,110px);align-items:center}
+.why-img{aspect-ratio:4/5;overflow:hidden;background:#111}
+.why-img img{width:100%;height:100%;object-fit:cover}
+.vs{margin-top:42px;border-top:1px solid var(--line)}
+.vs div{display:flex;justify-content:space-between;gap:20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.vs b{font:400 21px/1.3 var(--serif)}
+.vs span{color:var(--mute);font-size:14px;text-align:right;max-width:24ch}
+.vs .yes b{color:var(--red)}
+.vs .yes span{color:var(--ink)}
+.note{font:italic 300 22px/1.45 var(--serif);margin-top:36px}
+@media(max-width:860px){.why{grid-template-columns:1fr}.why-img{aspect-ratio:1}}
 
-/* shops & get */
-#shops{background:var(--deep);text-align:center}
-#get{background:var(--bg);text-align:center}
-#shops .cta-btns,#get .cta-btns{margin-top:40px}
-.tagline{margin-top:40px;font-family:var(--serif);font-size:clamp(20px,5vw,30px);color:var(--gold)}
+/* shops — the one bold moment */
+.shops{background:var(--red);color:#fff;text-align:center}
+.shops .kicker{color:#f0c9cf}
+.shops .sub{color:rgba(255,255,255,.8)}
+.btn-w{display:inline-block;margin-top:42px;border:1px solid #fff;color:#fff;text-decoration:none;font:500 14px/1 var(--sans);letter-spacing:.04em;padding:18px 34px;transition:background .2s,color .2s}
+.btn-w:hover{background:#fff;color:var(--red)}
 
-footer{padding:26px 24px 40px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center}
-.foot-copy{font-size:13px;color:var(--muted);letter-spacing:.06em}
-.foot-links{display:flex;gap:18px;flex-wrap:wrap}
-.foot-links a{font-size:13px;letter-spacing:.06em;color:var(--text);text-decoration:none}
-.foot-links a:hover{color:var(--gold-l)}
-.foot-logo{font-family:var(--serif);font-size:16px;letter-spacing:.32em;color:var(--white)}.foot-logo b{font-weight:400;color:var(--gold)}
+/* get */
+.get{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 26px;margin-top:42px;align-items:center}
 
-.rv{opacity:0;transform:translateY(24px);transition:opacity .9s ease,transform .9s ease}
-.rv.show{opacity:1;transform:none}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+footer{border-top:1px solid var(--line);padding:48px 22px 60px;text-align:center}
+footer .mark{display:inline-block;font-size:18px}
+footer nav{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;margin:24px 0 18px;font-size:13px}
+footer nav a{color:var(--mute);text-decoration:none}
+footer small{color:var(--mute);font-size:12px}
 
-@media (min-width:860px){
-  .modes-grid{grid-template-columns:1fr 1fr}
-  .modes-grid .tabs{justify-content:flex-start}
-  .modes-grid .mdesc{text-align:left;margin-left:0}
-  .steps{flex-direction:row;gap:28px}
-  .step{flex:1}
-  .stones-grid{grid-template-columns:repeat(4,1fr)}
-  .cta-btns.row{flex-direction:row;justify-content:center}
-}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-PBJZ1WQNN8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-PBJZ1WQNN8");</script>
 </head>
 <body>
-<div id="pre" aria-hidden="true"><b id="preN">/00</b><i></i><span>AUTHENTICATING</span></div>
 
-<nav>
-  <a class="nav-logo" href="/">JADE<b>KEY</b></a>
-  <a class="nav-link" href="/scan.html">Открыть сканер</a>
-</nav>
+<header class="top"><div class="top-in">
+  <nav><a href="#collection">Коллекция</a><a href="#modes">Послания</a><a href="#how">Как это работает</a></nav>
+  <a class="mark" href="/">JADEKEY</a>
+  <a class="cta-s" href="/scan.html">Открыть сканер</a>
+</div></header>
 
-<section id="hero">
-  <img class="hero-photo" src="img/hero-phone.jpg" alt="Живой камень Love: послание Тане от Сергея на экране телефона" width="1086" height="1448">
-  <h1 class="hero-title">Живой <em>камень</em></h1>
-  <p class="hero-sub">Камень, который помнит тебя. Каждый день он открывает послание от того, кто его подарил.</p>
-  <p class="hero-micro">Stone becomes a gift</p>
-  <div class="cta-btns">
-    <a class="cta-btn solid" href="/scan.html?live=1">Оживить камень</a>
-    <a class="cta-btn" href="#how">Как это работает</a>
+<main>
+<div class="hero">
+  <div class="hero-img"><img src="/img/hero-love.jpg" alt="Живой камень и послание на экране телефона" fetchpriority="high"></div>
+  <div class="hero-txt">
+    <h1>Живой<br><i>камень</i></h1>
+    <div class="rule"></div>
+    <p class="lead">Камень, который помнит тебя. Каждый день он открывает послание от того, кто его подарил.</p>
+    <div class="btns">
+      <a class="btn" href="/scan.html?live=1">Оживить камень</a>
+      <a class="link" href="#how">Как это работает</a>
+    </div>
   </div>
-</section>
+</div>
 
-<section id="how"><div class="wide">
-  <div class="in center">
-    <div class="label">Как это работает</div>
-    <h2 class="h2">Две минуты —<br>и камень <em>живой</em></h2>
+<section class="coll" id="collection"><div class="wrap center">
+  <p class="kicker">Коллекция</p>
+  <h2>Каждый минерал —<br>как отпечаток пальца</h2>
+  <p class="sub">Рисунок камня складывался миллионы лет. Второго такого нет, поэтому и подарок нельзя подделать.</p>
+  <div class="grid">
+    <div class="piece"><figure><img src="/img/stone-g1.jpg" alt="" loading="lazy"></figure><h3>Розовый агат</h3><p>Love</p></div>
+    <div class="piece"><figure><img src="/img/stone-g3.jpg" alt="" loading="lazy"></figure><h3>Агат с жеодой</h3><p>Талисман</p></div>
+    <div class="piece"><figure><img src="/img/stone-g4.jpg" alt="" loading="lazy"></figure><h3>Лазурит</h3><p>Новый год</p></div>
+    <div class="piece"><figure><img src="/img/stone-g10.jpg" alt="" loading="lazy"></figure><h3>Огненный агат</h3><p>Love</p></div>
+    <div class="piece"><figure><img src="/img/stone-g7.jpg" alt="" loading="lazy"></figure><h3>Агат с вкраплениями</h3><p>Печенье с предсказанием</p></div>
+    <div class="piece"><figure><img src="/img/stone-g6.jpg" alt="" loading="lazy"></figure><h3>Фиолетовый агат</h3><p>Талисман</p></div>
+  </div>
+</div></section>
+
+<section id="modes"><div class="wrap">
+  <div class="center">
+    <p class="kicker">Послания</p>
+    <h2>Чем станет твой камень</h2>
+    <p class="sub">Выбери, о чём он будет говорить. Новое послание каждый день — только для одного человека.</p>
+  </div>
+  <div class="modes">
+    <div class="mode"><h3>Love</h3><p class="when">Для любимых</p><blockquote>«Береги себя сегодня. Ты — самое важное, что у меня есть»</blockquote></div>
+    <div class="mode"><h3>Новый год</h3><p class="when">С 1 декабря до полуночи 31-го</p><blockquote>«Каждый день — новое послание, а в новогоднюю ночь — главное поздравление»</blockquote></div>
+    <div class="mode"><h3>Талисман</h3><p class="when">Для себя или в подарок</p><blockquote>«Сделай сегодня то, что давно откладывается. Удача ждёт именно этого»</blockquote></div>
+    <div class="mode"><h3>Печенье</h3><p class="when">Каждый скан — новое</p><blockquote>«Предсказание, счастливые числа и китайское слово дня»</blockquote></div>
+  </div>
+</div></section>
+
+<section class="coll" id="how"><div class="wrap">
+  <div class="center">
+    <p class="kicker">Как это работает</p>
+    <h2>Две минуты — и камень живой</h2>
   </div>
   <div class="steps">
-    <div class="step rv"><div class="step-num">1</div><h3>Возьми камень с рисунком</h3><p>Агат, яшма, лазурит, малахит. Кулон, брелок или камушек, найденный на море.</p></div>
-    <div class="step rv"><div class="step-num">2</div><h3>Сними обе стороны</h3><p>Сканер сам проверит свет и рисунок и убедится, что такого камня ещё нет. Затем выбери режим и впиши имена.</p></div>
-    <div class="step rv"><div class="step-num">3</div><h3>Отправь ссылку</h3><p>В Telegram или WhatsApp. Послания откроются только на телефоне получателя и только с этим камнем в руках.</p></div>
+    <div class="step"><div class="n">I</div><h3>Возьми камень с рисунком</h3><p>Агат, яшма, лазурит, малахит. Кулон, брелок или камушек, найденный на море.</p></div>
+    <div class="step"><div class="n">II</div><h3>Сними обе стороны</h3><p>Сканер сам проверит свет и рисунок и убедится, что такого камня ещё нет. Затем выбери послания и впиши имена.</p></div>
+    <div class="step"><div class="n">III</div><h3>Отправь ссылку</h3><p>В Telegram или WhatsApp. Послания откроются только на телефоне получателя и только с этим камнем в руках.</p></div>
   </div>
 </div></section>
 
-<section id="modes"><div class="wide">
-  <div class="in center">
-    <div class="label">Режимы</div>
-    <h2 class="h2">Чем станет<br>твой <em>камень</em></h2>
-  </div>
-  <div class="modes-grid">
-    <div>
-      <div class="tabs" role="tablist" aria-label="Режимы камня">
-        <button class="tab" role="tab" aria-selected="true" data-m="0">Love</button>
-        <button class="tab" role="tab" aria-selected="false" data-m="1">Новый год</button>
-        <button class="tab" role="tab" aria-selected="false" data-m="2">Талисман</button>
-        <button class="tab" role="tab" aria-selected="false" data-m="3">Печенье</button>
-      </div>
-      <p class="mdesc" id="mdesc"></p>
-    </div>
-    <div class="phone" aria-hidden="true"><span class="btnL"></span><span class="btnR"></span>
-      <div class="glass"><div class="screen">
-        <div class="island"></div>
-        <div class="sbar"><span>9:41</span><span style="display:flex;gap:5px;align-items:center"><svg viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg><svg viewBox="0 0 16 11"><path d="M8 2.2c2.4 0 4.6.9 6.3 2.5l1.2-1.3A10.5 10.5 0 0 0 8 .4 10.5 10.5 0 0 0 .5 3.4l1.2 1.3A9 9 0 0 1 8 2.2zm0 3.5c1.4 0 2.8.5 3.8 1.5L13 5.9a7.4 7.4 0 0 0-10 0l1.2 1.3c1-1 2.4-1.5 3.8-1.5zM8 9a1.3 1.3 0 1 0 0 2 1.3 1.3 0 0 0 0-2z"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3" fill="none" stroke="#e9f3ee" opacity=".5"/><rect x="2" y="2" width="20" height="8" rx="1.8"/><rect x="25" y="4" width="1.6" height="4" rx=".8" opacity=".5"/></svg></span></div>
-        <div class="apphead"><span class="wm">JADE<b>KEY</b></span><span class="chip">Готов · GPU</span></div>
-        <div class="camview"><img id="pStone" src="img/stone-g8.jpg" alt=""></div>
-        <div class="floaters" id="floaters"></div>
-        <div class="sheet" id="psheet"></div>
-        <div class="homeind"></div>
-      </div></div>
-      <div class="shine"></div>
+<section><div class="wrap why">
+  <div class="why-img"><img src="/img/stone-g9.jpg" alt="" loading="lazy"></div>
+  <div>
+    <p class="kicker">Почему камень</p>
+    <h2>Подарок, который не заканчивается</h2>
+    <div class="vs">
+      <div><b>Открытка</b><span>прочитали один раз и убрали в ящик</span></div>
+      <div><b>QR-код или наклейка</b><span>легко скопировать, переслать, потерять</span></div>
+      <div><b>Сувенир</b><span>красиво, но молчит</span></div>
+      <div class="yes"><b>Живой камень</b><span>новое послание каждый день</span></div>
     </div>
   </div>
 </div></section>
 
-<section id="gallery"><div class="wide">
-  <div class="in center">
-    <div class="label">Коллекция</div>
-    <h2 class="h2">Каждый минерал —<br><em>как отпечаток пальца</em></h2>
-    <p class="gallery-mins">Агат · Лазурит · Яшма · Малахит</p>
-  </div>
-  <div class="stones-grid">
-    <div class="stone-card"><img src="img/stone-g1.jpg" alt="Розовый агат" loading="lazy"><div class="stone-label">Розовый агат</div></div>
-    <div class="stone-card"><img src="img/stone-g2.jpg" alt="Агат" loading="lazy"><div class="stone-label">Агат</div></div>
-    <div class="stone-card"><img src="img/stone-g3.jpg" alt="Агат с жеодой" loading="lazy"><div class="stone-label">Агат с жеодой</div></div>
-    <div class="stone-card"><img src="img/stone-g4.jpg" alt="Лазурит" loading="lazy"><div class="stone-label">Лазурит</div></div>
-    <div class="stone-card"><img src="img/stone-g5.jpg" alt="Розовый агат" loading="lazy"><div class="stone-label">Розовый агат</div></div>
-    <div class="stone-card"><img src="img/stone-g6.jpg" alt="Фиолетовый агат" loading="lazy"><div class="stone-label">Фиолетовый агат</div></div>
-    <div class="stone-card"><img src="img/stone-g7.jpg" alt="Агат с вкраплениями" loading="lazy"><div class="stone-label">Агат с вкраплениями</div></div>
-    <div class="stone-card"><img src="img/stone-g8.jpg" alt="Агат в оправе" loading="lazy"><div class="stone-label">Агат в оправе</div></div>
-    <div class="stone-card"><img src="img/stone-g9.jpg" alt="Агат с друзой" loading="lazy"><div class="stone-label">Агат с друзой</div></div>
-    <div class="stone-card"><img src="img/stone-g10.jpg" alt="Огненный агат" loading="lazy"><div class="stone-label">Огненный агат</div></div>
-    <div class="stone-card"><img src="img/stone-g11.jpg" alt="Лазурит" loading="lazy"><div class="stone-label">Лазурит</div></div>
-    <div class="stone-card"><img src="img/stone-g12.jpg" alt="Лазурит" loading="lazy"><div class="stone-label">Лазурит</div></div>
-  </div>
+<section class="shops"><div class="wrap">
+  <p class="kicker">Магазинам</p>
+  <h2>Продаёте камни?<br>Пусть они заговорят</h2>
+  <p class="sub" style="margin-left:auto;margin-right:auto">Покупатель оживляет камень прямо у вас на кассе и уходит с подарком, а не с сувениром. Делаем наборы с коробкой и QR-этикеткой под ваш магазин.</p>
+  <a class="btn-w" href="mailto:jadekey1965@gmail.com?subject=JadeKey%20%D0%B4%D0%BB%D1%8F%20%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0">Написать нам</a>
 </div></section>
 
-<section id="why"><div class="in">
-  <div class="label">Почему камень</div>
-  <h2 class="h2">Подарок, который<br><em>не заканчивается</em></h2>
-  <div class="why-rows">
-    <div class="why-row"><div class="why-row-text">Открытка<small>прочитали один раз и убрали в ящик</small></div><span class="why-x">✕</span></div>
-    <div class="why-row"><div class="why-row-text">QR-код или наклейка<small>легко скопировать, переслать, потерять</small></div><span class="why-x">✕</span></div>
-    <div class="why-row"><div class="why-row-text">Обычный сувенир<small>красиво, но молчит</small></div><span class="why-x">✕</span></div>
-    <div class="why-row"><div class="why-row-text last">Живой камень<small style="font-family:var(--sans);font-style:normal">новое послание каждый день, только для одного человека</small></div><span class="why-check">✓</span></div>
+<section><div class="wrap center">
+  <p class="kicker">Бесплатно</p>
+  <h2>На любом телефоне</h2>
+  <p class="sub">iPhone — приложение JadeKey в App Store. Android и всё остальное — сканер в браузере; в Chrome его можно установить на экран как приложение.</p>
+  <div class="get">
+    <a class="btn" href="https://apps.apple.com/app/id6769250226">Скачать в App Store</a>
+    <a class="link" href="/scan.html">Открыть сканер в браузере</a>
   </div>
-  <p class="why-sub">Рисунок камня складывался миллионы лет. Повторить его невозможно — поэтому и подделать подарок нельзя.</p>
 </div></section>
-
-<section id="shops"><div class="in">
-  <div class="label">Магазинам</div>
-  <h2 class="h2">Продаёте камни?<br><em>Пусть они заговорят</em></h2>
-  <p class="body-text">Покупатель оживляет камень прямо у вас на кассе и уходит с подарком, а не с сувениром. Делаем наборы с коробкой и QR-этикеткой под ваш магазин.</p>
-  <div class="cta-btns"><a class="cta-btn" href="mailto:jadekey1965@gmail.com?subject=JadeKey%20%D0%B4%D0%BB%D1%8F%20%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0">Написать нам</a></div>
-</div></section>
-
-<section id="get"><div class="in">
-  <div class="label">Бесплатно</div>
-  <h2 class="h2">На любом<br><em>телефоне</em></h2>
-  <p class="body-text">iPhone — приложение JadeKey в App Store. Android и всё остальное — сканер в браузере; в Chrome его можно установить на экран как приложение.</p>
-  <div class="cta-btns row">
-    <a class="cta-btn solid" href="https://apps.apple.com/app/id6769250226">App Store</a>
-    <a class="cta-btn" href="/scan.html?live=1">Открыть сканер</a>
-  </div>
-  <p class="tagline">Stone becomes a gift.</p>
-</div></section>
+</main>
 
 <footer>
-  <div class="foot-copy">© 2026 ИП Панин С. Н.</div>
-  <div class="foot-links"><a href="/tech.html">Технология и инвесторам</a><a href="/privacy.html">Конфиденциальность</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></div>
-  <div class="foot-logo">JADE<b>KEY</b></div>
+  <a class="mark" href="/">JADEKEY</a>
+  <nav><a href="/tech.html">Технология и инвесторам</a><a href="/privacy.html">Конфиденциальность</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></nav>
+  <small>© 2026 ИП Панин С. Н.</small>
 </footer>
-
-<script>
-const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-/* preloader */
-(() => {
-  const n = document.getElementById('preN'), p = document.getElementById('pre');
-  let i = 0; const t = setInterval(() => {
-    i += 2; n.textContent = '/' + String(Math.min(i, 48)).padStart(2, '0');
-    if (i >= 48) { clearInterval(t); setTimeout(() => { p.style.opacity = 0; setTimeout(() => p.remove(), 1000); }, 250); }
-  }, calm ? 1 : 28);
-})();
-
-
-
-/* modes showcase */
-const TB = '<div class="tabbar"><span class="on">⌗ Сканер</span><span>◇ Живой</span></div>';
-const MD = [
-  { stone:'img/stone-g8.jpg', bg:'linear-gradient(180deg,#3a1626,#1d0d15)', line:'#6b2f45', fl:['♥','🍓','♥','💗','🌸'], col:['#ff8fb1','#ffb3c9','#ff6f9c'],
-    desc:'Каждый день новое послание от дарителя: ваши имена, счётчик дней вместе, мелодия музыкальной шкатулки и сердечки.',
-    html:`<div class="s-top">♥ JadeKey Love</div><div class="s-pic">🍓</div><div class="s-to">Тане,</div><div class="s-msg">Береги себя сегодня. Ты — самое важное, что у меня есть.</div><div class="s-from">— Сергей</div><div class="s-meta"><span>День 214 вместе</span><span>11 ноября</span></div><div class="s-btns"><i>🔊</i><i>Закрыть</i></div>` },
-  { stone:'img/stone-g12.jpg', bg:'linear-gradient(180deg,#14306b,#0a1430)', line:'#2c4c94', fl:['❄','•','❄','✦'], col:['#ffffff','#cfe3ff'],
-    desc:'С 1 декабря каждый день новое послание, а в новогоднюю полночь — главное поздравление, салют и Jingle Bells.',
-    html:`<div class="s-top" style="color:#ffd987">✦ До Нового года</div><div class="s-msg" style="font-size:24px;color:#ffe3a1;margin-top:8px">20 дней 03:04:51</div><div class="s-to" style="color:#ffe3a1">Маме,</div><div class="s-msg">Включи музыку и потанцуй ровно одну песню.</div><div class="s-from" style="color:#ffe3a1">— Сын</div><div class="adv">${Array.from({length:16},(_,i)=>`<i class="${i<10?'o':i===10?'t':''}">${i+1}</i>`).join('')}</div><div class="s-btns"><i>🔊</i><i style="background:#f2c45a;color:#2a1600">Закрыть</i></div>` },
-  { stone:'img/stone-g6.jpg', bg:'linear-gradient(180deg,#3b2a5e,#140d24)', line:'#5b4590', fl:['✦','·','✧'], col:['#ffe9b0','#d5c6ff','#ffffff'],
-    desc:'Для себя: пожелание, слово и знак дня, маленький ритуал. В день рождения камень скажет особые слова.',
-    html:`<div class="s-top" style="color:#cdb8ff;text-align:center">✦ Твой талисман</div><div class="s-msg" style="text-align:center;margin-top:12px">Ясность приходит, когда перестаёшь спешить.</div><div class="s-meta" style="border-color:#ffffff22;color:#cdb8ff"><span>Слово дня<br><b style="font:400 15px ui-serif,Georgia,serif;color:#fff">Покой</b></span><span style="text-align:right">Знак дня<br><b style="font:400 15px ui-serif,Georgia,serif;color:#fff">Тёплый ветер</b></span></div><div class="s-btns"><i>🔊</i><i style="background:#fff;color:#1a1030">Закрыть</i></div>` },
-  { stone:'img/stone-g10.jpg', bg:'linear-gradient(180deg,#8a1f16,#2b0806)', line:'#c0392b', fl:['✦','·','✧'], col:['#ffd987','#ffb070','#ffffff'],
-    desc:'Каждый раз, когда наводишь телефон, печенье ломается: новое предсказание, шесть счастливых чисел и китайское слово дня.',
-    html:`<div class="s-top" style="color:#ffd987;text-align:center">✦ Мама, твоё предсказание</div><div style="text-align:center;font-size:34px;margin:6px 0 -4px">🥠</div><div class="paper"><div class="s-msg">Ты найдёшь то, что давно потерял.</div><div class="nums"><b>3</b><b>9</b><b>17</b><b>24</b><b>33</b><b>41</b></div></div><div class="s-meta" style="border:0;color:#ffe9c9;align-items:center"><span class="hz">心</span><span style="text-align:right">xīn — сердце<br>китайское слово дня</span></div><div class="s-btns"><i>🔊</i><i style="background:#ffd987;color:#3a1200">Ещё печенье</i></div>` },
-];
-let flT = null;
-function floaters(M) {
-  const box = document.getElementById('floaters'); box.innerHTML = '';
-  if (calm) return;
-  for (let i = 0; i < 14; i++) {
-    const e = document.createElement('span'); e.textContent = M.fl[i % M.fl.length];
-    e.style.left = (Math.random() * 92) + '%'; e.style.fontSize = (9 + Math.random() * 14) + 'px'; e.style.color = M.col[i % M.col.length];
-    e.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px'); e.style.setProperty('--r', (Math.random() * 80 - 40) + 'deg');
-    e.style.animationDuration = (4 + Math.random() * 4) + 's'; e.style.animationDelay = (Math.random() * 5) + 's';
-    box.appendChild(e);
-  }
-}
-const psheet = document.getElementById('psheet'), mdesc = document.getElementById('mdesc');
-function showMode(m) {
-  const M = MD[m];
-  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(+t.dataset.m === m)));
-  psheet.innerHTML = '<div class="grab"></div>' + M.html + TB;
-  psheet.style.background = M.bg; psheet.style.borderTopColor = M.line;
-  document.getElementById('pStone').src = M.stone;
-  floaters(M);
-  mdesc.textContent = M.desc;
-}
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showMode(+t.dataset.m)));
-showMode(0);
-
-/* reveal */
-const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('show'); io.unobserve(e.target); } }), { threshold: .2 }) : null;
-document.querySelectorAll('.rv').forEach(el => io ? io.observe(el) : el.classList.add('show'));
-</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PBJZ1WQNN8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-PBJZ1WQNN8");</script>
 </body>
 </html>
