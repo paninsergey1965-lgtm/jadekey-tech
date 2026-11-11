@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /live.html
+Disallow: /new.html
+
+Sitemap: https://jadekey.tech/sitemap.xml
