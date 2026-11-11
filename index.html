@@ -136,6 +136,11 @@ h2{font:300 clamp(40px,5.4vw,68px)/1.02 var(--serif);letter-spacing:-.005em}
 /* get */
 .get{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 26px;margin-top:42px;align-items:center}
 
+.howto{max-width:440px;margin:56px auto 0;text-align:left;border-top:1px solid var(--line);padding-top:30px}
+.howto h3{font:400 22px/1.25 var(--serif);text-align:center;margin-bottom:18px}
+.howto ol{list-style:none;counter-reset:h}
+.howto li{counter-increment:h;display:grid;grid-template-columns:30px 1fr;gap:8px;padding:8px 0;color:var(--mute);font-size:14px}
+.howto li::before{content:counter(h);font:400 22px/1 var(--serif);color:var(--red)}
 footer{border-top:1px solid var(--line);padding:48px 22px 60px;text-align:center}
 footer .mark{display:inline-block;font-size:18px}
 footer nav{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;margin:24px 0 18px;font-size:13px}
@@ -231,10 +236,18 @@ footer small{color:var(--mute);font-size:12px}
 <section><div class="wrap center">
   <p class="kicker">Бесплатно</p>
   <h2>На любом телефоне</h2>
-  <p class="sub">iPhone — приложение JadeKey в App Store. Android и всё остальное — сканер в браузере; в Chrome его можно установить на экран как приложение.</p>
+  <p class="sub">iPhone — приложение JadeKey в App Store. Android — сканер прямо в браузере, без установки.</p>
   <div class="get">
     <a class="btn" href="https://apps.apple.com/app/id6769250226">Скачать в App Store</a>
     <a class="link" href="/scan.html">Открыть сканер в браузере</a>
+  </div>
+  <div class="howto">
+    <h3>Как поставить сканер на Android как приложение</h3>
+    <ol>
+      <li>Откройте сканер в Chrome.</li>
+      <li>Нажмите меню ⋮ в правом верхнем углу и выберите «Добавить на главный экран» (или «Установить приложение»).</li>
+      <li>На экране телефона появится значок JadeKey. Дальше открывайте сканер с него.</li>
+    </ol>
   </div>
 </div></section>
 </main>
