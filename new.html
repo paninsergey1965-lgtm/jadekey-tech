@@ -8,226 +8,347 @@
 <meta property="og:title" content="JadeKey — живые камни">
 <meta property="og:description" content="Камень, который каждый день открывает послание от того, кто его подарил.">
 <meta property="og:image" content="https://jadekey.tech/img/stone-pink.jpg">
-<meta name="theme-color" content="#0a1310">
+<meta name="theme-color" content="#121a3d">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="preload" href="/fonts/unbounded-cyrillic-800-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-:root{--bg:#0a1310;--panel:#112019;--panel2:#16291f;--line:#223a2e;--fg:#e9f3ee;--mute:#86a396;--jade:#3fd8a2;--gold:#d8b45c;
-  --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+@font-face{font-family:Unbounded;font-weight:400;font-display:swap;src:url(/fonts/unbounded-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Unbounded;font-weight:400;font-display:swap;src:url(/fonts/unbounded-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+@font-face{font-family:Unbounded;font-weight:600;font-display:swap;src:url(/fonts/unbounded-cyrillic-600-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Unbounded;font-weight:600;font-display:swap;src:url(/fonts/unbounded-latin-600-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+@font-face{font-family:Unbounded;font-weight:800;font-display:swap;src:url(/fonts/unbounded-cyrillic-800-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Unbounded;font-weight:800;font-display:swap;src:url(/fonts/unbounded-latin-800-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+@font-face{font-family:Golos;font-weight:400;font-display:swap;src:url(/fonts/golos-text-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Golos;font-weight:400;font-display:swap;src:url(/fonts/golos-text-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+@font-face{font-family:Golos;font-weight:500;font-display:swap;src:url(/fonts/golos-text-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Golos;font-weight:500;font-display:swap;src:url(/fonts/golos-text-latin-500-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+@font-face{font-family:Golos;font-weight:600;font-display:swap;src:url(/fonts/golos-text-cyrillic-600-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Golos;font-weight:600;font-display:swap;src:url(/fonts/golos-text-latin-600-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+
+:root{
+  --lapis:#121a3d; --deep:#0b1130; --chalce:#f2ebf3; --mist:#aaa7cc; --pyrite:#e0b95a; --ink:#1b1408;
+  --acc:#ff7fb0; --acc2:#ffd0e2;
+  --display:Unbounded,"Arial Black",system-ui,sans-serif; --body:Golos,-apple-system,system-ui,sans-serif;
+}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--lapis);color:var(--chalce);font:400 18px/1.55 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit}
-.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
-header{position:sticky;top:0;z-index:10;background:#0a1310cc;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid #ffffff0d}
-header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
-.word{font-family:var(--serif);font-size:17px;letter-spacing:.32em;text-decoration:none}
-.word b{font-weight:400;color:var(--jade)}
-.hbtn{font-size:14px;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--panel)}
-h1,h2,h3{font-family:var(--serif);font-weight:400;margin:0}
-.k{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--jade);margin:0 0 12px}
-.lead{color:var(--mute);font-size:18px;max-width:560px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 24px;border-radius:16px;font-size:16px;font-weight:600;text-decoration:none;border:1px solid var(--line);background:var(--panel2);color:var(--fg)}
-.btn.main{background:var(--jade);border-color:var(--jade);color:#04150e}
-.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
-section{padding:72px 0;border-top:1px solid #ffffff0a}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em}
 
-/* hero */
-.hero{padding:44px 0 64px;border-top:0;overflow:hidden}
-.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center}
-.hero h1{font-size:clamp(44px,8vw,76px);line-height:1.02;margin:0 0 18px}
-.hero h1 i{font-style:normal;color:var(--jade)}
-.stage{position:relative;height:440px}
-.orb{position:absolute;left:50%;top:46%;width:290px;height:290px;margin:-145px 0 0 -145px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1px #ffffff22,0 0 90px #3fd8a244;animation:float 6s ease-in-out infinite}
-.orb img{width:100%;height:100%;object-fit:cover;transition:opacity .8s}
-.ring{position:absolute;left:50%;top:46%;width:350px;height:350px;margin:-175px 0 0 -175px;border-radius:50%;border:1px dashed #3fd8a255;animation:spin 40s linear infinite}
-.scan{position:absolute;left:50%;top:46%;width:290px;height:290px;margin:-145px 0 0 -145px;border-radius:50%;overflow:hidden;pointer-events:none}
-.scan:after{content:"";position:absolute;left:0;right:0;height:60px;background:linear-gradient(180deg,transparent,#3fd8a255,transparent);animation:sweep 3.2s ease-in-out infinite}
-.msg{position:absolute;right:0;bottom:6px;width:250px;background:linear-gradient(180deg,#5a1d3e,#2a0d1e);border:1px solid #ff8fb144;border-radius:18px;padding:14px 16px;box-shadow:0 20px 50px #0008;transition:opacity .5s,transform .5s}
-.msg .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#ffaecb}
-.msg p{margin:6px 0 4px;font-family:var(--serif);font-size:19px;line-height:1.3}
-.msg .f{font-family:var(--serif);color:#ffaecb;text-align:right}
-.msg.hide{opacity:0;transform:translateY(10px)}
-@keyframes float{50%{transform:translateY(-10px)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes sweep{0%{top:-60px}100%{top:300px}}
+.top{position:absolute;inset:0 0 auto 0;z-index:5}
+.top .wrap{display:flex;justify-content:space-between;align-items:center;height:72px}
+.logo{font-family:var(--display);font-weight:800;font-size:17px;text-decoration:none;letter-spacing:.02em}
+.logo span{color:var(--acc);transition:color .8s}
+.ghost{font-weight:500;font-size:15px;text-decoration:none;padding:10px 16px;border-radius:999px;border:1.5px solid #ffffff33}
+.ghost:hover{border-color:var(--chalce)}
 
-/* steps */
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
-.step{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px}
-.step .n{font-family:var(--serif);font-size:44px;color:var(--jade);line-height:1}
-.step h3{font-size:23px;margin:12px 0 6px}
-.step p{margin:0;color:var(--mute);font-size:16px}
+.hero{position:relative;min-height:100svh;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:20px;padding:96px max(24px,calc((100vw - 1180px)/2 + 24px)) 60px;
+  background:radial-gradient(70% 60% at 72% 50%,#1d2a62 0%,var(--lapis) 60%)}
+.hero h1{font-weight:800;font-size:clamp(42px,6.4vw,92px);line-height:.98}
+.hero h1 .w{display:block}
+.hero .sub{max-width:30ch;font-size:20px;color:var(--mist);margin:26px 0 0}
+.cta{display:inline-flex;align-items:center;height:60px;padding:0 30px;border-radius:999px;background:var(--acc);color:#1a0610;font:600 18px var(--body);text-decoration:none;border:0;cursor:pointer;transition:background .8s,transform .15s}
+.cta:active{transform:scale(.97)}
+.row{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-top:34px}
+.link{font-weight:500;text-decoration:underline;text-underline-offset:5px;text-decoration-color:#ffffff55}
 
-/* modes */
-.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
-.mode{border-radius:22px;padding:20px 18px;min-height:300px;display:flex;flex-direction:column;border:1px solid #ffffff1a;position:relative;overflow:hidden}
-.mode .tag{font-size:11px;letter-spacing:.22em;text-transform:uppercase}
-.mode h3{font-size:26px;margin:8px 0 6px}
-.mode .d{font-size:14px;opacity:.8;margin:0 0 14px}
-.mode .s{margin-top:auto;border-radius:14px;padding:12px 14px;background:#ffffff12;font-family:var(--serif);font-size:17px;line-height:1.3}
-.mode .s small{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.7;margin-bottom:4px}
-.m-love{background:linear-gradient(180deg,#5a1d3e,#1f0a17)} .m-love .tag{color:#ffaecb}
-.m-ny{background:linear-gradient(180deg,#14306b,#0a1430)} .m-ny .tag{color:#ffd987}
-.m-tal{background:linear-gradient(180deg,#3b2a5e,#140d24)} .m-tal .tag{color:#d5c6ff}
-.m-fc{background:linear-gradient(180deg,#8a1f16,#2b0806)} .m-fc .tag{color:#ffd987}
-.m-fc .s{background:#fff8ea;color:#3a1a0c}
-.m-fc .num{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
-.m-fc .num i{font-style:normal;font-family:var(--sans);font-size:12px;font-weight:600;color:#b3261e;border:1px solid #b3261e55;border-radius:999px;padding:1px 7px}
-.big{font-size:44px;line-height:1;color:#ffd987;font-family:var(--serif)}
+.stone{position:relative;justify-self:center;width:min(560px,46vw);aspect-ratio:1;cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;padding:0;background:none;color:inherit;font:inherit}
+.stone canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 40px 60px #0009)}
+.beam{position:absolute;left:8%;right:8%;height:18%;top:-20%;background:linear-gradient(180deg,transparent,var(--acc),transparent);mix-blend-mode:screen;opacity:0;pointer-events:none;border-radius:50%}
+.stone.scanning .beam{animation:beam 1.1s ease-in-out}
+@keyframes beam{0%{top:-10%;opacity:0}15%{opacity:.7}85%{opacity:.7}100%{top:92%;opacity:0}}
+.hint{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-size:14px;color:var(--mist);white-space:nowrap;transition:opacity .4s}
+.note{position:absolute;right:-4%;top:58%;width:min(300px,70%);padding:18px 20px 16px;border-radius:24px 24px 24px 6px;background:var(--chalce);color:#20142a;box-shadow:0 30px 60px #0007;text-align:left;
+  opacity:0;transform:translateY(16px) rotate(-2deg);transition:opacity .45s,transform .45s;pointer-events:none}
+.note.on{opacity:1;transform:none}
+.note .who{font:600 13px var(--body);color:#7a3b63}
+.note p{margin:6px 0 0;font:600 20px/1.3 var(--display);letter-spacing:-.01em}
+.note .sig{margin-top:8px;font-size:15px;text-align:right;color:#5b4d66}
+.modes-dots{position:absolute;left:50%;top:-8px;transform:translateX(-50%);display:flex;gap:8px}
+.modes-dots i{width:8px;height:8px;border-radius:50%;background:#ffffff33;transition:background .4s,width .4s}
+.modes-dots i.on{background:var(--acc);width:24px;border-radius:4px}
 
-/* why */
-.why{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
-.why div{padding:4px 0}
-.why b{display:block;font-family:var(--serif);font-weight:400;font-size:24px;margin-bottom:6px}
-.why p{margin:0;color:var(--mute);font-size:16px}
-.strip{display:flex;gap:12px;margin-top:34px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
-.strip img{width:150px;height:150px;border-radius:18px;object-fit:cover;flex:none;border:1px solid #ffffff1a}
+.how{padding:120px 0 110px;background:var(--chalce);color:#1d1730}
+.how h2{font-weight:800;font-size:clamp(34px,5vw,64px);line-height:1.02;max-width:14ch}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;margin-top:64px;counter-reset:s}
+.st{position:relative;padding-top:104px}
+.st:before{counter-increment:s;content:counter(s);position:absolute;top:-10px;left:-4px;font:800 110px/1 var(--display);color:transparent;-webkit-text-stroke:2px #1d1730}
+.st h3{font-weight:600;font-size:24px;line-height:1.15}
+.st p{margin:12px 0 0;color:#4d4561;max-width:32ch}
 
-/* get */
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:26px}
-.card h3{font-size:28px;margin:0 0 8px}
-.card p{color:var(--mute);margin:0 0 6px;font-size:16px}
-.card .btns{margin-top:18px}
-.b2b{background:linear-gradient(135deg,#16291f,#0d1a14);border:1px solid #3fd8a244}
+.show{padding:120px 0;background:var(--deep);transition:background 1s}
+.show .wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:56px;align-items:center}
+.show h2{font-weight:800;font-size:clamp(34px,5vw,64px);line-height:1.02}
+.tabs{display:flex;flex-wrap:wrap;gap:10px;margin:34px 0 26px}
+.tab{font:600 16px var(--body);color:var(--chalce);background:transparent;border:1.5px solid #ffffff30;border-radius:999px;padding:12px 18px;cursor:pointer}
+.tab[aria-selected=true]{background:var(--chalce);color:#1d1730;border-color:var(--chalce)}
+.mdesc{font-size:19px;color:var(--mist);max-width:40ch;min-height:5.2em}
+.phone{justify-self:center;width:min(340px,80vw);aspect-ratio:9/18.5;border-radius:48px;padding:12px;background:#05070f;box-shadow:0 0 0 2px #ffffff18,0 50px 90px #0009;position:relative}
+.screen{position:absolute;inset:12px;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;transition:background .6s}
+.screen .top-s{position:absolute;top:0;left:0;right:0;padding:44px 22px 0;font:800 13px var(--display);letter-spacing:.06em;opacity:.8}
+.sheet{margin:0;padding:22px 20px 26px;border-radius:28px 28px 0 0;color:#fff}
+.sheet .lab{font-size:13px;opacity:.8}
+.sheet .big{font:600 25px/1.22 var(--display);margin:10px 0 12px;letter-spacing:-.01em}
+.sheet .meta{display:flex;justify-content:space-between;font-size:14px;opacity:.85}
+.sheet .nums{display:flex;gap:6px;margin-top:12px}
+.sheet .nums b{font:600 13px var(--body);border-radius:999px;padding:3px 9px}
+.cookie-paper{background:#fff8ea;color:#3a1a0c;border-radius:10px;padding:14px;margin:6px 0 0}
+.cookie-paper .big{color:#3a1a0c;font-size:20px;margin:0}
+.cookie-paper .nums b{border:1.5px solid #b3261e66;color:#b3261e}
+.hz{font:400 54px/1 var(--body);color:#ffd987}
 
-footer{padding:40px 0 60px;border-top:1px solid #ffffff0a;color:var(--mute);font-size:14px}
-footer .wrap{display:flex;flex-wrap:wrap;gap:12px 26px;justify-content:space-between}
-footer nav{display:flex;flex-wrap:wrap;gap:12px 22px}
+.real{padding:110px 0 120px;background:var(--lapis)}
+.real h2{font-weight:800;font-size:clamp(30px,4.4vw,56px);line-height:1.04;max-width:17ch}
+.real p.lead{color:var(--mist);max-width:44ch;font-size:19px;margin:20px 0 0}
+.rail{display:flex;gap:18px;margin-top:56px;padding:0 24px 10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail figure{margin:0;flex:none;scroll-snap-align:center;text-align:center}
+.rail img{width:220px;height:220px;object-fit:cover;display:block;border-radius:43% 57% 52% 48% / 51% 44% 56% 49%;box-shadow:0 20px 40px #0007}
+.rail figure:nth-child(2n) img{border-radius:56% 44% 41% 59% / 46% 58% 42% 54%}
+.rail figcaption{margin-top:14px;font-size:15px;color:var(--mist)}
+
+.shops{background:var(--pyrite);color:var(--ink);padding:110px 0}
+.shops .wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:56px;align-items:end}
+.shops h2{font-weight:800;font-size:clamp(34px,5vw,66px);line-height:1}
+.shops p{font-size:19px;margin:0 0 14px;max-width:42ch}
+.shops .cta{background:var(--ink);color:var(--pyrite)}
+
+.get{padding:110px 0;background:var(--chalce);color:#1d1730}
+.get .wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.get h2{font-weight:800;font-size:clamp(32px,4.6vw,58px);line-height:1.02}
+.get h3{font-weight:600;font-size:22px;margin:0 0 8px}
+.get p{margin:0;color:#4d4561}
+.get .opt{padding:26px 0;border-top:2px solid #1d173022}
+.get .opt:first-child{border-top:0;padding-top:0}
+.get .cta{background:#1d1730;color:var(--chalce);margin-top:18px}
+
+footer{background:var(--deep);color:var(--mist);font-size:15px;padding:48px 0 70px}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px 30px}
+footer nav{display:flex;flex-wrap:wrap;gap:12px 26px}
 footer a{text-decoration:none}
-footer a:hover{color:var(--fg)}
-
-.rv{opacity:0;transform:translateY(18px);transition:opacity .7s,transform .7s}
-.rv.on{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.orb,.ring,.scan:after{animation:none}.rv{opacity:1;transform:none}}
+footer a:hover{color:var(--chalce)}
 
 @media (max-width:900px){
-  .hero .wrap{grid-template-columns:1fr}
-  .stage{height:380px;order:-1}
-  .orb,.scan{width:240px;height:240px;margin:-120px 0 0 -120px}
-  .ring{width:290px;height:290px;margin:-145px 0 0 -145px}
-  .msg{width:220px;right:2px;bottom:0}
-  .modes{grid-template-columns:1fr 1fr}
-  .steps,.why,.cards{grid-template-columns:1fr}
-  section{padding:56px 0}
+  .hero{grid-template-columns:1fr;padding-top:84px;gap:8px}
+  .stone{order:-1;width:min(400px,84vw);margin-bottom:64px}
+  .note{right:-2%;top:auto;bottom:-56px;width:min(260px,74%)}
+  .hint{bottom:auto;top:100%;margin-top:8px}
+  .note p{font-size:17px}
+  .steps,.show .wrap,.shops .wrap,.get .wrap{grid-template-columns:1fr}
+  .steps{gap:36px}
+  .show .wrap{gap:40px}
+  .how,.show,.real,.shops,.get{padding:84px 0}
 }
-@media (max-width:520px){
-  .modes{grid-template-columns:1fr}
-  .mode{min-height:0}
-  .msg{width:205px}
-  .msg p{font-size:17px}
-}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<header><div class="wrap">
-  <a class="word" href="/">JADE<b>KEY</b></a>
-  <a class="hbtn" href="/scan.html">Открыть сканер</a>
-</div></header>
-
-<div class="hero"><div class="wrap">
-  <div>
-    <p class="k">Живые камни</p>
-    <h1>Камень, который <i>говорит</i></h1>
-    <p class="lead">Каждый природный камень уникален, как отпечаток пальца. JadeKey узнаёт его по рисунку — и каждый день открывает послание от того, кто его подарил.</p>
-    <div class="btns">
-      <a class="btn main" href="/scan.html?live=1">Оживить камень</a>
-      <a class="btn" href="#how">Как это работает</a>
-    </div>
-  </div>
-  <div class="stage" aria-hidden="true">
-    <div class="ring"></div>
-    <div class="orb"><img id="orbImg" src="img/stone-pink.jpg" alt=""></div>
-    <div class="scan"></div>
-    <div class="msg" id="msg"><div class="t" id="msgT">♥ День 214 вместе</div><p id="msgP">Ты — моё любимое «доброе утро».</p><div class="f" id="msgF">— Сергей</div></div>
-  </div>
+<div class="top"><div class="wrap">
+  <a class="logo" href="/">JADE<span>KEY</span></a>
+  <a class="ghost" href="/scan.html">Открыть сканер</a>
 </div></div>
 
-<section id="how"><div class="wrap">
-  <p class="k">Как это работает</p>
-  <h2 style="font-size:clamp(32px,5vw,48px)">Три шага — и камень оживает</h2>
+<main>
+<section class="hero">
+  <div>
+    <h1><span class="w">Камень,</span><span class="w">который</span><span class="w">тебя помнит</span></h1>
+    <p class="sub">Рисунок природного камня неповторим, как отпечаток пальца. Наведи телефон — и камень откроет послание от того, кто его подарил.</p>
+    <div class="row">
+      <a class="cta" href="/scan.html?live=1">Оживить свой камень</a>
+      <a class="link" href="#how">Как это устроено</a>
+    </div>
+  </div>
+  <button class="stone" id="stone" aria-label="Нажми на камень, чтобы увидеть послание">
+    <span class="modes-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span>
+    <canvas id="agate" width="1120" height="1120"></canvas>
+    <span class="beam"></span>
+    <span class="note" id="note" aria-live="polite"><span class="who" id="nWho">День 214 вместе</span><p id="nTxt">Ты — моё любимое «доброе утро».</p><span class="sig" id="nSig" style="display:block">Сергей</span></span>
+    <span class="hint" id="hint">Нажми на камень</span>
+  </button>
+</section>
+
+<section class="how" id="how"><div class="wrap">
+  <h2>Две минуты, и камень живой</h2>
   <div class="steps">
-    <div class="step rv"><div class="n">1</div><h3>Выбери камень</h3><p>Любой природный камень с рисунком: агат, яшма, лазурит, малахит. Кулон, брелок или просто камушек с моря.</p></div>
-    <div class="step rv"><div class="n">2</div><h3>Оживи за две минуты</h3><p>Сними камень с двух сторон, выбери режим и впиши имена. Сканер сам проверит свет, рисунок и что такого камня ещё нет.</p></div>
-    <div class="step rv"><div class="n">3</div><h3>Подари</h3><p>Отправь ссылку в Telegram или WhatsApp. Послания откроются только на телефоне получателя и только с этим камнем в руках.</p></div>
+    <div class="st"><h3>Возьми камень с рисунком</h3><p>Агат, яшма, лазурит, малахит. Кулон, брелок или камушек, найденный на море.</p></div>
+    <div class="st"><h3>Сфотографируй обе стороны</h3><p>Сканер сам проверит свет и рисунок и убедится, что такого камня ещё нет. Потом выбери режим и впиши имена.</p></div>
+    <div class="st"><h3>Отправь ссылку</h3><p>В Telegram или WhatsApp. Послания откроются только на телефоне получателя и только с этим камнем в руках.</p></div>
   </div>
 </div></section>
 
-<section id="modes"><div class="wrap">
-  <p class="k">Режимы</p>
-  <h2 style="font-size:clamp(32px,5vw,48px)">Чем станет твой камень</h2>
-  <div class="modes">
-    <div class="mode m-love rv"><span class="tag">♥ Love</span><h3>Для двоих</h3><p class="d">Каждый день новое послание, ваши имена и счётчик дней вместе. Мелодия музыкальной шкатулки и сердечки.</p>
-      <div class="s"><small>День 214 вместе</small>Даже в самый серый день ты моё солнце.</div></div>
-    <div class="mode m-ny rv"><span class="tag">❄ Новый год</span><h3>Адвент-камень</h3><p class="d">С 1 декабря каждый день новое послание, а в полночь — главное поздравление с салютом и Jingle Bells.</p>
-      <div class="s"><small>До Нового года</small><span class="big">20</span> дней · послание №11</div></div>
-    <div class="mode m-tal rv"><span class="tag">✦ Талисман</span><h3>Для себя</h3><p class="d">Пожелание, слово и знак дня, маленький ритуал. В день рождения — особое послание.</p>
-      <div class="s"><small>Слово дня · Опора</small>Сегодня всё идёт своим чередом. Не торопи ни одно событие.</div></div>
-    <div class="mode m-fc rv"><span class="tag">🥠 Печенье</span><h3>С предсказанием</h3><p class="d">Каждый раз, когда наводишь телефон, печенье ломается и выпадает новое предсказание и китайское слово дня.</p>
-      <div class="s">Удача улыбнётся тебе, когда ты меньше всего этого ждёшь.<div class="num"><i>7</i><i>12</i><i>19</i><i>23</i><i>38</i><i>44</i></div></div></div>
+<section class="show" id="modes"><div class="wrap">
+  <div>
+    <h2>Чем станет твой камень</h2>
+    <div class="tabs" role="tablist" aria-label="Режимы камня">
+      <button class="tab" role="tab" aria-selected="true" data-m="0">Love</button>
+      <button class="tab" role="tab" aria-selected="false" data-m="1">Новый год</button>
+      <button class="tab" role="tab" aria-selected="false" data-m="2">Талисман</button>
+      <button class="tab" role="tab" aria-selected="false" data-m="3">Печенье</button>
+    </div>
+    <p class="mdesc" id="mdesc"></p>
+  </div>
+  <div class="phone" aria-hidden="true"><div class="screen" id="screen"></div></div>
+</div></section>
+
+<section class="real"><div class="wrap">
+  <h2>Это не рендеры. Это наши камни</h2>
+  <p class="lead">Каждый из них уже живёт в базе JadeKey, и сканер отличит его от любого другого, даже от камня с того же прилавка.</p>
+</div>
+  <div class="rail">
+    <figure><img src="img/stone-pink.jpg" alt="Розовый агат в оправе" loading="lazy"><figcaption>Розовый агат</figcaption></figure>
+    <figure><img src="img/stone-lapis.jpg" alt="Лазурит" loading="lazy"><figcaption>Лазурит</figcaption></figure>
+    <figure><img src="img/stone-red.jpg" alt="Красный агат в оправе" loading="lazy"><figcaption>Огненный агат</figcaption></figure>
+    <figure><img src="img/stone-violet.jpg" alt="Фиолетовый агат" loading="lazy"><figcaption>Фиолетовый агат</figcaption></figure>
+    <figure><img src="img/stone-rose.jpg" alt="Агат с друзой" loading="lazy"><figcaption>Агат с друзой</figcaption></figure>
+    <figure><img src="img/stone-agate.jpg" alt="Срез агата" loading="lazy"><figcaption>Срез агата</figcaption></figure>
+  </div>
+</section>
+
+<section class="shops"><div class="wrap">
+  <h2>Продаёте камни? Пусть они заговорят</h2>
+  <div>
+    <p>Покупатель оживляет камень прямо у вас на кассе и уходит с подарком, а не с сувениром. Вы — с продажей дороже обычной.</p>
+    <p>Делаем наборы с коробкой и QR-этикеткой под ваш магазин.</p>
+    <a class="cta" href="mailto:jadekey1965@gmail.com?subject=JadeKey%20%D0%B4%D0%BB%D1%8F%20%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0">Написать нам</a>
   </div>
 </div></section>
 
-<section id="why"><div class="wrap">
-  <p class="k">Почему это работает</p>
-  <h2 style="font-size:clamp(32px,5vw,48px)">Природа уже всё подписала</h2>
-  <div class="why">
-    <div class="rv"><b>Неповторим</b><p>Рисунок камня складывался миллионы лет. Двух одинаковых не бывает — поэтому сканер узнаёт именно твой.</p></div>
-    <div class="rv"><b>Без чипов и наклеек</b><p>Ничего не нужно клеить или вживлять. Достаточно камеры телефона: распознавание работает прямо на устройстве.</p></div>
-    <div class="rv"><b>Только для своих</b><p>Чужой телефон увидит лишь замок. Послания открываются только у того, кому камень подарили.</p></div>
-  </div>
-  <div class="strip">
-    <img src="img/stone-red.jpg" alt="Агат"><img src="img/stone-lapis.jpg" alt="Лазурит"><img src="img/stone-violet.jpg" alt="Агат"><img src="img/stone-rose.jpg" alt="Агат"><img src="img/stone-agate.jpg" alt="Агат"><img src="img/stone-pink.jpg" alt="Агат">
+<section class="get" id="get"><div class="wrap">
+  <h2>Бесплатно. На любом телефоне</h2>
+  <div>
+    <div class="opt"><h3>iPhone</h3><p>Приложение JadeKey в App Store.</p><a class="cta" href="https://apps.apple.com/app/id6769250226">Скачать в App Store</a></div>
+    <div class="opt"><h3>Android и всё остальное</h3><p>Открой сканер в браузере. В Chrome его можно установить на экран телефона, как приложение.</p><a class="cta" href="/scan.html?live=1">Открыть сканер</a></div>
   </div>
 </div></section>
-
-<section id="get"><div class="wrap">
-  <p class="k">Начать</p>
-  <h2 style="font-size:clamp(32px,5vw,48px)">Попробуй прямо сейчас</h2>
-  <div class="cards">
-    <div class="card rv"><h3>На телефоне</h3>
-      <p>iPhone — приложение JadeKey в App Store, бесплатно.</p>
-      <p>Android — открой этот сайт в Chrome и нажми «Установить на телефон» во вкладке «Живой».</p>
-      <div class="btns"><a class="btn main" href="https://apps.apple.com/app/id6769250226">App Store</a><a class="btn" href="/scan.html?live=1">Открыть в браузере</a></div></div>
-    <div class="card b2b rv"><h3>Магазинам камней</h3>
-      <p>Продаёте камни, украшения или сувениры? Сделайте из них подарок, который живёт: покупатель оживляет камень прямо у вас на кассе.</p>
-      <p>Наборы с коробкой и QR-этикеткой — под ваш магазин.</p>
-      <div class="btns"><a class="btn main" href="mailto:jadekey1965@gmail.com?subject=JadeKey%20%D0%B4%D0%BB%D1%8F%20%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0">Написать нам</a></div></div>
-  </div>
-</div></section>
+</main>
 
 <footer><div class="wrap">
-  <div>© 2026 JadeKey · ИП Панин С. Н.</div>
+  <div>© 2026 JadeKey, ИП Панин С. Н.</div>
   <nav><a href="/tech.html">Технология и инвесторам</a><a href="/privacy.html">Конфиденциальность</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></nav>
 </div></footer>
 
 <script>
-// hero: rotate stone + message
-const SL = [
-  ['img/stone-pink.jpg', 'linear-gradient(180deg,#5a1d3e,#2a0d1e)', '#ff8fb144', '#ffaecb', '♥ День 214 вместе', 'Ты — моё любимое «доброе утро».', '— Сергей'],
-  ['img/stone-lapis.jpg', 'linear-gradient(180deg,#14306b,#0a1430)', '#f2c45a44', '#ffd987', '❄ До Нового года 20 дней', 'Купи мандарины. Это обязательная часть плана.', '— Сын'],
-  ['img/stone-violet.jpg', 'linear-gradient(180deg,#3b2a5e,#140d24)', '#b79cff44', '#d5c6ff', '✦ Слово дня · Смелость', 'Удача любит тех, кто начинает.', ''],
-  ['img/stone-red.jpg', 'linear-gradient(180deg,#8a1f16,#2b0806)', '#ffd98744', '#ffd987', '🥠 Твоё предсказание', 'Скоро ты получишь хорошую новость.', '— Мама'],
+const MODES = [
+  { acc:'#ff7fb0', acc2:'#ffd0e2', bg:'#2a0c22',
+    bands:['#2b0819','#6d1640','#b8336e','#e8679a','#f7a9c8','#fde3ee','#c94a80','#8a1f4f'],
+    who:'День 214 вместе', txt:'Ты — моё любимое «доброе утро».', sig:'Сергей',
+    desc:'Каждый день новое послание от дарителя: ваши имена, счётчик дней вместе, мелодия музыкальной шкатулки и сердечки.' },
+  { acc:'#8cc4ff', acc2:'#e3f1ff', bg:'#0b1a44',
+    bands:['#07122f','#163a85','#3c78d8','#8cc4ff','#e3f1ff','#ffffff','#5d97e8','#1f4fa8'],
+    who:'До Нового года 20 дней', txt:'Купи мандарины. Это обязательная часть плана.', sig:'Сын',
+    desc:'С 1 декабря каждый день новое послание, а в новогоднюю полночь — главное поздравление, салют и Jingle Bells.' },
+  { acc:'#b9a3ff', acc2:'#ebe4ff', bg:'#1a1036',
+    bands:['#120a26','#3a2470','#6e4fc4','#a68cff','#e3d9ff','#ffffff','#8a6ee6','#4b2c8a'],
+    who:'Слово дня: смелость', txt:'Удача любит тех, кто начинает.', sig:'',
+    desc:'Для себя: пожелание, слово и знак дня, маленький ритуал. В день рождения камень скажет особые слова.' },
+  { acc:'#f0a648', acc2:'#ffe6bf', bg:'#3a1206',
+    bands:['#2a0d04','#7a2c0c','#c0611f','#f0a648','#ffd98a','#fff4dc','#d98330','#9a3f12'],
+    who:'Твоё предсказание', txt:'Скоро ты получишь хорошую новость, которую давно ждёшь.', sig:'Мама',
+    desc:'Каждый раз, когда наводишь телефон, печенье ломается: новое предсказание, шесть счастливых чисел и китайское слово дня.' },
 ];
-let si = 0;
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-if (!calm) setInterval(() => {
-  si = (si + 1) % SL.length;
-  const [img, bg, bd, c, t, p, f] = SL[si], m = document.getElementById('msg'), o = document.getElementById('orbImg');
-  m.classList.add('hide'); o.style.opacity = 0;
+const root = document.documentElement.style;
+
+/* procedural agate */
+const cv = document.getElementById('agate'), g = cv.getContext('2d'), S = cv.width, C = S / 2;
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+let mode = 0, shown = MODES[0].bands.map(hex), from = shown, mixT = 1, t0 = performance.now();
+const seed = Array.from({ length: 7 }, (_, k) => ({ a: (Math.random() * .5 + .5) / (k + 2) ** 1.25, p: Math.random() * 6.28, k: k + 2 }));
+const wob = Array.from({ length: 5 }, (_, k) => ({ a: Math.random() * .03 / (k + 1), p: Math.random() * 6.28, k: k * 3 + 5 }));
+function rad(th, layer, time) {
+  let r = 1;
+  for (const s of seed) r += s.a * .35 * Math.sin(s.k * th + s.p + layer * .9 + time * .00012 * s.k);
+  for (const w of wob) r += w.a * Math.sin(w.k * th + w.p + layer * 2.1);
+  return r;
+}
+function draw(now) {
+  const time = calm ? 0 : now - t0;
+  if (mixT < 1) mixT = Math.min(1, mixT + .025);
+  const e = mixT * mixT * (3 - 2 * mixT), target = MODES[mode].bands.map(hex);
+  shown = target.map((c, i) => lerp(from[i], c, e));
+  g.clearRect(0, 0, S, S);
+  const R = S * .43, N = 44, steps = 220;
+  g.save(); g.translate(C, C); g.rotate(-.35);
+  for (let L = 0; L < N; L++) {
+    const f = 1 - L / N, rr = R * (.06 + .94 * f) ** .9, col = shown[(L * 3 + (L % 4 === 0 ? 1 : 0)) % shown.length];
+    const breath = 1 + (calm ? 0 : .006 * Math.sin(time * .0011 + L * .45));
+    g.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const th = i / steps * Math.PI * 2, r = rr * rad(th, L * .07, time) * breath * (1 + (L === 0 ? 0 : .005 * Math.sin(th * 17 + L)));
+      const x = Math.cos(th) * r * 1.08, y = Math.sin(th) * r * .9;
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+    g.closePath();
+    g.fillStyle = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${L === 0 ? 1 : .92})`;
+    g.fill();
+    if (L === 0) { g.save(); g.clip(); }
+  }
+  const dr = R * .16, gr = g.createRadialGradient(0, 0, 0, 0, 0, dr * 1.6);
+  gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.5, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, dr * 1.7, dr * 1.1, 0, 0, 7); g.fill();
+  for (let i = 0; i < 60; i++) {
+    const a = i * 2.39996, d = Math.sqrt(i / 60) * dr * 1.3, tw = calm ? .6 : .5 + .5 * Math.sin(time * .004 + i * 1.7);
+    g.fillStyle = `rgba(255,255,255,${.25 + .6 * tw})`;
+    g.beginPath(); g.arc(Math.cos(a) * d * 1.3, Math.sin(a) * d * .8, 2 + (i % 5), 0, 7); g.fill();
+  }
+  const hl = g.createLinearGradient(-R, -R, R, R);
+  hl.addColorStop(0, 'rgba(255,255,255,.28)'); hl.addColorStop(.35, 'rgba(255,255,255,0)'); hl.addColorStop(1, 'rgba(0,0,0,.35)');
+  g.fillStyle = hl; g.fillRect(-S, -S, S * 2, S * 2);
+  g.restore(); g.restore();
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+/* hero: tap the stone */
+const stone = document.getElementById('stone'), note = document.getElementById('note'), dots = stone.querySelectorAll('.modes-dots i');
+function setMode(m) {
+  from = shown; mixT = 0; mode = m;
+  root.setProperty('--acc', MODES[m].acc); root.setProperty('--acc2', MODES[m].acc2);
+  dots.forEach((d, i) => d.classList.toggle('on', i === m));
+}
+let busy = false, opened = false;
+stone.addEventListener('click', () => {
+  if (busy) return; busy = true;
+  document.getElementById('hint').style.opacity = 0;
+  note.classList.remove('on');
   setTimeout(() => {
-    o.src = img; o.style.opacity = 1;
-    m.style.background = bg; m.style.borderColor = bd;
-    const T = document.getElementById('msgT'); T.textContent = t; T.style.color = c;
-    document.getElementById('msgP').textContent = p;
-    const F = document.getElementById('msgF'); F.textContent = f; F.style.color = c;
-    m.classList.remove('hide');
-  }, 600);
-}, 4200);
-// reveal on scroll
-const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } }), { threshold: .15 }) : null;
-document.querySelectorAll('.rv').forEach(el => io ? io.observe(el) : el.classList.add('on'));
+    if (opened) setMode((mode + 1) % MODES.length);
+    opened = true;
+    stone.classList.remove('scanning'); void stone.offsetWidth; stone.classList.add('scanning');
+    setTimeout(() => {
+      const M = MODES[mode];
+      document.getElementById('nWho').textContent = M.who;
+      document.getElementById('nTxt').textContent = M.txt;
+      document.getElementById('nSig').textContent = M.sig;
+      note.classList.add('on'); busy = false;
+      setTimeout(() => { if (!busy) document.getElementById('hint').style.opacity = 1, document.getElementById('hint').textContent = 'Нажми ещё раз — другой режим'; }, 1800);
+    }, calm ? 50 : 1050);
+  }, 250);
+});
+setTimeout(() => { if (!opened) stone.click(); }, calm ? 300 : 1400);
+
+/* modes showcase */
+const SCREENS = [
+  `<div class="top-s">JADEKEY</div><div class="sheet" style="background:linear-gradient(180deg,#5a1d3e,#2a0d1e)"><div class="lab">♥ Тане от Сергея</div><div class="big">Даже в самый серый день ты моё солнце.</div><div class="meta"><span>День 214 вместе</span><span>🎵</span></div></div>`,
+  `<div class="top-s">JADEKEY</div><div class="sheet" style="background:linear-gradient(180deg,#14306b,#0a1430)"><div class="lab">❄ До Нового года</div><div class="big" style="font-size:32px;color:#ffd987">20 дней 03:04</div><div class="big" style="font-size:20px">Включи музыку и потанцуй ровно одну песню.</div><div class="meta"><span>Маме от сына</span><span>🔔</span></div></div>`,
+  `<div class="top-s">JADEKEY</div><div class="sheet" style="background:linear-gradient(180deg,#3b2a5e,#140d24)"><div class="lab">✦ Твой талисман</div><div class="big">Ясность приходит, когда перестаёшь спешить.</div><div class="meta"><span>Слово дня: покой</span><span>Знак: тёплый ветер</span></div></div>`,
+  `<div class="top-s">JADEKEY</div><div class="sheet" style="background:linear-gradient(180deg,#8a1f16,#2b0806)"><div class="lab">🥠 Маме от сына</div><div class="cookie-paper"><div class="big">Ты найдёшь то, что давно потерял.</div><div class="nums"><b>3</b><b>9</b><b>17</b><b>24</b><b>33</b><b>41</b></div></div><div class="meta" style="margin-top:14px;align-items:center"><span class="hz">福</span><span>fú — удача</span></div></div>`,
+];
+const screen = document.getElementById('screen'), mdesc = document.getElementById('mdesc'), show = document.querySelector('.show');
+function showMode(m) {
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(+t.dataset.m === m)));
+  screen.innerHTML = SCREENS[m];
+  screen.style.background = MODES[m].bg;
+  show.style.background = `radial-gradient(60% 70% at 75% 50%,${MODES[m].bg} 0%,var(--deep) 70%)`;
+  mdesc.textContent = MODES[m].desc;
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showMode(+t.dataset.m)));
+showMode(0);
 </script>
 </body>
 </html>
