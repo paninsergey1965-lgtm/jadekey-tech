@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JadeKey — природный рисунок камня как ключ</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07110e">
+<link rel="icon" href="/icons/icon-180.png">
+<style>
+@font-face{font-family:"Cormorant Garamond";font-weight:300;font-style:normal;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-300-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-weight:300;font-style:normal;font-display:swap;src:url(/fonts/cormorant-garamond-latin-300-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:"Cormorant Garamond";font-weight:400;font-style:italic;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-400-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-weight:400;font-style:italic;font-display:swap;src:url(/fonts/cormorant-garamond-latin-400-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:"Cormorant Garamond";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/cormorant-garamond-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Cormorant Garamond";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/cormorant-garamond-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:Manrope;font-weight:400;font-display:swap;src:url(/fonts/manrope-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Manrope;font-weight:400;font-display:swap;src:url(/fonts/manrope-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:Manrope;font-weight:600;font-display:swap;src:url(/fonts/manrope-cyrillic-600-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Manrope;font-weight:600;font-display:swap;src:url(/fonts/manrope-latin-600-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+:root{
+  --bg:#07110e; --surf:#0e1a16; --surf2:#13221d; --line:rgba(236,224,200,.12);
+  --txt:#efe8dc; --mute:#97a39d; --gold:#cdb282; --jade:#62c9a3; --love:#b23a5e;
+  --serif:"Cormorant Garamond","Times New Roman",serif; --sans:Manrope,-apple-system,"Segoe UI",sans-serif;
+  --pad:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{background:var(--bg);color:var(--txt);font:400 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:1.5px solid var(--gold);outline-offset:3px}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:rgba(7,17,14,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.top-in{max-width:1180px;margin:auto;height:58px;padding:0 var(--pad);display:flex;align-items:center;justify-content:space-between;gap:20px}
+.mark{font:400 19px/1 var(--serif);letter-spacing:.38em}
+.top nav{display:flex;gap:26px;font-size:13px;color:var(--mute)}
+.top nav a:hover{color:var(--txt)}
+.scan-s{font-size:13px;font-weight:600;color:var(--bg);background:var(--gold);padding:9px 15px;border-radius:999px}
+@media(max-width:860px){.top nav{display:none}}
+
+/* hero */
+.hero{max-width:1180px;margin:auto;padding:28px var(--pad) 72px;display:grid;gap:34px}
+.view{position:relative;aspect-ratio:1;border-radius:28px;overflow:hidden;background:#000}
+.view img{width:100%;height:100%;object-fit:cover;transform:scale(1.04)}
+.reticle{position:absolute;inset:13%}
+.reticle i{position:absolute;width:30px;height:30px;border:1.5px solid var(--gold)}
+.reticle i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-top-left-radius:10px}
+.reticle i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-top-right-radius:10px}
+.reticle i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-bottom-left-radius:10px}
+.reticle i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-bottom-right-radius:10px}
+.sweep{position:absolute;left:13%;right:13%;top:13%;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 18px var(--gold);opacity:0;animation:sweep 2.2s .5s cubic-bezier(.5,0,.3,1) forwards}
+@keyframes sweep{0%{opacity:0;top:13%}10%{opacity:1}85%{opacity:1}100%{opacity:0;top:87%}}
+.found{position:absolute;left:14px;right:14px;bottom:14px;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:rgba(7,17,14,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);opacity:0;transform:translateY(8px);animation:found .6s 2.6s ease-out forwards}
+@keyframes found{to{opacity:1;transform:none}}
+.found .dot{width:9px;height:9px;border-radius:50%;background:var(--jade);box-shadow:0 0 10px var(--jade);flex:none}
+.found b{display:block;font-weight:600;font-size:14px}
+.found span{font-size:12px;color:var(--mute)}
+.found em{margin-left:auto;font-style:normal;font-size:10.5px;color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:3px 8px;white-space:nowrap}
+h1{font:300 clamp(44px,7vw,84px)/1 var(--serif);letter-spacing:-.01em}
+h1 i{font-style:italic;font-weight:400;color:var(--gold)}
+.lead{font:400 20px/1.4 var(--serif);color:var(--mute);margin-top:18px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:30px}
+.btn{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:14px;font-weight:600;font-size:15px}
+.btn.p{background:var(--gold);color:var(--bg)}
+.btn.s{border:1px solid var(--line);color:var(--txt)}
+.now{margin-top:18px;font-size:13px;color:var(--mute)}
+@media(min-width:900px){.hero{grid-template-columns:1fr 1fr;align-items:center;gap:64px;padding-top:56px}.hero-t{order:-1}.btns{max-width:420px}}
+
+/* sections */
+section{padding:72px var(--pad);border-top:1px solid var(--line)}
+.wrap{max-width:1180px;margin:auto}
+.k{font:italic 400 18px/1 var(--serif);color:var(--gold);margin-bottom:12px}
+h2{font:300 clamp(36px,5vw,58px)/1.05 var(--serif)}
+.sub{color:var(--mute);margin-top:14px;max-width:52ch}
+
+/* directions */
+.dirs{display:grid;gap:14px;margin-top:36px}
+.dir{background:var(--surf);border:1px solid var(--line);border-radius:22px;overflow:hidden;display:grid;grid-template-columns:112px 1fr}
+.dir img{width:100%;height:100%;object-fit:cover;min-height:150px}
+.dir div{padding:18px 18px 20px}
+.dir h3{font:400 26px/1.1 var(--serif);margin:10px 0 6px}
+.dir p{font-size:14px;color:var(--mute)}
+.dir .go{display:inline-block;margin-top:12px;font-size:14px;font-weight:600;color:var(--gold)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{color:var(--jade)} .st.dev{color:var(--gold)}
+.dir.love{background:linear-gradient(160deg,#2a0f1b,#150a10)}
+.dir.love .go{color:#e38aa6}
+@media(min-width:900px){.dirs{grid-template-columns:repeat(3,1fr)}.dir{grid-template-columns:1fr}.dir img{aspect-ratio:4/3;min-height:0}}
+
+/* flow — real sequence */
+.flow{list-style:none;margin-top:36px;display:grid;gap:0;counter-reset:f}
+.flow li{counter-increment:f;display:grid;grid-template-columns:44px 1fr;gap:14px;padding:18px 0;border-bottom:1px solid var(--line)}
+.flow li::before{content:counter(f);font:300 34px/1 var(--serif);color:var(--gold)}
+.flow b{font:400 23px/1.2 var(--serif);display:block}
+.flow span{font-size:14px;color:var(--mute)}
+@media(min-width:900px){.flow{grid-template-columns:repeat(4,1fr);gap:28px}.flow li{grid-template-columns:1fr;border:0;border-top:1px solid var(--line)}}
+
+/* collection */
+.rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:36px calc(-1*var(--pad)) 0;padding:0 var(--pad) 6px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail figure{flex:0 0 62%;scroll-snap-align:start;max-width:280px}
+.rail img{aspect-ratio:1;object-fit:cover;border-radius:18px;background:#000}
+.rail figcaption{margin-top:10px;font:400 19px/1.2 var(--serif)}
+.rail small{display:block;font:400 12px/1.4 var(--sans);color:var(--mute);margin-top:2px}
+
+/* love demo */
+.love-wrap{display:grid;gap:30px}
+.msg{border-radius:26px;padding:26px 24px 22px;background:linear-gradient(165deg,#5a1630,#2a0b18 70%);border:1px solid rgba(255,170,195,.16);max-width:420px}
+.msg .h{font-size:11px;letter-spacing:.14em;color:#f2a9c0;font-weight:600}
+.msg p{font:400 26px/1.3 var(--serif);margin:18px 0 14px}
+.msg .by{text-align:right;font:italic 400 19px/1 var(--serif);color:#f3cfda}
+.msg .ft{display:flex;justify-content:space-between;margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,190,210,.16);font-size:12px;color:#d8a9b8}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.modes span{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--mute)}
+@media(min-width:900px){.love-wrap{grid-template-columns:1fr 1fr;align-items:center}}
+
+/* tech */
+.tech{display:grid;gap:12px;margin-top:30px}
+.tech details{background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:0 18px}
+.tech summary{list-style:none;cursor:pointer;padding:18px 0;font:400 22px/1.2 var(--serif);display:flex;justify-content:space-between;gap:12px}
+.tech summary::-webkit-details-marker{display:none}
+.tech summary::after{content:"+";color:var(--gold);font-family:var(--sans)}
+.tech details[open] summary::after{content:"−"}
+.tech details p{color:var(--mute);font-size:14px;padding-bottom:18px}
+
+/* partners */
+.partners{background:var(--surf2)}
+.uses{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.uses span{font-size:13px;padding:7px 13px;border-radius:999px;background:rgba(205,178,130,.1);color:var(--gold)}
+
+footer{border-top:1px solid var(--line);padding:44px var(--pad) calc(44px + env(safe-area-inset-bottom));color:var(--mute);font-size:13px}
+footer .wrap{display:grid;gap:18px}
+footer nav{display:flex;flex-wrap:wrap;gap:10px 22px}
+
+@media(max-width:420px){.btns{grid-template-columns:1fr}.found em{display:none}}
+@media(prefers-reduced-motion:reduce){.sweep{display:none}.found{animation:none;opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <a class="mark" href="/">JADEKEY</a>
+  <nav><a href="#products">Продукты</a><a href="#how">Как работает</a><a href="#collection">Коллекция</a><a href="#tech">Технология</a><a href="#partners">Для партнёров</a></nav>
+  <a class="scan-s" href="/scan.html">Сканер</a>
+</div></header>
+
+<main>
+<div class="hero">
+  <div class="view" aria-label="Пример экрана сканера">
+    <img src="/img/stone-g12.jpg" alt="Полированный лазурит" fetchpriority="high">
+    <div class="reticle"><i></i><i></i><i></i><i></i></div>
+    <div class="sweep"></div>
+    <div class="found"><span class="dot"></span><div><b>Камень узнан</b><span>Лазурит · история открыта</span></div><em>пример экрана</em></div>
+  </div>
+  <div class="hero-t">
+    <h1>Природа создала уникальность. <i>Мы превратили её в&nbsp;ключ</i></h1>
+    <p class="lead">У каждого камня своя цифровая история.</p>
+    <div class="btns">
+      <a class="btn p" href="/scan.html">Попробовать сканер</a>
+      <a class="btn s" href="#how">Как это работает</a>
+    </div>
+    <p class="now">Прямо сейчас: наведите камеру на камень с рисунком или оживите свой камень и подарите его. Бесплатно, в браузере или в приложении для iPhone.</p>
+  </div>
+</div>
+
+<section id="products"><div class="wrap">
+  <p class="k">Продукты</p>
+  <h2>Три направления</h2>
+  <div class="dirs">
+    <a class="dir" href="/scan.html"><img src="/img/stone-g4.jpg" alt="" loading="lazy"><div><span class="st ok">Работает</span><h3>JadeKey Identity</h3><p>Рисунок камня — ключ к его цифровой записи. Зарегистрируйте камень и проверяйте его сканером.</p><span class="go">Открыть сканер</span></div></a>
+    <a class="dir love" href="/scan.html?live=1"><img src="/img/stone-g1.jpg" alt="" loading="lazy"><div><span class="st ok">Работает</span><h3>JadeKey Love</h3><p>Камень-подарок: каждый день новое послание, которое откроется только с этим камнем в руках.</p><span class="go">Оживить камень</span></div></a>
+    <a class="dir" href="#partners"><img src="/img/stone-g11.jpg" alt="" loading="lazy"><div><span class="st dev">В разработке</span><h3>JadeKey Device</h3><p>Брелок с камнем, поисковым трекером и местом для платёжного стикера. Прототип собран, изделие ещё не продаётся.</p><span class="go">Узнать подробнее</span></div></a>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <p class="k">Как работает</p>
+  <h2>От камня к истории</h2>
+  <ol class="flow">
+    <li><div><b>Выбрать камень</b><span>Агат, лазурит, яшма — любой полированный камень с выраженным рисунком.</span></div></li>
+    <li><div><b>Зарегистрировать</b><span>Снимите обе стороны. Сканер проверит свет и рисунок и убедится, что такого камня ещё нет.</span></div></li>
+    <li><div><b>Сканировать</b><span>Наведите камеру — система сравнит рисунок с зарегистрированным образцом.</span></div></li>
+    <li><div><b>Открыть историю</b><span>Запись, послание или подарок, связанные именно с этим камнем.</span></div></li>
+  </ol>
+</div></section>
+
+<section id="collection"><div class="wrap">
+  <p class="k">Коллекция</p>
+  <h2>Каждый рисунок — единственный</h2>
+  <p class="sub">Примеры камней. Личные камни и послания пользователей здесь не показываются.</p>
+  <div class="rail">
+    <figure><img src="/img/stone-g1.jpg" alt="" loading="lazy"><figcaption>Розовый агат<small>Love</small></figcaption></figure>
+    <figure><img src="/img/stone-g12.jpg" alt="" loading="lazy"><figcaption>Лазурит<small>Identity</small></figcaption></figure>
+    <figure><img src="/img/stone-g3.jpg" alt="" loading="lazy"><figcaption>Агат с жеодой<small>Талисман</small></figcaption></figure>
+    <figure><img src="/img/stone-g6.jpg" alt="" loading="lazy"><figcaption>Фиолетовый агат<small>Новый год</small></figcaption></figure>
+    <figure><img src="/img/stone-g10.jpg" alt="" loading="lazy"><figcaption>Огненный агат<small>Печенье с предсказанием</small></figcaption></figure>
+  </div>
+</div></section>
+
+<section><div class="wrap love-wrap">
+  <div>
+    <p class="k">JadeKey Love</p>
+    <h2>Послание, которое живёт в камне</h2>
+    <p class="sub">Подарите камень — и каждый день он будет открывать новое послание от вас. Прочитать его можно только с этим камнем в руках.</p>
+    <div class="modes"><span>Love</span><span>Новый год</span><span>Талисман</span><span>Печенье с предсказанием</span></div>
+  </div>
+  <div class="msg" aria-label="Пример послания">
+    <div class="h">♥ JADEKEY LOVE</div>
+    <p>Тане,<br>береги себя сегодня. Ты — самое важное, что у меня есть.</p>
+    <div class="by">— Сергей</div>
+    <div class="ft"><span>Пример послания</span><span>10 ноября</span></div>
+  </div>
+</div></section>
+
+<section id="tech"><div class="wrap">
+  <p class="k">Технология</p>
+  <h2>Как камень узнают</h2>
+  <p class="sub">Рисунок полированного камня складывался миллионы лет и не повторяется. Мы используем его как природный отпечаток.</p>
+  <div class="tech">
+    <details><summary>Простыми словами</summary><p>Камера снимает камень, приложение выделяет особенности рисунка и ищет такой же среди зарегистрированных камней. Если находит — открывает связанную с ним историю.</p></details>
+    <details><summary>Для специалистов</summary><p>Нейросеть компьютерного зрения превращает снимок в числовой отпечаток рисунка (эмбеддинг). Он сравнивается с отпечатками зарегистрированных камней по мере сходства; при регистрации проверяются свет, контраст рисунка и дубликаты. Распознавание идёт на устройстве пользователя: фото не отправляется на сервер для анализа.</p></details>
+    <details><summary>Что пока в разработке</summary><p>Связка камня с защищённым NFC-чипом в брелоке и фиксация записи о камне в блокчейне. Это направления развития, а не работающие функции.</p></details>
+  </div>
+</div></section>
+
+<section class="partners" id="partners"><div class="wrap">
+  <p class="k">Для партнёров</p>
+  <h2>Сделаем ваш камень живым</h2>
+  <p class="sub">Подключаем магазины камней и ювелирные бренды: покупатель оживляет камень на кассе и уходит с подарком. Обсуждаем пилоты с производителями аксессуаров и корпоративных подарков.</p>
+  <div class="uses"><span>Магазины камней</span><span>Ювелирные бренды</span><span>Корпоративные подарки</span><span>Аксессуары</span></div>
+  <div class="btns" style="max-width:420px"><a class="btn p" href="mailto:jadekey1965@gmail.com?subject=JadeKey%20%E2%80%94%20%D0%BF%D0%B0%D1%80%D1%82%D0%BD%D1%91%D1%80%D1%81%D1%82%D0%B2%D0%BE">Написать нам</a><a class="btn s" href="/tech.html">Для инвесторов</a></div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <span class="mark" style="color:var(--txt)">JADEKEY</span>
+  <nav><a href="/scan.html">Сканер</a><a href="https://apps.apple.com/app/id6769250226">App Store</a><a href="/privacy.html">Конфиденциальность</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></nav>
+  <span>© 2026 ИП Панин С. Н.</span>
+</div></footer>
+</body>
+</html>
