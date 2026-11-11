@@ -2319,6 +2319,13 @@ window.__coi.then(() => { loadModel(); liveInit(); });
 if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
   if (inApp) $('lvPaste').style.display = '';
+  // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly
+  const AppP = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App;
+  const onUrl = u => { const m = u && /[?&]g=([\w-]+)\.([a-z0-9]+)/.exec(u); if (m) openGift(m[1], m[2]); };
+  if (AppP) {
+    try { AppP.addListener('appUrlOpen', e => onUrl(e && e.url)); } catch (e) {}
+    try { AppP.getLaunchUrl().then(r => onUrl(r && r.url)).catch(() => {}); } catch (e) {}
+  }
   const g = new URLSearchParams(location.search).get('g');
   if (g && /^[\w-]+\.[a-z0-9]+$/.test(g)) { const [id, claim] = g.split('.'); openGift(id, claim); }
   else if (new URLSearchParams(location.search).has('live')) { tab('live'); liveHome(); }
