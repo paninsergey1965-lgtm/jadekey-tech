@@ -7,7 +7,7 @@
 <meta name="description" content="JadeKey — природный камень, который каждый день открывает послание от того, кто его подарил. Камень узнаётся по рисунку, как отпечаток пальца.">
 <meta property="og:title" content="JadeKey — живые камни">
 <meta property="og:description" content="Камень, который каждый день открывает послание от того, кто его подарил.">
-<meta property="og:image" content="https://jadekey.tech/img/stone-pink.jpg">
+<meta property="og:image" content="https://jadekey.tech/img/hero-phone.jpg">
 <meta name="theme-color" content="#0a1310">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
@@ -53,6 +53,7 @@ section{padding:96px 24px;border-top:1px solid var(--border)}
 /* hero */
 #hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:96px 24px 72px;position:relative;overflow:hidden;border-top:none}
 #hero::before{content:'';position:absolute;top:34%;left:50%;transform:translate(-50%,-50%);width:90vw;height:90vw;max-width:620px;max-height:620px;background:radial-gradient(circle,color-mix(in srgb,var(--acc) 16%,transparent) 0%,transparent 70%);pointer-events:none;transition:background 1s}
+.hero-photo{display:block;width:min(400px,88vw);height:auto;border-radius:28px;margin:0 auto 10px;box-shadow:0 40px 80px -20px #000c,0 0 0 1px #223a2e;animation:float 7s ease-in-out infinite}
 .stone{position:relative;width:min(340px,78vw);aspect-ratio:1;margin-bottom:34px;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;color:inherit;font:inherit;animation:float 6s ease-in-out infinite}
 .stone canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 30px 50px rgba(0,0,0,.7))}
 .beam{position:absolute;left:6%;right:6%;height:16%;top:-10%;background:linear-gradient(180deg,transparent,var(--acc),transparent);mix-blend-mode:screen;opacity:0;pointer-events:none;border-radius:50%}
@@ -178,7 +179,7 @@ footer{padding:26px 24px 40px;border-top:1px solid var(--border);display:flex;fl
   .modes-grid .mdesc{text-align:left;margin-left:0}
   .steps{flex-direction:row;gap:28px}
   .step{flex:1}
-  .stones-grid{grid-template-columns:repeat(3,1fr)}
+  .stones-grid{grid-template-columns:repeat(4,1fr)}
   .cta-btns.row{flex-direction:row;justify-content:center}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
@@ -194,12 +195,7 @@ footer{padding:26px 24px 40px;border-top:1px solid var(--border);display:flex;fl
 </nav>
 
 <section id="hero">
-  <button class="stone" id="stone" aria-label="Нажми на камень, чтобы открыть послание">
-    <canvas id="agate" width="900" height="900"></canvas>
-    <span class="beam"></span>
-    <span class="note" id="note" aria-live="polite"><span class="who" id="nWho"></span><span class="txt" id="nTxt"></span><span class="sig" id="nSig"></span></span>
-  </button>
-  <p class="tap" id="tap">Коснись камня</p>
+  <img class="hero-photo" src="img/hero-phone.jpg" alt="Живой камень Love: послание Тане от Сергея на экране телефона" width="1086" height="1448">
   <h1 class="hero-title">Живой <em>камень</em></h1>
   <p class="hero-sub">Камень, который помнит тебя. Каждый день он открывает послание от того, кто его подарил.</p>
   <p class="hero-micro">Stone becomes a gift</p>
@@ -258,12 +254,18 @@ footer{padding:26px 24px 40px;border-top:1px solid var(--border);display:flex;fl
     <p class="gallery-mins">Агат · Лазурит · Яшма · Малахит</p>
   </div>
   <div class="stones-grid">
-    <div class="stone-card"><img src="img/stone-pink.jpg" alt="Розовый агат" loading="lazy"><div class="stone-label">Розовый агат</div></div>
-    <div class="stone-card"><img src="img/stone-lapis.jpg" alt="Лазурит" loading="lazy"><div class="stone-label">Лазурит</div></div>
-    <div class="stone-card"><img src="img/stone-red.jpg" alt="Огненный агат" loading="lazy"><div class="stone-label">Огненный агат</div></div>
-    <div class="stone-card"><img src="img/stone-violet.jpg" alt="Фиолетовый агат" loading="lazy"><div class="stone-label">Фиолетовый агат</div></div>
-    <div class="stone-card"><img src="img/stone-rose.jpg" alt="Агат с друзой" loading="lazy"><div class="stone-label">Агат с друзой</div></div>
-    <div class="stone-card"><img src="img/stone-agate.jpg" alt="Срез агата" loading="lazy"><div class="stone-label">Срез агата</div></div>
+    <div class="stone-card"><img src="img/stone-g1.jpg" alt="Розовый агат" loading="lazy"><div class="stone-label">Розовый агат</div></div>
+    <div class="stone-card"><img src="img/stone-g2.jpg" alt="Агат" loading="lazy"><div class="stone-label">Агат</div></div>
+    <div class="stone-card"><img src="img/stone-g3.jpg" alt="Агат с жеодой" loading="lazy"><div class="stone-label">Агат с жеодой</div></div>
+    <div class="stone-card"><img src="img/stone-g4.jpg" alt="Лазурит" loading="lazy"><div class="stone-label">Лазурит</div></div>
+    <div class="stone-card"><img src="img/stone-g5.jpg" alt="Розовый агат" loading="lazy"><div class="stone-label">Розовый агат</div></div>
+    <div class="stone-card"><img src="img/stone-g6.jpg" alt="Фиолетовый агат" loading="lazy"><div class="stone-label">Фиолетовый агат</div></div>
+    <div class="stone-card"><img src="img/stone-g7.jpg" alt="Агат с вкраплениями" loading="lazy"><div class="stone-label">Агат с вкраплениями</div></div>
+    <div class="stone-card"><img src="img/stone-g8.jpg" alt="Агат в оправе" loading="lazy"><div class="stone-label">Агат в оправе</div></div>
+    <div class="stone-card"><img src="img/stone-g9.jpg" alt="Агат с друзой" loading="lazy"><div class="stone-label">Агат с друзой</div></div>
+    <div class="stone-card"><img src="img/stone-g10.jpg" alt="Огненный агат" loading="lazy"><div class="stone-label">Огненный агат</div></div>
+    <div class="stone-card"><img src="img/stone-g11.jpg" alt="Лазурит" loading="lazy"><div class="stone-label">Лазурит</div></div>
+    <div class="stone-card"><img src="img/stone-g12.jpg" alt="Лазурит" loading="lazy"><div class="stone-label">Лазурит</div></div>
   </div>
 </div></section>
 
@@ -314,91 +316,7 @@ const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   }, calm ? 1 : 28);
 })();
 
-const MODES = [
-  { acc:'#3fd8a2', bands:['#04140d','#0d3b28','#1d7a55','#3fd8a2','#9cf0cf','#e6fff4','#2aa77a','#135c40'],
-    who:'JadeKey', txt:'Этот камень один такой на свете.', sig:'' },
-  { acc:'#f29ac0', bands:['#2b0819','#6d1640','#b8336e','#e8679a','#f7a9c8','#fde3ee','#c94a80','#8a1f4f'],
-    who:'Love · день 214 вместе', txt:'Ты — моё любимое «доброе утро».', sig:'— Сергей' },
-  { acc:'#9cc8ff', bands:['#07122f','#163a85','#3c78d8','#8cc4ff','#e3f1ff','#ffffff','#5d97e8','#1f4fa8'],
-    who:'Новый год · через 20 дней', txt:'Купи мандарины. Это обязательная часть плана.', sig:'— Сын' },
-  { acc:'#c3b0ff', bands:['#120a26','#3a2470','#6e4fc4','#a68cff','#e3d9ff','#ffffff','#8a6ee6','#4b2c8a'],
-    who:'Талисман · слово дня: смелость', txt:'Удача любит тех, кто начинает.', sig:'' },
-  { acc:'#f0a648', bands:['#2a0d04','#7a2c0c','#c0611f','#f0a648','#ffd98a','#fff4dc','#d98330','#9a3f12'],
-    who:'Печенье · твоё предсказание', txt:'Скоро ты получишь хорошую новость.', sig:'— Мама' },
-];
-const root = document.documentElement.style;
 
-/* procedural agate */
-const cv = document.getElementById('agate'), g = cv.getContext('2d'), S = cv.width, C = S / 2;
-const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
-let mode = 0, shown = MODES[0].bands.map(hex), from = shown, mixT = 1, t0 = performance.now();
-const seed = Array.from({ length: 7 }, (_, k) => ({ a: (Math.random() * .5 + .5) / (k + 2) ** 1.25, p: Math.random() * 6.28, k: k + 2 }));
-const wob = Array.from({ length: 5 }, (_, k) => ({ a: Math.random() * .03 / (k + 1), p: Math.random() * 6.28, k: k * 3 + 5 }));
-function rad(th, layer, time) {
-  let r = 1;
-  for (const s of seed) r += s.a * .35 * Math.sin(s.k * th + s.p + layer * .9 + time * .00012 * s.k);
-  for (const w of wob) r += w.a * Math.sin(w.k * th + w.p + layer * 2.1);
-  return r;
-}
-function draw(now) {
-  const time = calm ? 0 : now - t0;
-  if (mixT < 1) mixT = Math.min(1, mixT + .022);
-  const e = mixT * mixT * (3 - 2 * mixT), target = MODES[mode].bands.map(hex);
-  shown = target.map((c, i) => lerp(from[i], c, e));
-  g.clearRect(0, 0, S, S);
-  const R = S * .44, N = 44, steps = 200;
-  g.save(); g.translate(C, C); g.rotate(-.35);
-  for (let L = 0; L < N; L++) {
-    const f = 1 - L / N, rr = R * (.06 + .94 * f) ** .9, col = shown[(L * 3 + (L % 4 === 0 ? 1 : 0)) % shown.length];
-    const breath = 1 + (calm ? 0 : .006 * Math.sin(time * .0011 + L * .45));
-    g.beginPath();
-    for (let i = 0; i <= steps; i++) {
-      const th = i / steps * Math.PI * 2, r = rr * rad(th, L * .07, time) * breath * (1 + (L === 0 ? 0 : .005 * Math.sin(th * 17 + L)));
-      const x = Math.cos(th) * r * 1.08, y = Math.sin(th) * r * .9;
-      i ? g.lineTo(x, y) : g.moveTo(x, y);
-    }
-    g.closePath();
-    g.fillStyle = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${L === 0 ? 1 : .92})`;
-    g.fill();
-    if (L === 0) { g.save(); g.clip(); }
-  }
-  const dr = R * .16, gr = g.createRadialGradient(0, 0, 0, 0, 0, dr * 1.6);
-  gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.5, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, dr * 1.7, dr * 1.1, 0, 0, 7); g.fill();
-  for (let i = 0; i < 60; i++) {
-    const a = i * 2.39996, d = Math.sqrt(i / 60) * dr * 1.3, tw = calm ? .6 : .5 + .5 * Math.sin(time * .004 + i * 1.7);
-    g.fillStyle = `rgba(255,255,255,${.25 + .6 * tw})`;
-    g.beginPath(); g.arc(Math.cos(a) * d * 1.3, Math.sin(a) * d * .8, 1.6 + (i % 5) * .8, 0, 7); g.fill();
-  }
-  const hl = g.createLinearGradient(-R, -R, R, R);
-  hl.addColorStop(0, 'rgba(255,255,255,.26)'); hl.addColorStop(.35, 'rgba(255,255,255,0)'); hl.addColorStop(1, 'rgba(0,0,0,.4)');
-  g.fillStyle = hl; g.fillRect(-S, -S, S * 2, S * 2);
-  g.restore(); g.restore();
-  requestAnimationFrame(draw);
-}
-requestAnimationFrame(draw);
-
-/* hero: tap the stone */
-const stone = document.getElementById('stone'), note = document.getElementById('note'), tap = document.getElementById('tap');
-let busy = false;
-stone.addEventListener('click', () => {
-  if (busy) return; busy = true;
-  note.classList.remove('on'); tap.style.opacity = 0;
-  setTimeout(() => {
-    from = shown; mixT = 0; mode = mode % (MODES.length - 1) + 1;
-    root.setProperty('--acc', MODES[mode].acc);
-    stone.classList.remove('scanning'); void stone.offsetWidth; stone.classList.add('scanning');
-    setTimeout(() => {
-      const M = MODES[mode];
-      document.getElementById('nWho').textContent = M.who;
-      document.getElementById('nTxt').textContent = M.txt;
-      document.getElementById('nSig').textContent = M.sig;
-      note.classList.add('on'); busy = false;
-      tap.textContent = 'Коснись ещё раз'; tap.style.opacity = 1;
-    }, calm ? 50 : 1050);
-  }, 220);
-});
 
 /* modes showcase */
 const TB = '<div class="tabbar"><span class="on">⌗ Сканер</span><span>◇ Живой</span></div>';
