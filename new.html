@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>JadeKey — живые камни</title>
+<meta name="description" content="Природный камень, который каждый день открывает послание от того, кто его подарил. Камень узнаётся по рисунку, как отпечаток пальца.">
+<meta property="og:title" content="JadeKey — живые камни">
+<meta property="og:description" content="Камень, который каждый день открывает послание от того, кто его подарил.">
+<meta property="og:image" content="https://jadekey.tech/img/stone-pink.jpg">
+<meta name="theme-color" content="#0a1310">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<style>
+:root{--bg:#0a1310;--panel:#112019;--panel2:#16291f;--line:#223a2e;--fg:#e9f3ee;--mute:#86a396;--jade:#3fd8a2;--gold:#d8b45c;
+  --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+header{position:sticky;top:0;z-index:10;background:#0a1310cc;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid #ffffff0d}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.word{font-family:var(--serif);font-size:17px;letter-spacing:.32em;text-decoration:none}
+.word b{font-weight:400;color:var(--jade)}
+.hbtn{font-size:14px;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--panel)}
+h1,h2,h3{font-family:var(--serif);font-weight:400;margin:0}
+.k{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--jade);margin:0 0 12px}
+.lead{color:var(--mute);font-size:18px;max-width:560px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 24px;border-radius:16px;font-size:16px;font-weight:600;text-decoration:none;border:1px solid var(--line);background:var(--panel2);color:var(--fg)}
+.btn.main{background:var(--jade);border-color:var(--jade);color:#04150e}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+section{padding:72px 0;border-top:1px solid #ffffff0a}
+
+/* hero */
+.hero{padding:44px 0 64px;border-top:0;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center}
+.hero h1{font-size:clamp(44px,8vw,76px);line-height:1.02;margin:0 0 18px}
+.hero h1 i{font-style:normal;color:var(--jade)}
+.stage{position:relative;height:440px}
+.orb{position:absolute;left:50%;top:46%;width:290px;height:290px;margin:-145px 0 0 -145px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1px #ffffff22,0 0 90px #3fd8a244;animation:float 6s ease-in-out infinite}
+.orb img{width:100%;height:100%;object-fit:cover;transition:opacity .8s}
+.ring{position:absolute;left:50%;top:46%;width:350px;height:350px;margin:-175px 0 0 -175px;border-radius:50%;border:1px dashed #3fd8a255;animation:spin 40s linear infinite}
+.scan{position:absolute;left:50%;top:46%;width:290px;height:290px;margin:-145px 0 0 -145px;border-radius:50%;overflow:hidden;pointer-events:none}
+.scan:after{content:"";position:absolute;left:0;right:0;height:60px;background:linear-gradient(180deg,transparent,#3fd8a255,transparent);animation:sweep 3.2s ease-in-out infinite}
+.msg{position:absolute;right:0;bottom:6px;width:250px;background:linear-gradient(180deg,#5a1d3e,#2a0d1e);border:1px solid #ff8fb144;border-radius:18px;padding:14px 16px;box-shadow:0 20px 50px #0008;transition:opacity .5s,transform .5s}
+.msg .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#ffaecb}
+.msg p{margin:6px 0 4px;font-family:var(--serif);font-size:19px;line-height:1.3}
+.msg .f{font-family:var(--serif);color:#ffaecb;text-align:right}
+.msg.hide{opacity:0;transform:translateY(10px)}
+@keyframes float{50%{transform:translateY(-10px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes sweep{0%{top:-60px}100%{top:300px}}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px}
+.step .n{font-family:var(--serif);font-size:44px;color:var(--jade);line-height:1}
+.step h3{font-size:23px;margin:12px 0 6px}
+.step p{margin:0;color:var(--mute);font-size:16px}
+
+/* modes */
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
+.mode{border-radius:22px;padding:20px 18px;min-height:300px;display:flex;flex-direction:column;border:1px solid #ffffff1a;position:relative;overflow:hidden}
+.mode .tag{font-size:11px;letter-spacing:.22em;text-transform:uppercase}
+.mode h3{font-size:26px;margin:8px 0 6px}
+.mode .d{font-size:14px;opacity:.8;margin:0 0 14px}
+.mode .s{margin-top:auto;border-radius:14px;padding:12px 14px;background:#ffffff12;font-family:var(--serif);font-size:17px;line-height:1.3}
+.mode .s small{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.7;margin-bottom:4px}
+.m-love{background:linear-gradient(180deg,#5a1d3e,#1f0a17)} .m-love .tag{color:#ffaecb}
+.m-ny{background:linear-gradient(180deg,#14306b,#0a1430)} .m-ny .tag{color:#ffd987}
+.m-tal{background:linear-gradient(180deg,#3b2a5e,#140d24)} .m-tal .tag{color:#d5c6ff}
+.m-fc{background:linear-gradient(180deg,#8a1f16,#2b0806)} .m-fc .tag{color:#ffd987}
+.m-fc .s{background:#fff8ea;color:#3a1a0c}
+.m-fc .num{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.m-fc .num i{font-style:normal;font-family:var(--sans);font-size:12px;font-weight:600;color:#b3261e;border:1px solid #b3261e55;border-radius:999px;padding:1px 7px}
+.big{font-size:44px;line-height:1;color:#ffd987;font-family:var(--serif)}
+
+/* why */
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+.why div{padding:4px 0}
+.why b{display:block;font-family:var(--serif);font-weight:400;font-size:24px;margin-bottom:6px}
+.why p{margin:0;color:var(--mute);font-size:16px}
+.strip{display:flex;gap:12px;margin-top:34px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.strip img{width:150px;height:150px;border-radius:18px;object-fit:cover;flex:none;border:1px solid #ffffff1a}
+
+/* get */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:26px}
+.card h3{font-size:28px;margin:0 0 8px}
+.card p{color:var(--mute);margin:0 0 6px;font-size:16px}
+.card .btns{margin-top:18px}
+.b2b{background:linear-gradient(135deg,#16291f,#0d1a14);border:1px solid #3fd8a244}
+
+footer{padding:40px 0 60px;border-top:1px solid #ffffff0a;color:var(--mute);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 26px;justify-content:space-between}
+footer nav{display:flex;flex-wrap:wrap;gap:12px 22px}
+footer a{text-decoration:none}
+footer a:hover{color:var(--fg)}
+
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s,transform .7s}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.orb,.ring,.scan:after{animation:none}.rv{opacity:1;transform:none}}
+
+@media (max-width:900px){
+  .hero .wrap{grid-template-columns:1fr}
+  .stage{height:380px;order:-1}
+  .orb,.scan{width:240px;height:240px;margin:-120px 0 0 -120px}
+  .ring{width:290px;height:290px;margin:-145px 0 0 -145px}
+  .msg{width:220px;right:2px;bottom:0}
+  .modes{grid-template-columns:1fr 1fr}
+  .steps,.why,.cards{grid-template-columns:1fr}
+  section{padding:56px 0}
+}
+@media (max-width:520px){
+  .modes{grid-template-columns:1fr}
+  .mode{min-height:0}
+  .msg{width:205px}
+  .msg p{font-size:17px}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="word" href="/">JADE<b>KEY</b></a>
+  <a class="hbtn" href="/scan.html">Открыть сканер</a>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div>
+    <p class="k">Живые камни</p>
+    <h1>Камень, который <i>говорит</i></h1>
+    <p class="lead">Каждый природный камень уникален, как отпечаток пальца. JadeKey узнаёт его по рисунку — и каждый день открывает послание от того, кто его подарил.</p>
+    <div class="btns">
+      <a class="btn main" href="/scan.html?live=1">Оживить камень</a>
+      <a class="btn" href="#how">Как это работает</a>
+    </div>
+  </div>
+  <div class="stage" aria-hidden="true">
+    <div class="ring"></div>
+    <div class="orb"><img id="orbImg" src="img/stone-pink.jpg" alt=""></div>
+    <div class="scan"></div>
+    <div class="msg" id="msg"><div class="t" id="msgT">♥ День 214 вместе</div><p id="msgP">Ты — моё любимое «доброе утро».</p><div class="f" id="msgF">— Сергей</div></div>
+  </div>
+</div></div>
+
+<section id="how"><div class="wrap">
+  <p class="k">Как это работает</p>
+  <h2 style="font-size:clamp(32px,5vw,48px)">Три шага — и камень оживает</h2>
+  <div class="steps">
+    <div class="step rv"><div class="n">1</div><h3>Выбери камень</h3><p>Любой природный камень с рисунком: агат, яшма, лазурит, малахит. Кулон, брелок или просто камушек с моря.</p></div>
+    <div class="step rv"><div class="n">2</div><h3>Оживи за две минуты</h3><p>Сними камень с двух сторон, выбери режим и впиши имена. Сканер сам проверит свет, рисунок и что такого камня ещё нет.</p></div>
+    <div class="step rv"><div class="n">3</div><h3>Подари</h3><p>Отправь ссылку в Telegram или WhatsApp. Послания откроются только на телефоне получателя и только с этим камнем в руках.</p></div>
+  </div>
+</div></section>
+
+<section id="modes"><div class="wrap">
+  <p class="k">Режимы</p>
+  <h2 style="font-size:clamp(32px,5vw,48px)">Чем станет твой камень</h2>
+  <div class="modes">
+    <div class="mode m-love rv"><span class="tag">♥ Love</span><h3>Для двоих</h3><p class="d">Каждый день новое послание, ваши имена и счётчик дней вместе. Мелодия музыкальной шкатулки и сердечки.</p>
+      <div class="s"><small>День 214 вместе</small>Даже в самый серый день ты моё солнце.</div></div>
+    <div class="mode m-ny rv"><span class="tag">❄ Новый год</span><h3>Адвент-камень</h3><p class="d">С 1 декабря каждый день новое послание, а в полночь — главное поздравление с салютом и Jingle Bells.</p>
+      <div class="s"><small>До Нового года</small><span class="big">20</span> дней · послание №11</div></div>
+    <div class="mode m-tal rv"><span class="tag">✦ Талисман</span><h3>Для себя</h3><p class="d">Пожелание, слово и знак дня, маленький ритуал. В день рождения — особое послание.</p>
+      <div class="s"><small>Слово дня · Опора</small>Сегодня всё идёт своим чередом. Не торопи ни одно событие.</div></div>
+    <div class="mode m-fc rv"><span class="tag">🥠 Печенье</span><h3>С предсказанием</h3><p class="d">Каждый раз, когда наводишь телефон, печенье ломается и выпадает новое предсказание и китайское слово дня.</p>
+      <div class="s">Удача улыбнётся тебе, когда ты меньше всего этого ждёшь.<div class="num"><i>7</i><i>12</i><i>19</i><i>23</i><i>38</i><i>44</i></div></div></div>
+  </div>
+</div></section>
+
+<section id="why"><div class="wrap">
+  <p class="k">Почему это работает</p>
+  <h2 style="font-size:clamp(32px,5vw,48px)">Природа уже всё подписала</h2>
+  <div class="why">
+    <div class="rv"><b>Неповторим</b><p>Рисунок камня складывался миллионы лет. Двух одинаковых не бывает — поэтому сканер узнаёт именно твой.</p></div>
+    <div class="rv"><b>Без чипов и наклеек</b><p>Ничего не нужно клеить или вживлять. Достаточно камеры телефона: распознавание работает прямо на устройстве.</p></div>
+    <div class="rv"><b>Только для своих</b><p>Чужой телефон увидит лишь замок. Послания открываются только у того, кому камень подарили.</p></div>
+  </div>
+  <div class="strip">
+    <img src="img/stone-red.jpg" alt="Агат"><img src="img/stone-lapis.jpg" alt="Лазурит"><img src="img/stone-violet.jpg" alt="Агат"><img src="img/stone-rose.jpg" alt="Агат"><img src="img/stone-agate.jpg" alt="Агат"><img src="img/stone-pink.jpg" alt="Агат">
+  </div>
+</div></section>
+
+<section id="get"><div class="wrap">
+  <p class="k">Начать</p>
+  <h2 style="font-size:clamp(32px,5vw,48px)">Попробуй прямо сейчас</h2>
+  <div class="cards">
+    <div class="card rv"><h3>На телефоне</h3>
+      <p>iPhone — приложение JadeKey в App Store, бесплатно.</p>
+      <p>Android — открой этот сайт в Chrome и нажми «Установить на телефон» во вкладке «Живой».</p>
+      <div class="btns"><a class="btn main" href="https://apps.apple.com/app/id6769250226">App Store</a><a class="btn" href="/scan.html?live=1">Открыть в браузере</a></div></div>
+    <div class="card b2b rv"><h3>Магазинам камней</h3>
+      <p>Продаёте камни, украшения или сувениры? Сделайте из них подарок, который живёт: покупатель оживляет камень прямо у вас на кассе.</p>
+      <p>Наборы с коробкой и QR-этикеткой — под ваш магазин.</p>
+      <div class="btns"><a class="btn main" href="mailto:jadekey1965@gmail.com?subject=JadeKey%20%D0%B4%D0%BB%D1%8F%20%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%B0">Написать нам</a></div></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div>© 2026 JadeKey · ИП Панин С. Н.</div>
+  <nav><a href="/tech.html">Технология и инвесторам</a><a href="/privacy.html">Конфиденциальность</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></nav>
+</div></footer>
+
+<script>
+// hero: rotate stone + message
+const SL = [
+  ['img/stone-pink.jpg', 'linear-gradient(180deg,#5a1d3e,#2a0d1e)', '#ff8fb144', '#ffaecb', '♥ День 214 вместе', 'Ты — моё любимое «доброе утро».', '— Сергей'],
+  ['img/stone-lapis.jpg', 'linear-gradient(180deg,#14306b,#0a1430)', '#f2c45a44', '#ffd987', '❄ До Нового года 20 дней', 'Купи мандарины. Это обязательная часть плана.', '— Сын'],
+  ['img/stone-violet.jpg', 'linear-gradient(180deg,#3b2a5e,#140d24)', '#b79cff44', '#d5c6ff', '✦ Слово дня · Смелость', 'Удача любит тех, кто начинает.', ''],
+  ['img/stone-red.jpg', 'linear-gradient(180deg,#8a1f16,#2b0806)', '#ffd98744', '#ffd987', '🥠 Твоё предсказание', 'Скоро ты получишь хорошую новость.', '— Мама'],
+];
+let si = 0;
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!calm) setInterval(() => {
+  si = (si + 1) % SL.length;
+  const [img, bg, bd, c, t, p, f] = SL[si], m = document.getElementById('msg'), o = document.getElementById('orbImg');
+  m.classList.add('hide'); o.style.opacity = 0;
+  setTimeout(() => {
+    o.src = img; o.style.opacity = 1;
+    m.style.background = bg; m.style.borderColor = bd;
+    const T = document.getElementById('msgT'); T.textContent = t; T.style.color = c;
+    document.getElementById('msgP').textContent = p;
+    const F = document.getElementById('msgF'); F.textContent = f; F.style.color = c;
+    m.classList.remove('hide');
+  }, 600);
+}, 4200);
+// reveal on scroll
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } }), { threshold: .15 }) : null;
+document.querySelectorAll('.rv').forEach(el => io ? io.observe(el) : el.classList.add('on'));
+</script>
+</body>
+</html>
