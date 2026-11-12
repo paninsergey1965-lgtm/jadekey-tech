@@ -232,7 +232,7 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
     <div class="idle" id="idleS">
       <svg class="gem" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg>
       <h2>Покажи камень</h2>
-      <p>Положи камень на ровную поверхность при хорошем свете и нажми кнопку. Сканер сам найдёт камень и узнает его.</p>
+      <p>Положи камень на однотонную поверхность или лист бумаги. Свет сбоку, без бликов. Держи телефон прямо над камнем.</p>
     </div>
     <div class="hud">
       <div class="msg" id="msgS">Готов</div>
@@ -261,7 +261,7 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
       <div class="cambox">
         <video id="vidA" playsinline muted autoplay></video>
         <canvas class="ov" id="ovA"></canvas>
-        <div class="idle" id="idleA" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Нажми «Снять камень»</p></div>
+        <div class="idle" id="idleA" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Положи камень на однотонную поверхность или лист бумаги. Свет сбоку, без бликов. Держи телефон прямо над камнем.</p></div>
         <div class="hud"><div class="msg" id="msgA">Готов</div><div class="sharp"><i id="barA"></i></div></div>
       </div>
       <div class="btns">
@@ -314,7 +314,7 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
         <div class="cambox">
           <video id="vidL" playsinline muted autoplay></video>
           <canvas class="ov" id="ovL"></canvas>
-          <div class="idle" id="idleL" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Положи камень на однотонный фон при хорошем свете и нажми «Снять»</p></div>
+          <div class="idle" id="idleL" style="gap:8px"><svg class="gem" style="width:56px;height:56px" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg><p>Положи камень на однотонную поверхность или лист бумаги. Свет сбоку, без бликов. Держи телефон прямо над камнем.</p></div>
           <div class="hud"><div class="msg" id="msgL">Готов</div><div class="sharp"><i id="barL"></i></div></div>
         </div>
         <div class="qrow" id="lvQ"></div>
@@ -702,6 +702,108 @@ function hullMask(cells, G) {
   return m;
 }
 
+// ===== TEST v2: robust stone finding under lamps / on paper =====
+// White balance from the photo border (the background): a lamp-yellow sheet becomes neutral grey.
+function wbGains(d, w, h) {
+  let r = 0, g = 0, b = 0, n = 0;
+  const bw = Math.max(2, Math.round(Math.min(w, h) * 0.08));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (x >= bw && x < w - bw && y >= bw && y < h - bw) continue;
+    const i = (y * w + x) * 4, mx = Math.max(d[i], d[i + 1], d[i + 2]);
+    if (mx < 25 || mx > 250) continue;
+    r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
+  }
+  if (n < 20) return [1, 1, 1];
+  r /= n; g /= n; b /= n; const m = (r + g + b) / 3;
+  const cl = v => Math.min(1.7, Math.max(0.6, v));
+  return [cl(m / (r || 1)), cl(m / (g || 1)), cl(m / (b || 1))];
+}
+function wbCanvas(src) {
+  const w = src.width, h = src.height, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d'); g.drawImage(src, 0, 0);
+  const im = g.getImageData(0, 0, w, h), d = im.data, [kr, kg, kb] = wbGains(d, w, h);
+  for (let i = 0; i < d.length; i += 4) { d[i] = Math.min(255, d[i] * kr); d[i + 1] = Math.min(255, d[i + 1] * kg); d[i + 2] = Math.min(255, d[i + 2] * kb); }
+  g.putImageData(im, 0, 0); return cv;
+}
+// Background statistics of a small copy: mean colour and spread of the border ring.
+function borderStats(d, w, h) {
+  const bw = Math.max(2, Math.round(Math.min(w, h) * 0.06)); let s = [0, 0, 0], s2 = 0, n = 0;
+  const px = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (x >= bw && x < w - bw && y >= bw && y < h - bw) continue;
+    const i = (y * w + x) * 4; px.push([d[i], d[i + 1], d[i + 2]]); s[0] += d[i]; s[1] += d[i + 1]; s[2] += d[i + 2]; n++;
+  }
+  const m = s.map(v => v / n);
+  for (const p of px) s2 += (p[0] - m[0]) ** 2 + (p[1] - m[1]) ** 2 + (p[2] - m[2]) ** 2;
+  return { m, sd: Math.sqrt(s2 / n / 3) };
+}
+// Stone = everything that differs from a plain background (works for grey / smoky stones too).
+function findStoneBg(p) {
+  const W = 400, sc = W / Math.max(p.img.width, p.img.height);
+  const w = Math.round(p.img.width * sc), h = Math.round(p.img.height * sc);
+  const cv0 = document.createElement('canvas'); cv0.width = w; cv0.height = h;
+  cv0.getContext('2d').drawImage(p.img, 0, 0, w, h);
+  const cv = wbCanvas(cv0), d = cv.getContext('2d').getImageData(0, 0, w, h).data;
+  const bs = borderStats(d, w, h);
+  if (bs.sd > 28) return null;                       // busy background: leave it to the colour finder
+  const cell = 4, gw = Math.floor(w / cell), gh = Math.floor(h / cell), m = new Array(gw * gh).fill(false), hue = new Float32Array(gw * gh);
+  const thr = Math.max(26, bs.sd * 3.2);
+  for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let y = gy * cell; y < (gy + 1) * cell; y++) for (let x = gx * cell; x < (gx + 1) * cell; x++) { const i = (y * w + x) * 4; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+    r /= n; g /= n; b /= n;
+    const L = (r + g + b) / 3, Lb = (bs.m[0] + bs.m[1] + bs.m[2]) / 3;
+    const chroma = Math.hypot(r - L - (bs.m[0] - Lb), g - L - (bs.m[1] - Lb), b - L - (bs.m[2] - Lb));
+    const dL = L - Lb;
+    // soft shadows are darker but keep the background's colour: need a bigger step to count
+    m[gy * gw + gx] = chroma > thr * 0.7 || dL > thr || dL < -thr * 1.9;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dd = mx - mn || 1;
+    let hh = mx === r ? ((g - b) / dd) % 6 : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4; hue[gy * gw + gx] = hh * Math.PI / 3;
+  }
+  const filled = fillHoles(m, gw, gh);
+  const touches = b => b.some(i => { const x = i % gw, y = (i / gw) | 0; return x === 0 || y === 0 || x === gw - 1 || y === gh - 1; });
+  let bl = blobs(filled, gw, gh).filter(b => b.length >= gw * gh * 0.004 && !touches(b));
+  if (!bl.length) return null;
+  const cx0 = p.near ? p.near.x * sc / cell : gw / 2, cy0 = p.near ? p.near.y * sc / cell : gh / 2, R = Math.max(gw, gh) * (p.near ? 0.25 : 0.5);
+  let pick;
+  if (p.tap) {
+    const tx = p.tap.x * sc / cell, ty = p.tap.y * sc / cell;
+    const dist = b => Math.min(...b.map(i => Math.hypot(i % gw + .5 - tx, ((i / gw) | 0) + .5 - ty)));
+    pick = bl.reduce((a, b) => dist(b) < dist(a) ? b : a);
+  } else {
+    const score = b => { let sx = 0, sy = 0; for (const i of b) { sx += i % gw + .5; sy += ((i / gw) | 0) + .5; } const dd = Math.hypot(sx / b.length - cx0, sy / b.length - cy0) / R; return b.length / (1 + dd * dd); };
+    pick = bl.reduce((a, b) => score(b) > score(a) ? b : a);
+  }
+  let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+  for (const i of pick) { const x = i % gw, y = (i / gw) | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x + 1); y1 = Math.max(y1, y + 1); }
+  const k = cell / sc;
+  return { cx: (x0 + x1) / 2 * k, cy: (y0 + y1) / 2 * k, side: Math.max(x1 - x0, y1 - y0) * k * 1.12,
+           hue: blobHue(pick, hue), via: 'bg', ...rectInfo(pick.map(i => [i % gw + .5, ((i / gw) | 0) + .5])) };
+}
+// Plain background → background finder; otherwise colour finder on a white-balanced copy.
+function findStoneSmart(p, targetHue = null) {
+  const b = findStoneBg(p);
+  if (b) return b;
+  const sc = 400 / Math.max(p.img.width, p.img.height);
+  const small = document.createElement('canvas'); small.width = Math.round(p.img.width * sc); small.height = Math.round(p.img.height * sc);
+  small.getContext('2d').drawImage(p.img, 0, 0, small.width, small.height);
+  const q = { img: wbCanvas(small), near: p.near ? { x: p.near.x * sc, y: p.near.y * sc } : null, tap: p.tap ? { x: p.tap.x * sc, y: p.tap.y * sc } : null };
+  const r = findStoneByColour(q, targetHue);
+  if (r) { const k = 1 / sc; return { ...r, cx: r.cx * k, cy: r.cy * k, side: r.side * k, via: 'wb' }; }
+  return findStoneByColour(p, targetHue);
+}
+// Light problems on the crop: glare on polish, darkness, lamp colour cast.
+function lightHint(cv) {
+  const n = 96, t = document.createElement('canvas'); t.width = t.height = n;
+  const g = t.getContext('2d'), m = cv.width * 0.28; g.drawImage(cv, m, m, cv.width - 2 * m, cv.height - 2 * m, 0, 0, n, n);
+  const d = g.getImageData(0, 0, n, n).data; let glare = 0, L = 0;
+  for (let i = 0; i < d.length; i += 4) { const l = (d[i] + d[i + 1] + d[i + 2]) / 3; L += l; if (d[i] > 245 && d[i + 1] > 245 && d[i + 2] > 245) glare++; }
+  L /= n * n; glare /= n * n;
+  if (glare > 0.04) return 'Блик на камне — наклони телефон или убери лампу сверху';
+  if (L < 45) return 'Темно — добавь света';
+  return null;
+}
+
 // ---- features ----
 async function features(cv, mode = 'shape') {
   const img = await RawImage.fromURL(cv.toDataURL('image/jpeg', 0.92));
@@ -859,7 +961,7 @@ function verdictOf(r) {
 // features of the stone in a crop, rotated so the stone's edges are axis-aligned (+extra turn)
 async function stoneFeatures(cv, extra = 0, targetHue = null) {
   const p = { img: cv, bg: borderColor(cv) };
-  const b = findStoneByColour(p, targetHue);
+  const b = findStoneByColour(p, targetHue) || findStoneSmart(p, targetHue);
   if (!b) return null;
   return { f: await features(render(p, b.cx, b.cy, b.side, -b.angle + extra), 'colour'), p, b };
 }
@@ -1097,7 +1199,7 @@ function detectFrame(ctx, last) {
   det.width = W; det.height = Math.round(vh * sc);
   det.getContext('2d').drawImage(vid, 0, 0, det.width, det.height);
   const near = last ? { x: last.cx * sc, y: last.cy * sc } : null;   // stay on the stone we already follow
-  const b = findStoneByColour({ img: det, near });
+  const b = findStoneByColour({ img: det, near }) || findStoneSmart({ img: det, near });
   if (!b) return null;
   return { cx: b.cx / sc, cy: b.cy / sc, side: b.side / sc, angle: b.angle };
 }
@@ -1170,6 +1272,7 @@ function captureStone(ctx) {
       else if (frac > 0.75) msg = 'Дальше';
       else if (moved > 0.1) msg = 'Держи ровно';
       else if (rel < 0.4 && peak > 1) msg = 'Не в фокусе, чуть отодвинь';
+      else { const lh = lightHint(cv); if (lh && (step.lh = (step.lh || 0) + 1) < 30) msg = lh; }
       if (msg) { if (moved > 0.1) burst = []; ctx.msg.textContent = msg; drawOverlay(ctx, box, '#e8c25a'); }
       else {
         burst.push({ cv, sharp: sh });
@@ -2474,7 +2577,7 @@ function liveRender() {
   $('lvDone').style.display = st === 3 ? '' : 'none';
   $('lvHiddenBox').style.display = st === 1 ? '' : 'none';
   $('lvH').textContent = ['Сторона А', 'Переверни камень', 'Кому и чем станет камень', 'Камень ожил'][st];
-  $('lvSub').textContent = ['Положи камень на однотонный фон при хорошем свете. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', 'Режим можно будет поменять позже.', ''][st];
+  $('lvSub').textContent = ['Положи камень на однотонную поверхность или лист бумаги, свет сбоку, без бликов. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', 'Режим можно будет поменять позже.', ''][st];
   lvQ(null); lvVerdict('', '');
   if (st === 0 && LV.a) lvVerdict('ok', 'Сторона А готова. Теперь переверни камень.');
   if (st === 1 && LV.b) lvVerdict('ok', 'Обе стороны готовы.');
