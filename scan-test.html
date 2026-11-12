@@ -962,7 +962,7 @@ function verdictOf(r) {
 // features of the stone in a crop, rotated so the stone's edges are axis-aligned (+extra turn)
 async function stoneFeatures(cv, extra = 0, targetHue = null) {
   const p = { img: cv, bg: borderColor(cv) };
-  const b = findStoneSmart(p, targetHue);
+  const b = findStoneByColour(p, targetHue) || findStoneSmart(p, targetHue);
   if (!b) return null;
   return { f: await features(render(p, b.cx, b.cy, b.side, -b.angle + extra), 'colour'), p, b };
 }
@@ -1200,7 +1200,7 @@ function detectFrame(ctx, last) {
   det.width = W; det.height = Math.round(vh * sc);
   det.getContext('2d').drawImage(vid, 0, 0, det.width, det.height);
   const near = last ? { x: last.cx * sc, y: last.cy * sc } : null;   // stay on the stone we already follow
-  const b = findStoneSmart({ img: det, near });
+  const b = findStoneByColour({ img: det, near }) || findStoneSmart({ img: det, near });
   if (!b) return null;
   return { cx: b.cx / sc, cy: b.cy / sc, side: b.side / sc, angle: b.angle };
 }
@@ -1302,7 +1302,7 @@ async function identify(cv, status = () => {}) {
   if (!q0) return { state: 'nostone' };
   const gq = gvecOf(q0.f);
   // coarse prefilter by one mean vector, then the exact geometric check on the closest few
-  const ranked = stones.filter(s => s.gv).map(s => ({ s, sc: dot(gq, s.gv) })).sort((a, b) => b.sc - a.sc).slice(0, 8);
+  const ranked = stones.filter(s => s.gv).map(s => ({ s, sc: dot(gq, s.gv) })).sort((a, b) => b.sc - a.sc).slice(0, 4);
   const rect = q0.b.rect > 0.9, mine = myIds();
   let best = null;
   for (const { s } of ranked) {
@@ -1324,7 +1324,6 @@ async function identify(cv, status = () => {}) {
     if (!best || entry.score > best.score) best = entry;
     if (verdictOf(local) === 'yes' && local.inl.length >= MIN_INLIERS * 1.5) break;
   }
-  if ((!best || verdictOf(best.res) !== 'yes') && !cv.__wb) { const cw = wbCanvas(cv); cw.__wb = 1; const r2 = await identify(cw, status); if (r2.state === 'found' || (!best && r2.state !== 'nostone')) return r2; }
   if (!best) return { state: 'unknown' };
   const v = verdictOf(best.res);
   return { state: v === 'yes' ? 'found' : v === 'no' ? 'unknown' : 'unsure', stone: best.stone, res: best.res, q0 };
