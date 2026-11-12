@@ -3201,7 +3201,7 @@ function showPath(s, P) {
     }
   }
   const W = PATH_WIS[(dn + h) % PATH_WIS.length], PR = PATH_PRAC[(dn + h * 7) % PATH_PRAC.length];
-  html += `<div class="pt-wis">«${esc(W[L])}»<small>${PATH_SRC[W[3]][L]}</small></div><div class="tl-rit">${T('Практика дня', 'Practice of the day', '今日修习')}: ${esc(PR[L])}</div>`;
+  html += `<div class="pt-wis">«${esc(W[L])}»<small>${PATH_SRC[W[3]][L]}${W[4]}${L === 2 ? '章' : ''}</small></div><div class="tl-rit">${T('Практика дня', 'Practice of the day', '今日修习')}: ${esc(PR[L])}</div>`;
   html += `<p class="sh-note" style="text-align:center">${T('Новое послание откроется завтра.', 'A new message opens tomorrow.', '明天会打开新的讯息。')}</p><div class="btns">${sndBtn()}${isAdmin ? `<button class="btn" id="ptNext">${T('Демо: завтра ›', 'Demo: tomorrow ›', '演示：明天 ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close', '关闭')}</button></div>`;
   sheet(html);
   $('sheet').classList.add('tal', 'path'); fxRise(['✦', '·', '☾'], ['#ffe2a8', '#c9d4ff', '#ffffff'], 22);
