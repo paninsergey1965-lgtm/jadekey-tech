@@ -64,31 +64,33 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 <form id="f" novalidate>
   <label>Имя<input name="name" autocomplete="name" required></label>
   <label>Телефон<input name="phone" type="tel" autocomplete="tel" required></label>
-  <label>Эл. почта — необязательно<input name="email" type="email" autocomplete="email"></label>
+  <label>Эл. почта — для чека<input name="email" type="email" autocomplete="email" required></label>
   <label>Доставка<select name="delivery"><option value="pickup">Самовывоз, Москва</option><option value="cdek">СДЭК по России (оплата доставки при получении)</option></select></label>
   <label id="adr">Адрес или пункт СДЭК<textarea name="address" rows="2" autocomplete="street-address"></textarea></label>
   <label>Комментарий<textarea name="comment" rows="2"></textarea></label>
-  <p class="agree">Нажимая «Заказать», вы принимаете условия <a href="/shop/oferta.html">оферты</a> и <a href="/shop/delivery.html">доставки и возврата</a>.</p>
+  <p class="agree">Нажимая «Оплатить», вы принимаете условия <a href="/shop/oferta.html">оферты</a> и <a href="/shop/delivery.html">доставки и возврата</a>.</p>
   <p class="err" id="err" role="alert"></p>
-  <button class="btn" id="go" type="submit">Заказать</button><p class="agree" style="margin-top:4px">Заказ откроется в Telegram — отправьте его нам. Мы пришлём ссылку на оплату картой или СБП.</p>
+  <button class="btn" id="go" type="submit">Оплатить 2 600 ₽</button>
 </form>
 <script>
 (() => {
-  const TG = 'direkto';
   const f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go'), adr = document.getElementById('adr');
+  const label = go.textContent;
   const sync = () => { adr.style.display = f.delivery.value === 'pickup' ? 'none' : ''; };
   f.delivery.onchange = sync; sync();
   f.onsubmit = async (e) => {
     e.preventDefault(); err.textContent = '';
-    const d = Object.fromEntries(new FormData(f));
-    if (!d.name.trim() || !d.phone.trim()) { err.textContent = 'Укажите имя и телефон.'; return; }
+    const d = Object.fromEntries(new FormData(f)); d.id = 'rose-agate';
+    if (!d.name.trim() || !d.phone.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { err.textContent = 'Заполните имя, телефон и почту — на неё придёт чек.'; return; }
     if (d.delivery !== 'pickup' && !d.address.trim()) { err.textContent = 'Укажите адрес или пункт СДЭК.'; return; }
-    const txt = 'Заказ JadeKey\n' + document.querySelector('.info h1').textContent + ' — ' + document.querySelector('.info .pr').textContent +
-      '\nИмя: ' + d.name + '\nТелефон: ' + d.phone + (d.email ? '\nПочта: ' + d.email : '') +
-      '\nДоставка: ' + f.delivery.selectedOptions[0].textContent + (d.delivery !== 'pickup' ? '\nАдрес: ' + d.address : '') + (d.comment ? '\nКомментарий: ' + d.comment : '');
-    try { await navigator.clipboard.writeText(txt); } catch (x) {}
-    try { sessionStorage.setItem('jk_order', txt); sessionStorage.removeItem('jk_sent'); } catch (x) {}
-    location.href = '/shop/thanks.html';
+    go.disabled = true; go.textContent = 'Переходим к оплате…';
+    try {
+      const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+      const j = await r.json();
+      if (j.paymentUrl) { location.href = j.paymentUrl; return; }
+      err.textContent = j.message || 'Не удалось создать платёж. Напишите нам: jadekey1965@gmail.com';
+    } catch (x) { err.textContent = 'Нет связи с платёжной системой. Попробуйте ещё раз.'; }
+    go.disabled = false; go.textContent = label;
   };
 })();
 </script></div></section>
