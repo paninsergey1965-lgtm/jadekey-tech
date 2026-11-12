@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JadeKey — технология: рисунок камня как ключ</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Как JadeKey узнаёт камень по природному рисунку: нейросеть на устройстве, 1024 фрагмента, геометрическая проверка. И брелок JadeKey Device.">
+<meta name="theme-color" content="#050706">
+<link rel="icon" href="/icons/icon-180.png">
+<style>
+@font-face{font-family:Inter;font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/inter-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Inter;font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/inter-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2190-21FF,U+2212}
+@font-face{font-family:Inter;font-weight:800;font-style:italic;font-display:swap;src:url(/fonts/inter-cyrillic-800-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Inter;font-weight:800;font-style:italic;font-display:swap;src:url(/fonts/inter-latin-800-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2190-21FF,U+2212}
+@font-face{font-family:Inter;font-weight:900;font-style:italic;font-display:swap;src:url(/fonts/inter-cyrillic-900-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Inter;font-weight:900;font-style:italic;font-display:swap;src:url(/fonts/inter-latin-900-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2190-21FF,U+2212}
+@font-face{font-family:JBM;font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:JBM;font-weight:400;font-display:swap;src:url(/fonts/jetbrains-mono-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2190-21FF,U+2212}
+@font-face{font-family:JBM;font-weight:500;font-display:swap;src:url(/fonts/jetbrains-mono-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:JBM;font-weight:500;font-display:swap;src:url(/fonts/jetbrains-mono-latin-500-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2190-21FF,U+2212}
+:root{
+  --bg:#050706; --panel:#0b100e; --txt:#d9dedb; --hi:#f2f5f3; --mute:#7d8a84; --line:rgba(217,222,219,.14);
+  --jade:#3fd8a2; --jade-d:rgba(63,216,162,.14); --red:#e0476b; --red-d:rgba(224,71,107,.14);
+  --sans:Inter,-apple-system,"Segoe UI",sans-serif; --mono:JBM,ui-monospace,Menlo,monospace; --pad:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font:400 16px/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--jade);outline-offset:3px}
+
+.top{position:sticky;top:0;z-index:30;background:rgba(5,7,6,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.top-in{max-width:1180px;margin:auto;height:56px;padding:0 var(--pad);display:flex;align-items:center;justify-content:space-between}
+.logo{font:900 italic 21px/1 var(--sans);letter-spacing:.02em;color:var(--hi)}
+.logo b{color:var(--jade);font-weight:900}
+.top a.s{font:500 13px/1 var(--mono);color:var(--jade);border:1px solid rgba(63,216,162,.45);padding:9px 13px;border-radius:8px}
+
+h1,h2{font-family:var(--sans);font-weight:900;font-style:italic;text-transform:uppercase;color:var(--hi);letter-spacing:-.02em;line-height:.95}
+h2{font-size:clamp(42px,9vw,92px)}
+.p{max-width:60ch;font-size:17px;color:var(--txt);margin-top:22px}
+.wrap{max-width:1180px;margin:auto;padding:0 var(--pad)}
+section{padding:110px 0}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:56px 0 90px;border-bottom:1px solid var(--line)}
+.log{position:absolute;inset:0;font:400 12px/1.7 var(--mono);color:rgba(63,216,162,.16);white-space:pre;padding:18px var(--pad);pointer-events:none;overflow:hidden;mask-image:linear-gradient(180deg,#000 30%,transparent 95%);-webkit-mask-image:linear-gradient(180deg,#000 30%,transparent 95%)}
+.hero .wrap{position:relative;text-align:center}
+.hero h1{font-size:clamp(60px,15vw,150px)}
+.lens{position:relative;width:min(78vw,420px);aspect-ratio:1;margin:34px auto 0;border-radius:28px;overflow:hidden;box-shadow:0 0 0 1px rgba(63,216,162,.35),0 30px 90px rgba(63,216,162,.12)}
+.lens img{width:100%;height:100%;object-fit:cover}
+.grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(32,1fr);grid-template-rows:repeat(32,1fr)}
+.grid i{border:.5px solid rgba(63,216,162,.10)}
+.grid i.m{background:rgba(63,216,162,.45);box-shadow:0 0 6px rgba(63,216,162,.6);opacity:0;animation:pop .3s forwards}
+@keyframes pop{to{opacity:1}}
+.hud{position:absolute;left:12px;right:12px;bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font:500 12px/1.3 var(--mono);color:var(--hi);background:rgba(5,7,6,.78);border:1px solid rgba(63,216,162,.35);border-radius:10px;padding:9px 12px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hud b{color:var(--jade);font-weight:500}
+.sub{max-width:44ch;margin:30px auto 0;font-size:18px;color:var(--txt)}
+.cta{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:30px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 28px;border-radius:12px;font:900 italic 17px/1 var(--sans);text-transform:uppercase;letter-spacing:.01em}
+.btn.g{background:var(--jade);color:#04110b}
+.btn.o{border:1px solid var(--line);color:var(--hi)}
+
+/* spec box */
+.spec{border-radius:16px;border:1px solid rgba(63,216,162,.55);background:linear-gradient(180deg,rgba(63,216,162,.10),rgba(63,216,162,.03));box-shadow:0 0 40px rgba(63,216,162,.12),inset 0 0 30px rgba(63,216,162,.05);overflow:hidden}
+.spec.r{border-color:rgba(224,71,107,.55);background:linear-gradient(180deg,rgba(224,71,107,.10),rgba(224,71,107,.03));box-shadow:0 0 40px rgba(224,71,107,.12),inset 0 0 30px rgba(224,71,107,.05)}
+.spec header{padding:20px 22px;border-bottom:1px solid rgba(63,216,162,.35)}
+.spec.r header{border-color:rgba(224,71,107,.35)}
+.spec header b{display:block;font:800 19px/1.25 var(--sans);color:var(--hi)}
+.spec header span{display:block;margin-top:4px;color:var(--txt);font-size:15px}
+.spec dl{padding:6px 22px 10px}
+.spec dl div{display:grid;grid-template-columns:96px 1fr;gap:12px;padding:13px 0;border-bottom:1px dotted rgba(217,222,219,.22);font:400 14px/1.45 var(--mono)}
+.spec dl div:last-child{border-bottom:0}
+.spec dt{font-weight:500;color:var(--hi)}
+.spec dd{color:var(--hi)}
+.spec dd small{display:block;color:var(--mute);font-size:12.5px}
+
+/* pipeline */
+.flow{display:grid;gap:14px;margin-top:48px}
+.st{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.st .ic{width:44px;height:44px;border-radius:10px;border:1px solid rgba(63,216,162,.45);display:grid;place-items:center;font:500 13px var(--mono);color:var(--jade)}
+.st b{font:800 italic 19px/1.2 var(--sans);text-transform:uppercase;color:var(--hi)}
+.st p{font-size:15px;color:var(--mute);margin-top:4px}
+.two{display:grid;gap:36px;margin-top:48px}
+@media(min-width:900px){.two{grid-template-columns:1fr 1fr;align-items:center}.flow{grid-template-columns:repeat(4,1fr)}.st{grid-template-columns:1fr}}
+
+/* rotation */
+.rots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
+.rot{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);aspect-ratio:1}
+.rot img{width:100%;height:100%;object-fit:cover}
+.rot span{position:absolute;left:8px;bottom:8px;font:500 11px/1 var(--mono);color:var(--hi);background:rgba(5,7,6,.8);padding:6px 7px;border-radius:6px}
+.rot span b{color:var(--jade);font-weight:500}
+
+/* checks */
+.checks{list-style:none;margin-top:40px;border-top:1px solid var(--line)}
+.checks li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:18px 0;border-bottom:1px solid var(--line)}
+.checks li::before{content:"✓";font:500 16px/1.4 var(--mono);color:var(--jade)}
+.checks b{color:var(--hi);font-weight:800}
+.checks span{display:block;color:var(--mute);font-size:15px}
+
+/* device exploded */
+.dev{border-top:1px solid var(--line);background:radial-gradient(60% 50% at 50% 30%,rgba(224,71,107,.08),transparent 70%)}
+.badge{display:inline-block;font:500 12px/1 var(--mono);color:var(--red);border:1px solid rgba(224,71,107,.5);padding:7px 10px;border-radius:999px;margin-bottom:18px}
+.stage{height:520px;perspective:1100px;display:grid;place-items:end center;padding-bottom:30px;margin:10px 0 0}
+.stack{position:relative;width:200px;height:250px;transform-style:preserve-3d;transform:rotateX(58deg) rotateZ(-38deg)}
+.ly{position:absolute;inset:0;border-radius:30px;transform-style:preserve-3d}
+.ly em{position:absolute;right:-14px;top:-14px;transform:rotateZ(38deg) rotateX(-58deg);font:500 12px/1 var(--mono);font-style:normal;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1px solid currentColor}
+.l1{transform:translateZ(250px);inset:14px;border-radius:20px;background:url(/img/stone-g12.jpg) center/cover;box-shadow:0 0 0 2px rgba(255,255,255,.15);color:var(--jade)}
+.l2{transform:translateZ(185px);background:transparent;border:7px solid #222826;color:var(--jade)}
+.l2::before{content:"";position:absolute;inset:6px;border-radius:20px;background:conic-gradient(from 0deg,#1b201e 0 25%,transparent 0 50%,#1b201e 0 75%,transparent 0) 0 0/22px 22px;opacity:.0}
+.l2 i{position:absolute;width:20px;height:20px;border:3px solid #9aa7a1;border-radius:3px}
+.l2 i:nth-child(1){left:8px;top:8px}.l2 i:nth-child(2){right:8px;top:8px}.l2 i:nth-child(3){left:8px;bottom:8px}
+.l3{transform:translateZ(125px);inset:40px;border-radius:50%;border:2px solid var(--red);background:repeating-radial-gradient(circle,transparent 0 7px,rgba(224,71,107,.55) 7px 8px);color:var(--red)}
+.l4{transform:translateZ(65px);inset:22px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#f1f3f2,#b8c0bc 70%);color:var(--red)}
+.l5{transform:translateZ(0);background:linear-gradient(135deg,#1c2321,#0d1110);border:1px solid #2f3835;box-shadow:0 40px 80px rgba(0,0,0,.6);color:var(--red)}
+.l5::after{content:"";position:absolute;left:50%;top:-26px;width:46px;height:38px;margin-left:-23px;border:7px solid #2a312e;border-bottom:0;border-radius:24px 24px 0 0}
+.parts{list-style:none;display:grid;gap:10px;margin-top:20px}
+.parts li{display:grid;grid-template-columns:30px 1fr;gap:12px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.parts li em{font:500 12px/1 var(--mono);font-style:normal;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--red);color:var(--red)}
+.parts li.j em{border-color:var(--jade);color:var(--jade)}
+.parts b{color:var(--hi);font-weight:800}
+.parts span{display:block;color:var(--mute);font-size:14.5px}
+.parts small{font:500 11px/1 var(--mono);color:var(--red);margin-left:6px;white-space:nowrap}
+@media(min-width:900px){.devgrid{display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:center}}
+@media(max-width:420px){.stage{height:500px}.stack{width:170px;height:212px}}
+
+/* status */
+.stat{display:grid;gap:10px;margin-top:40px}
+.stat div{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px 18px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+.stat b{color:var(--hi);font-weight:800;font-size:15.5px}
+.stat span{font:500 12px/1 var(--mono);padding:6px 9px;border-radius:999px;white-space:nowrap}
+.ok{color:var(--jade);border:1px solid rgba(63,216,162,.5)}
+.pr{color:#e6c46b;border:1px solid rgba(230,196,107,.5)}
+.pl{color:var(--mute);border:1px solid var(--line)}
+
+/* author */
+.auth{display:grid;gap:22px;padding:28px;border:1px solid var(--line);border-radius:18px;background:var(--panel);margin-top:44px}
+.auth q{font:800 italic clamp(22px,3vw,30px)/1.25 var(--sans);color:var(--hi);quotes:none}
+.auth cite{font:500 13px/1.5 var(--mono);color:var(--mute);font-style:normal}
+
+footer{border-top:1px solid var(--line);padding:40px var(--pad) calc(48px + env(safe-area-inset-bottom));text-align:center;color:var(--mute);font-size:14px}
+footer nav{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 24px;margin:14px 0}
+footer a:hover{color:var(--hi)}
+@media(prefers-reduced-motion:reduce){.grid i.m{animation:none;opacity:1}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <a class="logo" href="/">JADE<b>KEY</b></a>
+  <a class="s" href="/scan.html">Открыть сканер</a>
+</div></header>
+
+<main>
+<div class="hero">
+  <div class="log" aria-hidden="true">&gt; jk scan --camera rear
+  load model dinov2-small ........ [OK]
+  backend webgpu ................. [OK]
+  frame 448×448 → patches 32×32
+  mask: foreground pca .......... 712 / 1024
+  features 384-d · int8
+  candidates: 2 371 stones
+  ransac similarity · mirror on
+  inliers 186 · area 26.1% · rot 37°
+  verdict ....................... MATCH
+&gt; open story ..................... [OK]
+&gt; jk scan --camera rear
+  frame 448×448 → patches 32×32
+  mask: foreground pca .......... 688 / 1024
+  inliers 171 · area 24.8% · rot 212°
+  verdict ....................... MATCH</div>
+  <div class="wrap">
+    <h1>Камень<br>это ключ</h1>
+    <div class="lens">
+      <img src="/img/stone-g12.jpg" alt="Лазурит под сканером: сетка из 1024 фрагментов, совпавшие подсвечены" fetchpriority="high">
+      <div class="grid" id="grid" aria-hidden="true"></div>
+      <div class="hud"><span>inliers <b id="inl">0</b> · area <b id="area">0%</b></span><b id="verd">SCAN…</b></div>
+    </div>
+    <p class="sub">Природный рисунок камня складывался миллионы лет и не повторяется. JadeKey узнаёт его камерой телефона — без чипов и без меток.</p>
+    <div class="cta"><a class="btn g" href="/scan.html">Попробовать сканер</a><a class="btn o" href="#how">Как это работает</a></div>
+  </div>
+</div>
+
+<section id="how"><div class="wrap">
+  <h2>Как он видит камень</h2>
+  <p class="p">Сканер не сравнивает фотографии целиком. Он режет камень на тысячу маленьких фрагментов, описывает каждый и ищет такие же фрагменты у зарегистрированных камней — с учётом того, как камень повернули.</p>
+  <div class="flow">
+    <div class="st"><span class="ic">01</span><div><b>Кадр</b><p>Камера снимает камень, кадр приводится к 448×448.</p></div></div>
+    <div class="st"><span class="ic">02</span><div><b>Маска</b><p>Нейросеть отделяет камень от фона и руки.</p></div></div>
+    <div class="st"><span class="ic">03</span><div><b>Отпечаток</b><p>1024 фрагмента, у каждого — 384 числа, описывающих рисунок.</p></div></div>
+    <div class="st"><span class="ic">04</span><div><b>Проверка</b><p>Совпавшие фрагменты должны сложиться в одну геометрию — иначе это случайность.</p></div></div>
+  </div>
+  <div class="two">
+    <div class="spec">
+      <header><b>Распознавание на устройстве</b><span>Всё считается в телефоне. Фото камня не отправляется на сервер для анализа.</span></header>
+      <dl>
+        <div><dt>MODEL</dt><dd>DINOv2-small<small>Vision Transformer, ViT-S/14</small></dd></div>
+        <div><dt>INPUT</dt><dd>448 × 448 px<small>сетка 32 × 32 = 1024 фрагмента</small></dd></div>
+        <div><dt>FEATURE</dt><dd>384-d на фрагмент<small>хранение int8, только фрагменты камня</small></dd></div>
+        <div><dt>MASK</dt><dd>PCA по признакам<small>камень отделяется от фона</small></dd></div>
+        <div><dt>MATCH</dt><dd>RANSAC, подобие<small>поворот · масштаб · зеркало</small></dd></div>
+        <div><dt>VERDICT</dt><dd>≥ 60 совпадений<small>и ≥ 12% площади камня</small></dd></div>
+        <div><dt>RUNTIME</dt><dd>WebGPU / WASM<small>в браузере или в приложении для iPhone</small></dd></div>
+      </dl>
+    </div>
+    <div>
+      <h2 style="font-size:clamp(34px,6vw,60px)">Поверни<br>как хочешь</h2>
+      <p class="p">Камень можно держать под любым углом, ближе или дальше, даже зеркально. Геометрическая проверка находит поворот и масштаб сама.</p>
+      <div class="rots">
+        <div class="rot"><img src="/img/stone-g1.jpg" alt="" loading="lazy"><span>rot <b>0°</b></span></div>
+        <div class="rot"><img src="/img/stone-g1.jpg" alt="" loading="lazy" style="transform:rotate(90deg) scale(1.15)"><span>rot <b>90°</b></span></div>
+        <div class="rot"><img src="/img/stone-g1.jpg" alt="" loading="lazy" style="transform:scaleX(-1) rotate(200deg) scale(.85)"><span>mirror <b>✓</b></span></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section style="border-top:1px solid var(--line)"><div class="wrap">
+  <h2>Регистрация</h2>
+  <p class="p">Прежде чем камень станет ключом, сканер проверяет, что его можно будет узнать снова.</p>
+  <ul class="checks">
+    <li><div><b>Свет</b><span>Слишком тёмный или пересвеченный снимок не сохранится — сканер попросит переснять.</span></div></li>
+    <li><div><b>Достаточно рисунка</b><span>Однотонный камень без структуры не подойдёт — нечего узнавать.</span></div></li>
+    <li><div><b>Обе стороны</b><span>Камень снимается с двух сторон, узнаётся по любой.</span></div></li>
+    <li><div><b>Проверка на дубликат</b><span>Если такой камень уже зарегистрирован, второй раз его не записать.</span></div></li>
+  </ul>
+</div></section>
+
+<section class="dev" id="device"><div class="wrap devgrid">
+  <div>
+    <span class="badge">● ПРОТОТИП · В РАЗРАБОТКЕ</span>
+    <h2>JadeKey<br>Device</h2>
+    <p class="p">Брелок, в котором камень — лицевая сторона. Внутри — NFC-чип, поисковый трекер и место для платёжного стикера. Рабочий прототип собран, серийного изделия пока нет.</p>
+    <div class="stage" aria-hidden="true">
+      <div class="stack">
+        <div class="ly l5"><em>5</em></div>
+        <div class="ly l4"><em>4</em></div>
+        <div class="ly l3"><em>3</em></div>
+        <div class="ly l2"><i></i><i></i><i></i><em>2</em></div>
+        <div class="ly l1"><em>1</em></div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <ol class="parts">
+      <li class="j"><em>1</em><div><b>Камень</b><span>Полированный минерал почти во всю лицевую сторону. Его рисунок — ключ.</span></div></li>
+      <li class="j"><em>2</em><div><b>Рамка с метками</b><span>Метки по углам подсказывают сканеру, где верх камня.</span></div></li>
+      <li><em>3</em><div><b>NFC-чип</b><span>Сейчас NTAG 216, читается приложением для iPhone. Дальше — NTAG 424 DNA с одноразовыми криптокодами.</span></div></li>
+      <li><em>4</em><div><b>Трекер</b><span>Модуль поиска уровня AirTag — найти ключи через телефон.</span></div></li>
+      <li><em>5</em><div><b>Корпус</b><span>Радиопрозрачный полимер, без металла. Около 37 × 29 мм. Слот под платёжный стикер любого банка.<small>КОНЦЕПТ</small></span></div></li>
+    </ol>
+    <div class="spec r" style="margin-top:22px">
+      <header><b>Две проверки в одном предмете</b><span>Камень доказывает «это тот самый предмет», чип — «он не скопирован».</span></header>
+      <dl>
+        <div><dt>QUICK</dt><dd>Только NFC<small>приложить телефон</small></dd></div>
+        <div><dt>FULL</dt><dd>NFC + фото камня<small>чип и рисунок связаны в одну запись</small></dd></div>
+      </dl>
+    </div>
+  </div>
+</div></section>
+
+<section style="border-top:1px solid var(--line)"><div class="wrap">
+  <h2>Что работает<br>сегодня</h2>
+  <div class="stat">
+    <div><b>Сканер в браузере — iPhone и Android</b><span class="ok">РАБОТАЕТ</span></div>
+    <div><b>Приложение JadeKey в App Store</b><span class="ok">РАБОТАЕТ</span></div>
+    <div><b>Живые камни: Love, Новый год, Талисман, Печенье</b><span class="ok">РАБОТАЕТ</span></div>
+    <div><b>Чтение NFC в приложении для iPhone</b><span class="ok">РАБОТАЕТ</span></div>
+    <div><b>Брелок JadeKey Device</b><span class="pr">ПРОТОТИП</span></div>
+    <div><b>NTAG 424 DNA и запись о камне в блокчейне</b><span class="pl">В ПЛАНАХ</span></div>
+  </div>
+  <div class="auth">
+    <q>Я создал технологию, которая превращает природные минералы в физические цифровые объекты.</q>
+    <cite>Сергей Панин, изобретатель JadeKey · <a href="mailto:jadekey1965@gmail.com" style="color:var(--jade)">jadekey1965@gmail.com</a></cite>
+  </div>
+  <div class="cta" style="justify-content:flex-start;margin-top:30px"><a class="btn g" href="/scan.html">Попробовать сканер</a><a class="btn o" href="mailto:jadekey1965@gmail.com?subject=JadeKey%20%E2%80%94%20%D0%B8%D0%BD%D0%B2%D0%B5%D1%81%D1%82%D0%B8%D1%86%D0%B8%D0%B8">Связаться</a></div>
+</div></section>
+</main>
+
+<footer>
+  <a class="logo" href="/">JADE<b>KEY</b></a>
+  <nav><a href="/">Главная</a><a href="/scan.html">Сканер</a><a href="https://apps.apple.com/app/id6769250226">App Store</a><a href="/privacy.html">Конфиденциальность</a></nav>
+  <span>© 2026 ИП Панин С. Н.</span>
+</footer>
+
+<script>
+(() => {
+  const g = document.getElementById('grid'), N = 32, cells = [];
+  for (let i = 0; i < N * N; i++) { const c = document.createElement('i'); g.appendChild(c); cells.push(c); }
+  // pick "matched" patches inside the stone (centre square), deterministic
+  let s = 7; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const pick = [];
+  for (let y = 4; y < 28; y++) for (let x = 4; x < 28; x++) if (rnd() < .3) pick.push(y * N + x);
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const inl = document.getElementById('inl'), area = document.getElementById('area'), verd = document.getElementById('verd');
+  const finish = () => { inl.textContent = pick.length; area.textContent = (pick.length / 576 * 100).toFixed(1) + '%'; verd.textContent = 'MATCH ✓'; };
+  if (calm) { pick.forEach(i => cells[i].classList.add('m')); finish(); return; }
+  const io = new IntersectionObserver(es => {
+    if (!es[0].isIntersecting) return; io.disconnect();
+    pick.forEach((i, k) => setTimeout(() => {
+      cells[i].classList.add('m'); inl.textContent = k + 1; area.textContent = ((k + 1) / 576 * 100).toFixed(1) + '%';
+      if (k === pick.length - 1) finish();
+    }, 400 + k * 9));
+  });
+  io.observe(g);
+})();
+</script>
+</body>
+</html>
