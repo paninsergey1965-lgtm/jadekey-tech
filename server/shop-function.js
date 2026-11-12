@@ -7,6 +7,7 @@ const ITEMS = {
   'rose-agate': { name: 'Розовый агат', price: 2600 },
   'geode-agate': { name: 'Розовый агат с жеодой', price: 4300 },
   'crystal-pendant': { name: 'Агат-кулон с кристаллами', price: 3700 },
+  'lapis-mini': { name: 'Лазурит, мини (тест)', price: 100 },
 };
 const DELIVERY = { pickup: 'Самовывоз, Москва', cdek: 'СДЭК по России' };
 const ORIGINS = ['https://jadekey.tech', 'http://localhost:8765'];
