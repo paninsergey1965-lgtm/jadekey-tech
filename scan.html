@@ -2302,6 +2302,11 @@ function synthWav(kind) {
   } else if (kind === 'bowl') {
     out = new Float32Array(rate * 7);
     add(196, 0.05, 0.32, 1.6, [[1, 1, 1], [1.004, 0.8, 1], [2.71, 0.35, 0.6], [5.15, 0.15, 0.35]]);
+  } else if (kind === 'ghanta') {   // «Путь»: temple bell — three soft strikes over a low tanpura-like drone
+    out = new Float32Array(rate * 7);
+    [0.05, 1.45, 2.85].forEach((t0, i) => add(523.25 * (i === 2 ? 0.75 : 1), t0, i === 2 ? 0.2 : 0.14, 0.9, [[1, 1, 1], [2.32, 0.45, 0.55], [4.25, 0.25, 0.3], [6.63, 0.12, 0.2]]));
+    const n = out.length, f0 = 130.81;
+    for (let i = 0; i < n; i++) { const t = i / rate, env = Math.min(1, t / 1.2) * Math.min(1, (n - i) / (rate * 1.5)); out[i] += env * 0.05 * (Math.sin(2 * Math.PI * f0 * t) + 0.5 * Math.sin(2 * Math.PI * f0 * 1.5 * t) + 0.35 * Math.sin(2 * Math.PI * f0 * 2 * t + Math.sin(2 * Math.PI * 0.3 * t))); }
   } else {   // fireworks
     out = new Float32Array(rate * 4);
     for (let k = 0; k < 8; k++) {
@@ -3207,7 +3212,7 @@ function showPath(s, P) {
   html += `<p class="sh-note" style="text-align:center">${T('Новое послание откроется завтра.', 'A new message opens tomorrow.', '明天会打开新的讯息。')}</p><div class="btns">${sndBtn()}${isAdmin ? `<button class="btn" id="ptNext">${T('Демо: завтра ›', 'Demo: tomorrow ›', '演示：明天 ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close', '关闭')}</button></div>`;
   sheet(html);
   $('sheet').classList.add('tal', 'path'); fxRise(['✦', '·', '☾'], ['#ffe2a8', '#c9d4ff', '#ffffff'], 22);
-  playWav(synthWav('bowl')); bindSnd(() => synthWav('bowl'));
+  playWav(synthWav('ghanta')); bindSnd(() => synthWav('ghanta'));
   $('again').onclick = () => { pathShift = 0; loveStop(); hideSheet(); };
   if (isAdmin) $('ptNext').onclick = () => { pathShift++; showPath(s, P); };
 }
