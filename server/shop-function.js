@@ -3,11 +3,14 @@
 // POST {id,name,phone,email,delivery,address,comment} -> {paymentUrl}
 // POST from YooKassa {event,object} -> Telegram notification (payment re-checked via API)
 
-const ITEMS = {
-  'rose-agate': { name: 'Розовый агат', price: 2600 },
-  'geode-agate': { name: 'Розовый агат с жеодой', price: 4300 },
-  'crystal-pendant': { name: 'Агат-кулон с кристаллами', price: 3700 },
-};
+// Catalog lives on the site: https://jadekey.tech/shop/items.json  ({id: {name, price}})
+// Edit that file to add goods or change prices — no need to touch this function.
+const ITEMS_URL = 'https://jadekey.tech/shop/items.json';
+async function loadItems() {
+  const r = await fetch(ITEMS_URL + '?t=' + Date.now());
+  if (!r.ok) throw new Error('catalog ' + r.status);
+  return r.json();
+}
 const DELIVERY = { pickup: 'Самовывоз, Москва', cdek: 'СДЭК по России' };
 const ORIGINS = ['https://jadekey.tech', 'http://localhost:8765'];
 const RETURN_URL = 'https://jadekey.tech/shop/thanks.html?paid=1';
@@ -25,8 +28,8 @@ async function telegram(text) {
 }
 
 async function pay(b) {
-  const p = ITEMS[b.id];
-  if (!p) return [400, { message: 'Такого камня нет.' }];
+  const p = (await loadItems())[b.id];
+  if (!p || !(p.price > 0)) return [400, { message: 'Такого камня нет или он уже продан.' }];
   const name = s(b.name, 80), phone = s(b.phone, 30), email = s(b.email, 100);
   const delivery = DELIVERY[b.delivery] ? b.delivery : 'cdek';
   const address = s(b.address, 200), comment = s(b.comment, 200);
