@@ -1,0 +1,35 @@
+name: Shop orders → Telegram
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: shop-notify
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: server, sparse-checkout-cone-mode: true }
+      - name: Load state
+        run: |
+          git fetch -q origin shop-state && git show origin/shop-state:seen.json > /tmp/seen.json || true
+          [ -s /tmp/seen.json ] || rm -f /tmp/seen.json
+      - name: Check YooKassa
+        env:
+          YOOKASSA_SHOP_ID: ${{ secrets.YOOKASSA_SHOP_ID }}
+          YOOKASSA_SECRET_KEY: ${{ secrets.YOOKASSA_SECRET_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          STATE: /tmp/seen.json
+        run: python3 server/shop_notify.py
+      - name: Save state
+        run: |
+          cd "$(mktemp -d)"
+          git init -q && git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan shop-state
+          cp /tmp/seen.json seen.json
+          git -c user.name=shop-bot -c user.email=bot@jadekey.tech add seen.json
+          git -c user.name=shop-bot -c user.email=bot@jadekey.tech commit -qm "state"
+          git push -qf origin shop-state
