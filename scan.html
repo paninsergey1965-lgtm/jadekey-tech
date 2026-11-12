@@ -2287,7 +2287,7 @@ function synthWav(kind) {
     for (let i = 0; i < len; i++) { const t = i / rate; let v = 0; for (const [k, g, d] of parts) v += g * Math.sin(2 * Math.PI * f * k * t) * Math.exp(-t / (dec * d)); out[i0 + i] += amp * v; }
   };
   if (kind === 'bells') {   // Jingle Bells chorus (Pierpont, 1857, public domain) on bells + sleigh bells
-    const E = 76, G = 79, C = 72, D = 74, F = 77, q = 0.26;
+    const E = 76, G = 79, C = 72, D = 74, F = 77, q = 0.23;
     const tune = [[E,1],[E,1],[E,2],[E,1],[E,1],[E,2],[E,1],[G,1],[C,1.5],[D,.5],[E,4],[F,1],[F,1],[F,1.5],[F,.5],[F,1],[E,1],[E,1],[E,.5],[E,.5],[E,1],[D,1],[D,1],[E,1],[D,2],[G,2],
       [E,1],[E,1],[E,2],[E,1],[E,1],[E,2],[E,1],[G,1],[C,1.5],[D,.5],[E,4],[F,1],[F,1],[F,1.5],[F,.5],[F,1],[E,1],[E,1],[E,.5],[E,.5],[G,1],[G,1],[F,1],[D,1],[C,4]];
     const beats = tune.reduce((a, n) => a + n[1], 0);
