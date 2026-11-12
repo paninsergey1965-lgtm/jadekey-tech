@@ -3141,8 +3141,30 @@ function panchanga(date) {
   const moon = A.EclipticGeoMoon(t).lon, sun = A.SunPosition(t).elon;
   return { nak: Math.floor(deg360(moon - pathAyan(t)) / (360 / 27)), tithi: Math.floor(deg360(moon - sun) / 12) + 1, vara: date.getDay() };
 }
-// the day's panchanga is read at ~sunrise (07:00 local)
-function dayPanchanga(d) { const x = new Date(d); x.setHours(7, 0, 0, 0); return panchanga(x); }
+// observer: city by phone time zone, else rough point from UTC offset (default Moscow)
+const PATH_TZ = { 'Europe/Moscow': [55.75, 37.62], 'Europe/Kaliningrad': [54.71, 20.51], 'Europe/Samara': [53.2, 50.15], 'Europe/Volgograd': [48.7, 44.5], 'Asia/Yekaterinburg': [56.84, 60.6], 'Asia/Omsk': [54.99, 73.37], 'Asia/Novosibirsk': [55.03, 82.92], 'Asia/Krasnoyarsk': [56.01, 92.85], 'Asia/Irkutsk': [52.29, 104.28], 'Asia/Vladivostok': [43.12, 131.89], 'Asia/Bangkok': [13.75, 100.5], 'Asia/Shanghai': [31.23, 121.47], 'Asia/Hong_Kong': [22.3, 114.17], 'Asia/Kolkata': [28.61, 77.21], 'Asia/Calcutta': [28.61, 77.21], 'Asia/Dubai': [25.2, 55.27], 'Europe/Istanbul': [41.01, 28.98], 'Europe/Minsk': [53.9, 27.56], 'Europe/Kiev': [50.45, 30.52], 'Europe/Kyiv': [50.45, 30.52], 'Asia/Almaty': [43.24, 76.89], 'Asia/Tbilisi': [41.72, 44.79], 'Asia/Yerevan': [40.18, 44.51], 'Europe/London': [51.5, -0.12], 'Europe/Berlin': [52.52, 13.4], 'Europe/Paris': [48.86, 2.35], 'America/New_York': [40.71, -74.0] };
+function pathObs(d) {
+  let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
+  const c = PATH_TZ[tz] || (tz ? [Math.abs(d.getTimezoneOffset()) < 1 ? 51.5 : 45, -d.getTimezoneOffset() / 4] : PATH_TZ['Europe/Moscow']);
+  return new window.Astronomy.Observer(c[0], c[1], 0);
+}
+// real sunrise of the local calendar day (fallback 07:00)
+function pathSunrise(d) {
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  try { const r = window.Astronomy.SearchRiseSet(window.Astronomy.Body.Sun, pathObs(x), +1, x, 1); if (r && r.date.getDate() === x.getDate()) return r.date; } catch (e) {}
+  x.setHours(7, 0, 0, 0); return x;
+}
+// the day's panchanga is read at sunrise
+function dayPanchanga(d) { return panchanga(pathSunrise(d)); }
+// when does `key` change after `start` (within ~27h)? bisect to 30 s
+function pathNext(start, key) {
+  const v = panchanga(start)[key]; let a = start.getTime(), b = a, hit = false;
+  for (let i = 0; i < 108; i++) { b += 15 * 6e4; if (panchanga(new Date(b))[key] !== v) { hit = true; break; } a = b; }
+  if (!hit) return null;
+  while (b - a > 3e4) { const m = (a + b) / 2; if (panchanga(new Date(m))[key] === v) a = m; else b = m; }
+  return new Date(b);
+}
+const pathHM = d => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 // birth star: Moon's nakshatra at birth (time optional → noon)
 function birthNak(P) {
   if (!P.bday) return null;
@@ -3162,18 +3184,24 @@ function showPath(s, P) {
     const N = PATH_NAK[pc.nak], k = pc.tithi % 15, TI = k === 0 ? (pc.tithi === 15 ? PATH_FULL : PATH_NEW) : PATH_TITHI[k - 1];
     const paksha = pc.tithi === 15 || pc.tithi === 30 ? '' : (pc.tithi < 15 ? T('растущая Луна', 'waxing Moon', '上弦月') : T('убывающая Луна', 'waning Moon', '下弦月'));
     const V = PATH_VARA[pc.vara];
-    html += `<div class="pt-sky"><span>${T('Накшатра', 'Nakshatra', '月宿')}<b>${esc(N[L])}</b></span><span>${T('Лунный день', 'Tithi', '太阴日')}<b>${esc(TI[L])}</b>${paksha ? `<i>${paksha}</i>` : ''}</span><span>${T('Планета дня', 'Planet', '值日星')}<b>${esc(V[L])}</b></span></div>`;
+    const sr = pathSunrise(now), sr2 = pathSunrise(new Date(now.getTime() + 864e5));
+    let nN = null, nT = null; try { nN = pathNext(sr, 'nak'); nT = pathNext(sr, 'tithi'); } catch (e) {}
+    const sameDay = x => x && x < sr2;
+    const upto = (x, nxt) => sameDay(x) ? `<i>${T('до', 'until', '至')} ${pathHM(x)} → ${esc(nxt)}</i>` : '';
+    const nTi = pc.tithi % 30 + 1, kk = nTi % 15, TI2 = kk === 0 ? (nTi === 15 ? PATH_FULL : PATH_NEW) : PATH_TITHI[kk - 1];
+    html += `<div class="pt-skyh">${T('На восходе', 'At sunrise', '日出时')} ${pathHM(sr)}</div>`;
+    html += `<div class="pt-sky"><span>${T('Накшатра', 'Nakshatra', '月宿')}<b>${esc(N[L])}</b>${upto(nN, PATH_NAK[(pc.nak + 1) % 27][L])}</span><span>${T('Лунный день', 'Tithi', '太阴日')}<b>${esc(TI[L])}</b>${paksha ? `<i>${paksha}</i>` : ''}${upto(nT, TI2[L])}</span><span>${T('Планета дня', 'Planet', '值日星')}<b>${esc(V[L])}</b></span></div>`;
     const main = bday ? T(`С днём рождения${P.name ? ', ' + P.name : ''}! Новый круг твоего пути начинается сегодня — загадай, каким ты хочешь его пройти.`, `Happy birthday${P.name ? ', ' + P.name : ''}! A new circle of your path begins today — decide how you want to walk it.`, `生日快乐${P.name ? '，' + P.name : ''}！你的道路今天开启新的一轮——想想你希望怎样走过它。`) : N[6 + L];
     html += `<div class="tl-wish">${esc(main)}</div><div class="pt-note">${esc(N[3 + L])}</div>`;
     html += `<div class="pt-line"><b>${esc(TI[L])}.</b> ${esc(TI[3 + L])}</div><div class="pt-line">${esc(V[3 + L])}</div>`;
     const bn = birthNak(P);
     if (bn !== null) {
       const tr = PATH_TARA[((pc.nak - bn + 27) % 27) % 9];
-      html += `<div class="pt-tara"><small>${T('Твоя звезда рождения', 'Your birth star', '你的本命月宿')}: ${esc(PATH_NAK[bn][L])} · ${T('тара дня', 'tara of the day', '今日星力')}: ${esc(tr[L])}</small>${esc(tr[3 + L])}</div>`;
+      html += `<div class="pt-tara"><small>${T('Твоя звезда рождения', 'Your birth star', '你的本命月宿')}: ${esc(PATH_NAK[bn][L])} · ${T('тара дня', 'tara of the day', '今日星力')}: ${esc(tr[L])}</small>${esc(tr[3 + L])}${sameDay(nN) ? `<small style="margin-top:6px">${T('С', 'From', '自')} ${pathHM(nN)} ${T('тара', 'tara', '星力')}: ${esc(PATH_TARA[((pc.nak + 1 - bn + 27) % 27) % 9][L])}</small>` : ''}</div>`;
     }
   }
   const W = PATH_WIS[(dn + h) % PATH_WIS.length], PR = PATH_PRAC[(dn + h * 7) % PATH_PRAC.length];
-  html += `<div class="pt-wis">«${esc(W[L])}»<small>${PATH_SRC[W[3]][L]}${W[4]}${L === 2 ? '章' : ''}</small></div><div class="tl-rit">${T('Практика дня', 'Practice of the day', '今日修习')}: ${esc(PR[L])}</div>`;
+  html += `<div class="pt-wis">«${esc(W[L])}»<small>${PATH_SRC[W[3]][L]}</small></div><div class="tl-rit">${T('Практика дня', 'Practice of the day', '今日修习')}: ${esc(PR[L])}</div>`;
   html += `<p class="sh-note" style="text-align:center">${T('Новое послание откроется завтра.', 'A new message opens tomorrow.', '明天会打开新的讯息。')}</p><div class="btns">${sndBtn()}${isAdmin ? `<button class="btn" id="ptNext">${T('Демо: завтра ›', 'Demo: tomorrow ›', '演示：明天 ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close', '关闭')}</button></div>`;
   sheet(html);
   $('sheet').classList.add('tal', 'path'); fxRise(['✦', '·', '☾'], ['#ffe2a8', '#c9d4ff', '#ffffff'], 22);
