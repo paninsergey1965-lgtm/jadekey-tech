@@ -57,44 +57,11 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 <header class="top"><div><a class="cap l" href="/shop/">Каталог</a><a class="mark" href="/shop/">JADE<b>KEY</b></a><a class="cap r" href="/scan.html">Сканер</a></div></header>
 
 <section class="prod"><div class="ph"><img src="/img/stone-n3.jpg" alt="Агат-кулон с кристаллами"></div>
-<div class="info"><h1>Агат-кулон с кристаллами</h1><p class="sz">4 × 5 см · в единственном экземпляре</p><p class="pr">3 700 ₽</p>
+<div class="info"><h1>Агат-кулон с кристаллами</h1><p class="sz">4 × 5 см · в единственном экземпляре</p><p class="pr" style="color:#a5192f">Продан</p>
 <p class="tx">Прямоугольная пластина с гранёными краями и розовыми кристаллами внутри, с отверстием для шнурка или цепочки.</p>
 <ul class="inc"><li>Камень, тот самый, что на фото</li><li>Карточка с QR-кодом: оживить камень за пару минут</li><li>Послания: Love, Новый год, Талисман или Печенье с предсказанием — выбираете сами</li></ul>
 
-<form id="f" novalidate>
-  <label>Имя<input name="name" autocomplete="name" required></label>
-  <label>Телефон<input name="phone" type="tel" autocomplete="tel" required></label>
-  <label>Эл. почта — для чека<input name="email" type="email" autocomplete="email" required></label>
-  <label>Доставка<select name="delivery"><option value="pickup">Самовывоз, Москва</option><option value="cdek">СДЭК по России (оплата доставки при получении)</option><option value="post">Почта России (оплата доставки при получении)</option></select></label>
-  <label id="adr">Адрес, индекс или пункт СДЭК<textarea name="address" rows="2" autocomplete="street-address"></textarea></label>
-  <label>Комментарий<textarea name="comment" rows="2"></textarea></label>
-  <p class="agree">Нажимая «Оплатить», вы принимаете условия <a href="/shop/oferta.html">оферты</a> и <a href="/shop/delivery.html">доставки и возврата</a>.</p>
-  <p class="err" id="err" role="alert"></p>
-  <button class="btn" id="go" type="submit">Оплатить 3 700 ₽</button>
-</form>
-<script>
-(() => {
-  const f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go'), adr = document.getElementById('adr');
-  const label = go.textContent;
-  const sync = () => { adr.style.display = f.delivery.value === 'pickup' ? 'none' : ''; };
-  f.delivery.onchange = sync; sync();
-  f.onsubmit = async (e) => {
-    e.preventDefault(); err.textContent = '';
-    const d = Object.fromEntries(new FormData(f)); d.id = 'crystal-pendant';
-    if (!d.name.trim() || !d.phone.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { err.textContent = 'Заполните имя, телефон и почту — на неё придёт чек.'; return; }
-    if (d.delivery !== 'pickup' && !d.address.trim()) { err.textContent = 'Укажите адрес доставки.'; return; }
-    if (d.delivery === 'post') { d.delivery = 'cdek'; d.address = 'Почта России: ' + d.address; }
-    go.disabled = true; go.textContent = 'Переходим к оплате…';
-    try {
-      const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
-      const j = await r.json();
-      if (j.paymentUrl) { location.href = j.paymentUrl; return; }
-      err.textContent = j.message || 'Не удалось создать платёж. Напишите нам: jadekey1965@gmail.com';
-    } catch (x) { err.textContent = 'Нет связи с платёжной системой. Попробуйте ещё раз.'; }
-    go.disabled = false; go.textContent = label;
-  };
-})();
-</script></div></section>
+<p class="pr" style="margin-top:24px;color:#a5192f">Этот камень уже продан.</p><a class="ul" href="/shop/">Посмотреть другие камни</a></div></section>
 <footer><div><a href="/shop/">Каталог</a><a href="/shop/delivery.html">Доставка и возврат</a><a href="/shop/oferta.html">Оферта</a><a href="/privacy.html">Конфиденциальность</a><a href="https://jadekey.tech">jadekey.tech</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></div>
 <small>ИП Панин Сергей Николаевич · ИНН 771501067019</small></footer>
 </body></html>
