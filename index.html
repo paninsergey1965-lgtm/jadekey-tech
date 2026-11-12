@@ -11,7 +11,7 @@
 <meta name="description" content="JadeKey — природный камень, который каждый день открывает послание от того, кто его подарил. Камень узнаётся по рисунку, как отпечаток пальца.">
 <meta property="og:title" content="JadeKey — живые камни">
 <meta property="og:description" content="Камень, который каждый день открывает послание от того, кто его подарил.">
-<meta property="og:image" content="https://jadekey.tech/img/hero-box.jpg">
+<meta property="og:image" content="https://jadekey.tech/img/hero-winter.jpg">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
 <style>
@@ -57,19 +57,26 @@ a{color:inherit}
 @media(max-width:760px){.top nav{display:none}.top-in{grid-template-columns:auto 1fr}.mark{justify-self:start;padding-left:0;font-size:19px}}
 
 /* hero */
-.hero{max-width:1240px;margin:auto}
-.hero-img{aspect-ratio:3/2;max-height:calc(100svh - 200px);width:100%;overflow:hidden;background:#111}
-.hero-img img{width:100%;height:100%;object-fit:cover}
-.hero-txt{display:flex;flex-direction:column;align-items:center;text-align:center;padding:64px 24px 88px}
+.hero{max-width:1240px;margin:auto;display:grid;grid-template-columns:1fr 1fr;min-height:calc(100svh - 64px)}
+.hero-img{position:relative;overflow:hidden;background:#0b0f1a}
+.hero-img img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.hero-mark{position:absolute;left:0;right:0;top:12%;text-align:center;font:400 clamp(30px,4.4vw,54px)/1 var(--serif);letter-spacing:.42em;padding-left:.42em;color:#f4f1ea;text-shadow:0 2px 24px rgba(0,0,0,.5)}
+.hero-mark b{font-weight:400;color:#3fd8a2}
+.hero-txt{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:64px clamp(28px,6vw,96px)}
 .hero h1{font:300 clamp(56px,8.4vw,112px)/.92 var(--serif);letter-spacing:-.01em}
 .hero h1 i{font-style:italic;color:var(--red)}
 .rule{width:56px;height:1px;background:var(--ink);margin:30px auto 24px}
-.lead{font:400 clamp(21px,2.1vw,26px)/1.4 var(--serif);max-width:26ch}
+.lead{font:400 clamp(21px,2.1vw,26px)/1.4 var(--serif);max-width:24ch}
 .btns{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;justify-content:center;margin-top:38px}
 .btn{display:inline-block;background:var(--red);color:#fff;text-decoration:none;font:500 14px/1 var(--sans);letter-spacing:.04em;padding:18px 34px;transition:background .2s}
 .btn:hover{background:var(--red-deep)}
 .link{font-size:14px;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px}
-@media(max-width:600px){.hero-img{aspect-ratio:4/3}.hero-img img{object-position:30% 50%}.hero-txt{padding:44px 24px 64px}}
+@media(max-width:860px){
+  .hero{grid-template-columns:1fr;min-height:0}
+  .hero-img{aspect-ratio:3/4}
+  .hero-mark{font-size:clamp(26px,8.5vw,44px)}
+  .hero-txt{padding:44px 24px 64px}
+}
 
 /* sections */
 section{padding:clamp(80px,11vw,150px) 22px}
@@ -156,7 +163,7 @@ footer small{color:var(--mute);font-size:12px}
 
 <main>
 <div class="hero">
-  <div class="hero-img"><img src="/img/hero-box.jpg" alt="Розовый агат JadeKey в подарочной коробке с сертификатом" fetchpriority="high"></div>
+  <div class="hero-img"><img src="/img/hero-winter.jpg" alt="Розовый агат JadeKey в подарочной коробке на снегу" fetchpriority="high"><div class="hero-mark" aria-hidden="true">JADE<b>KEY</b></div></div>
   <div class="hero-txt">
     <h1>Живой<br><i>камень</i></h1>
     <div class="rule"></div>
