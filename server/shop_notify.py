@@ -6,7 +6,7 @@ import base64, datetime as dt, json, os, urllib.parse, urllib.request
 E = os.environ
 AUTH = 'Basic ' + base64.b64encode(f"{E['YOOKASSA_SHOP_ID']}:{E['YOOKASSA_SECRET_KEY']}".encode()).decode()
 STATE = E.get('STATE', 'seen.json')
-DELIVERY = {'pickup': 'Самовывоз, Москва', 'cdek': 'СДЭК по России'}
+DELIVERY = {'pickup': 'Самовывоз, Москва', 'cdek': 'СДЭК по России', 'post': 'Почта России'}
 
 def get(url):
     req = urllib.request.Request(url, headers={'Authorization': AUTH})
@@ -42,6 +42,9 @@ for p in sorted(items, key=lambda x: x['created_at']):
     t = f"Оплачено {p['amount']['value']} ₽\n{p.get('description') or m.get('package', '')}"
     for k, label in (('name', ''), ('phone', 'Тел: '), ('email', '')):
         if m.get(k): t += f"\n{label}{m[k]}"
+    addr = m.get('address') or ''
+    if addr.startswith('Почта России: '):
+        m['delivery'], m['address'] = 'post', addr[len('Почта России: '):]
     if m.get('delivery'): t += f"\nДоставка: {DELIVERY.get(m['delivery'], m['delivery'])}"
     if m.get('address'): t += f"\nАдрес: {m['address']}"
     if m.get('comment'): t += f"\nКомментарий: {m['comment']}"
