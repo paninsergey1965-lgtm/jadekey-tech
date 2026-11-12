@@ -125,6 +125,31 @@ footer small{font:500 11px/1.4 var(--cap);letter-spacing:.12em;text-transform:up
 footer .langs{color:rgba(255,255,255,.7)}
 footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* what the stone opens — sample screens */
+.ui{padding:72px 0 64px;text-align:center;background:var(--stone)}
+.ui .txt{padding:0 24px}
+.phones{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:34px 24px 6px;margin-top:6px}
+.phones::-webkit-scrollbar{display:none}
+.ph{flex:0 0 64%;max-width:250px;scroll-snap-align:center;text-align:left}
+.ph .fr{background:#0d0d0f;border-radius:30px;padding:7px;box-shadow:0 18px 40px -22px #0007}
+.ph img{width:100%;aspect-ratio:390/700;object-fit:cover;object-position:top;border-radius:24px}
+.ph h3{margin:18px 4px 0}
+.ph p{margin:6px 4px 0;color:var(--mute);font-size:14px;line-height:1.55}
+.ui .hint{margin-top:22px;font:500 11px/1 var(--cap);letter-spacing:.14em;text-transform:uppercase;color:#9a918a}
+@media(min-width:900px){.phones{justify-content:center;overflow:visible}.ph{flex:0 0 200px}.ui .hint{display:none}}
+
+.ph .fr{cursor:zoom-in}
+.lb{position:fixed;inset:0;z-index:100;background:#0b0c12;display:none}
+.lb.on{display:block}
+.lb-row{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.lb-row::-webkit-scrollbar{display:none}
+.lb-sl{flex:0 0 100%;height:100%;overflow-y:auto;scroll-snap-align:center;padding:calc(env(safe-area-inset-top) + 58px) 14px 40px;-webkit-overflow-scrolling:touch}
+.lb-sl img{width:100%;max-width:460px;margin:0 auto;border-radius:22px}
+.lb-x{position:absolute;top:calc(env(safe-area-inset-top) + 10px);right:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:#ffffff1f;color:#fff;font:400 26px/42px var(--cap);cursor:pointer}
+.lb-m{position:absolute;top:calc(env(safe-area-inset-top) + 10px);left:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:#ffffff1f;color:#fff;font:400 18px/42px var(--cap);cursor:pointer}
+.lb-dots{position:absolute;top:calc(env(safe-area-inset-top) + 26px);left:0;right:0;display:flex;gap:7px;justify-content:center;pointer-events:none}
+.lb-dots i{width:6px;height:6px;border-radius:50%;background:#ffffff40}.lb-dots i.on{background:#fff}
 </style>
 </head>
 <body>
@@ -149,6 +174,19 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
   <h2 class="cap-l" data-t="introT">Подарок, который не заканчивается</h2>
   <p class="txt" data-t="introP">Открытку читают один раз. Живой камень каждый день открывает новое послание — и только в руках того, кому его подарили. Рисунок камня складывался миллионы лет, второго такого нет.</p>
   <a class="ul" href="#how" data-t="howLink">Как это работает</a>
+</section>
+
+<section class="ui" id="screens">
+  <h2 class="cap-l" data-t="uiT">Что откроет твой камень</h2>
+  <p class="txt" data-t="uiP">Так выглядят послания. В твоём камне будут твои имена и твой день.</p>
+  <div class="phones">
+    <figure class="ph"><div class="fr"><img src="/img/ui/path-ru.jpg" data-ui="path" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_pathT">Путь</h3><p data-t="ui_pathP">Небо дня по джйотишу: накшатра, лунный день и твоя звезда рождения.</p></figure>
+    <figure class="ph"><div class="fr"><img src="/img/ui/tal-ru.jpg" data-ui="tal" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_talT">Талисман</h3><p data-t="ui_talP">Пожелание, слово и знак дня, маленький ритуал.</p></figure>
+    <figure class="ph"><div class="fr"><img src="/img/ui/fc-ru.jpg" data-ui="fc" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_fcT">Печенье</h3><p data-t="ui_fcP">Предсказание, счастливые числа и китайское слово дня.</p></figure>
+    <figure class="ph"><div class="fr"><img src="/img/ui/ny-ru.jpg" data-ui="ny" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_nyT">Новый год</h3><p data-t="ui_nyP">Календарь декабря и главное поздравление в полночь.</p></figure>
+    <figure class="ph"><div class="fr"><img src="/img/ui/love-ru.jpg" data-ui="love" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_loveT">Love</h3><p data-t="ui_loveP">Послание от любимого человека и счёт ваших дней вместе.</p></figure>
+  </div>
+  <p class="hint" data-t="uiH">Листай →</p>
 </section>
 
 <div class="pair">
@@ -243,6 +281,8 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
   </div>
 </section>
 </main>
+<div class="lb" id="lb" aria-hidden="true"><button class="lb-m" id="lbM" aria-label="Звук">🔊</button><button class="lb-x" id="lbX" aria-label="Закрыть">×</button><div class="lb-dots" id="lbD"></div><div class="lb-row" id="lbR"></div></div>
+
 
 <footer><div class="in">
   <nav><a href="/scan.html" data-t="scanner">Сканер</a><a href="/tech.html" data-t="techT">Технология</a><a href="https://apps.apple.com/app/id6769250226">App Store</a><a href="/privacy.html" data-t="priv">Конфиденциальность</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></nav>
@@ -252,7 +292,7 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
 
 <script>
 (() => {
-  const T = {"_title": {"en": "JadeKey — living stones", "zh": "JadeKey — 会说话的石头"}, "scanner": {"en": "Scanner", "zh": "扫描"}, "heroT": {"en": "Living stone", "zh": "会说话的石头"}, "heroP": {"en": "A stone that remembers you. Every day it reveals a new message from the one who gave it.", "zh": "一块记得你的石头。每天，它都会打开送礼人留下的一条新消息。"}, "revive": {"en": "Bring a stone to life", "zh": "唤醒石头"}, "revive2": {"en": "Bring to life", "zh": "唤醒"}, "introT": {"en": "A gift that never ends", "zh": "不会结束的礼物"}, "introP": {"en": "A card is read once. A living stone reveals a new message every day — and only in the hands of the person it was given to. Its pattern took millions of years to form; there is no other like it.", "zh": "贺卡只读一次。会说话的石头每天都会打开一条新消息，而且只在收礼人手中才能打开。石头的纹理经过数百万年形成，世上独一无二。"}, "howLink": {"en": "How it works", "zh": "如何使用"}, "loveP": {"en": "A message from your loved one every day: your names, a count of your days together and a melody.", "zh": "每天一条来自爱人的消息：你们的名字、在一起的天数，还有一段旋律。"}, "nyT": {"en": "New Year", "zh": "新年"}, "nyP": {"en": "From 1 December the stone reveals a new message every day, and at midnight on New Year's Eve — the main greeting, to the sound of bells.", "zh": "从12月1日起，石头每天打开一条新消息；新年午夜钟声响起时，送上最重要的祝福。"}, "talT": {"en": "Talisman", "zh": "护身符"}, "talP": {"en": "For yourself or as a gift: a wish, a word and a sign of the day, a small ritual. On your birthday — a special greeting.", "zh": "送给自己或他人：每日祝愿、每日一词、每日征兆和一个小仪式。生日当天还有特别的祝福。"}, "fcT": {"en": "Fortune cookie", "zh": "幸运饼干"}, "fcP": {"en": "Every time you point your phone, the cookie cracks open: a new prediction, lucky numbers and a Chinese word of the day.", "zh": "每次用手机对准石头，饼干就会裂开：新的预言、幸运数字和每日汉字。"}, "collT": {"en": "Collection", "zh": "收藏"}, "collP": {"en": "Every mineral is like a fingerprint.", "zh": "每一块矿石都像指纹一样独特。"}, "s1": {"en": "Pink agate", "zh": "粉色玛瑙"}, "s2": {"en": "Geode agate", "zh": "晶洞玛瑙"}, "s3": {"en": "Lapis lazuli", "zh": "青金石"}, "s4": {"en": "Fire agate pendant", "zh": "火玛瑙吊坠"}, "s5": {"en": "White-pink agate", "zh": "粉白玛瑙"}, "s6": {"en": "Crystal agate pendant", "zh": "水晶玛瑙吊坠"}, "howT": {"en": "How it works", "zh": "如何使用"}, "st1T": {"en": "Take a stone", "zh": "选一块石头"}, "st1P": {"en": "Agate, lapis, jasper — any stone with a pattern. A pendant, a keychain or a pebble from the beach.", "zh": "玛瑙、青金石、碧玉——任何有纹理的石头。吊坠、钥匙扣，或是海边捡的小石子。"}, "st2T": {"en": "Photograph both sides", "zh": "拍下两面"}, "st2P": {"en": "The scanner checks the light and the pattern. Choose the messages and add the names.", "zh": "扫描器会检查光线和纹理。选择消息类型并填写名字。"}, "st3T": {"en": "Send the link", "zh": "发送链接"}, "st3P": {"en": "The messages open only for the recipient, and only with this stone in hand.", "zh": "消息只会为收礼人打开，而且必须手持这块石头。"}, "shopT": {"en": "For shops", "zh": "商家合作"}, "shopP": {"en": "Do you sell stones? Your customer brings a stone to life right at the till and leaves with a gift, not a souvenir.", "zh": "您销售石头吗？顾客在收银台就能唤醒石头，带走的是一份礼物，而不只是纪念品。"}, "write": {"en": "Contact us", "zh": "联系我们"}, "techT": {"en": "Technology", "zh": "技术"}, "techP": {"en": "A neural network recognises the stone by its natural pattern, like a fingerprint. How it works, what already works today and where the project is heading.", "zh": "神经网络通过石头的天然纹理识别它，就像识别指纹。了解它的原理、已实现的功能以及项目的发展方向。"}, "techB": {"en": "Technology & investors", "zh": "技术与投资者"}, "getT": {"en": "On any phone", "zh": "任何手机都能用"}, "getP": {"en": "iPhone — the JadeKey app on the App Store. Android — the scanner right in the browser. Free.", "zh": "iPhone：在 App Store 下载 JadeKey。安卓：直接在浏览器中使用扫描器。免费。"}, "appB": {"en": "Download on the App Store", "zh": "在 App Store 下载"}, "webB": {"en": "Open the scanner in your browser", "zh": "在浏览器中打开扫描器"}, "andT": {"en": "Android: scanner as an app", "zh": "安卓：把扫描器装成应用"}, "and1": {"en": "Open the scanner in Chrome.", "zh": "在 Chrome 中打开扫描器。"}, "and2": {"en": "Menu ⋮ → “Add to Home screen”.", "zh": "菜单 ⋮ →“添加到主屏幕”。"}, "and3": {"en": "A JadeKey icon appears — open the scanner from it.", "zh": "主屏幕上会出现 JadeKey 图标，之后从这里打开扫描器。"}, "priv": {"en": "Privacy", "zh": "隐私"}, "copy": {"en": "© 2026 IE Panin S. N.", "zh": "© 2026 IE Panin S. N."}, "shop": {"en": "Shop", "zh": "商店"}, "shopB": {"en": "All stones in the shop", "zh": "商店里的全部石头"}};
+  const T = {"uiT": {"en": "What your stone will open", "zh": "你的石头会打开什么"}, "uiP": {"en": "This is how the messages look. Your stone will carry your names and your day.", "zh": "消息就是这样的。你的石头里会是你们的名字和你的日子。"}, "uiH": {"en": "Swipe →", "zh": "滑动 →"}, "ui_pathT": {"en": "Path", "zh": "道路"}, "ui_pathP": {"en": "The sky of the day in Jyotish: nakshatra, lunar day and your birth star.", "zh": "按吠陀占星看今日天象：月宿、太阴日和你的本命星。"}, "ui_talT": {"en": "Talisman", "zh": "护身符"}, "ui_talP": {"en": "A wish, a word and a sign of the day, a small ritual.", "zh": "每日祝愿、每日一词、每日征兆和一个小仪式。"}, "ui_fcT": {"en": "Fortune cookie", "zh": "幸运饼干"}, "ui_fcP": {"en": "A prediction, lucky numbers and a Chinese word of the day.", "zh": "预言、幸运数字和每日汉字。"}, "ui_nyT": {"en": "New Year", "zh": "新年"}, "ui_nyP": {"en": "A December calendar and the main greeting at midnight.", "zh": "十二月日历，以及零点时最重要的祝福。"}, "ui_loveT": {"en": "Love", "zh": "Love"}, "ui_loveP": {"en": "A message from your loved one and a count of your days together.", "zh": "来自爱人的消息，以及你们在一起的天数。"}, "_title": {"en": "JadeKey — living stones", "zh": "JadeKey — 会说话的石头"}, "scanner": {"en": "Scanner", "zh": "扫描"}, "heroT": {"en": "Living stone", "zh": "会说话的石头"}, "heroP": {"en": "A stone that remembers you. Every day it reveals a new message from the one who gave it.", "zh": "一块记得你的石头。每天，它都会打开送礼人留下的一条新消息。"}, "revive": {"en": "Bring a stone to life", "zh": "唤醒石头"}, "revive2": {"en": "Bring to life", "zh": "唤醒"}, "introT": {"en": "A gift that never ends", "zh": "不会结束的礼物"}, "introP": {"en": "A card is read once. A living stone reveals a new message every day — and only in the hands of the person it was given to. Its pattern took millions of years to form; there is no other like it.", "zh": "贺卡只读一次。会说话的石头每天都会打开一条新消息，而且只在收礼人手中才能打开。石头的纹理经过数百万年形成，世上独一无二。"}, "howLink": {"en": "How it works", "zh": "如何使用"}, "loveP": {"en": "A message from your loved one every day: your names, a count of your days together and a melody.", "zh": "每天一条来自爱人的消息：你们的名字、在一起的天数，还有一段旋律。"}, "nyT": {"en": "New Year", "zh": "新年"}, "nyP": {"en": "From 1 December the stone reveals a new message every day, and at midnight on New Year's Eve — the main greeting, to the sound of bells.", "zh": "从12月1日起，石头每天打开一条新消息；新年午夜钟声响起时，送上最重要的祝福。"}, "talT": {"en": "Talisman", "zh": "护身符"}, "talP": {"en": "For yourself or as a gift: a wish, a word and a sign of the day, a small ritual. On your birthday — a special greeting.", "zh": "送给自己或他人：每日祝愿、每日一词、每日征兆和一个小仪式。生日当天还有特别的祝福。"}, "fcT": {"en": "Fortune cookie", "zh": "幸运饼干"}, "fcP": {"en": "Every time you point your phone, the cookie cracks open: a new prediction, lucky numbers and a Chinese word of the day.", "zh": "每次用手机对准石头，饼干就会裂开：新的预言、幸运数字和每日汉字。"}, "collT": {"en": "Collection", "zh": "收藏"}, "collP": {"en": "Every mineral is like a fingerprint.", "zh": "每一块矿石都像指纹一样独特。"}, "s1": {"en": "Pink agate", "zh": "粉色玛瑙"}, "s2": {"en": "Geode agate", "zh": "晶洞玛瑙"}, "s3": {"en": "Lapis lazuli", "zh": "青金石"}, "s4": {"en": "Fire agate pendant", "zh": "火玛瑙吊坠"}, "s5": {"en": "White-pink agate", "zh": "粉白玛瑙"}, "s6": {"en": "Crystal agate pendant", "zh": "水晶玛瑙吊坠"}, "howT": {"en": "How it works", "zh": "如何使用"}, "st1T": {"en": "Take a stone", "zh": "选一块石头"}, "st1P": {"en": "Agate, lapis, jasper — any stone with a pattern. A pendant, a keychain or a pebble from the beach.", "zh": "玛瑙、青金石、碧玉——任何有纹理的石头。吊坠、钥匙扣，或是海边捡的小石子。"}, "st2T": {"en": "Photograph both sides", "zh": "拍下两面"}, "st2P": {"en": "The scanner checks the light and the pattern. Choose the messages and add the names.", "zh": "扫描器会检查光线和纹理。选择消息类型并填写名字。"}, "st3T": {"en": "Send the link", "zh": "发送链接"}, "st3P": {"en": "The messages open only for the recipient, and only with this stone in hand.", "zh": "消息只会为收礼人打开，而且必须手持这块石头。"}, "shopT": {"en": "For shops", "zh": "商家合作"}, "shopP": {"en": "Do you sell stones? Your customer brings a stone to life right at the till and leaves with a gift, not a souvenir.", "zh": "您销售石头吗？顾客在收银台就能唤醒石头，带走的是一份礼物，而不只是纪念品。"}, "write": {"en": "Contact us", "zh": "联系我们"}, "techT": {"en": "Technology", "zh": "技术"}, "techP": {"en": "A neural network recognises the stone by its natural pattern, like a fingerprint. How it works, what already works today and where the project is heading.", "zh": "神经网络通过石头的天然纹理识别它，就像识别指纹。了解它的原理、已实现的功能以及项目的发展方向。"}, "techB": {"en": "Technology & investors", "zh": "技术与投资者"}, "getT": {"en": "On any phone", "zh": "任何手机都能用"}, "getP": {"en": "iPhone — the JadeKey app on the App Store. Android — the scanner right in the browser. Free.", "zh": "iPhone：在 App Store 下载 JadeKey。安卓：直接在浏览器中使用扫描器。免费。"}, "appB": {"en": "Download on the App Store", "zh": "在 App Store 下载"}, "webB": {"en": "Open the scanner in your browser", "zh": "在浏览器中打开扫描器"}, "andT": {"en": "Android: scanner as an app", "zh": "安卓：把扫描器装成应用"}, "and1": {"en": "Open the scanner in Chrome.", "zh": "在 Chrome 中打开扫描器。"}, "and2": {"en": "Menu ⋮ → “Add to Home screen”.", "zh": "菜单 ⋮ →“添加到主屏幕”。"}, "and3": {"en": "A JadeKey icon appears — open the scanner from it.", "zh": "主屏幕上会出现 JadeKey 图标，之后从这里打开扫描器。"}, "priv": {"en": "Privacy", "zh": "隐私"}, "copy": {"en": "© 2026 IE Panin S. N.", "zh": "© 2026 IE Panin S. N."}, "shop": {"en": "Shop", "zh": "商店"}, "shopB": {"en": "All stones in the shop", "zh": "商店里的全部石头"}};
   const L = ['ru','en','zh'];
   let lang = 'ru';
   try {
@@ -266,6 +306,7 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
   document.querySelectorAll('[data-t]').forEach(e => ru.set(e, e.innerHTML));
   function apply(l) {
     document.documentElement.lang = l;
+    document.querySelectorAll('img[data-ui]').forEach(e => { e.src = `/img/ui/${e.dataset.ui}-${l}.jpg`; });
     document.querySelectorAll('[data-t]').forEach(e => {
       const k = e.dataset.t, v = l === 'ru' ? ru.get(e) : (T[k] && T[k][l]);
       if (v) e.innerHTML = v;
@@ -282,6 +323,31 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
     lang = b.dataset.l; try { localStorage.setItem('jk2_lang', lang); } catch (e) {} apply(lang);
   });
   apply(lang);
+})();
+</script>
+
+<script>
+(() => {
+  const lb = document.getElementById('lb'), row = document.getElementById('lbR'), dots = document.getElementById('lbD');
+  const phs = [...document.querySelectorAll('.ph img[data-ui]')];
+  const lang = () => document.documentElement.lang || 'ru';
+  const SND = { path: 'path', tal: 'tal', fc: 'fc', ny: 'ny', love: 'love' }, au = new Audio();
+  let muted = false, cur = -1;
+  function play(k) { au.pause(); if (muted) return; au.src = `/snd/${SND[phs[k].dataset.ui]}.mp3`; au.currentTime = 0; const p = au.play(); if (p && p.catch) p.catch(() => {}); }
+  document.getElementById('lbM').onclick = e => { muted = !muted; e.currentTarget.textContent = muted ? '🔇' : '🔊'; if (muted) au.pause(); else play(cur); };
+  function open(i) {
+    row.innerHTML = phs.map(p => `<div class="lb-sl"><img src="/img/ui/${p.dataset.ui}-${lang()}-full.jpg" alt=""></div>`).join('');
+    dots.innerHTML = phs.map(() => '<i></i>').join('');
+    lb.classList.add('on'); lb.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+    cur = i; play(i); requestAnimationFrame(() => { row.scrollLeft = i * row.clientWidth; mark(); });
+  }
+  function close() { au.pause(); lb.classList.remove('on'); lb.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+  function mark() { const k = Math.round(row.scrollLeft / row.clientWidth); [...dots.children].forEach((d, j) => d.classList.toggle('on', j === k)); if (k !== cur && lb.classList.contains('on')) { cur = k; play(k); } }
+  phs.forEach((p, i) => p.closest('.fr').addEventListener('click', () => open(i)));
+  row.addEventListener('scroll', mark, { passive: true });
+  row.addEventListener('click', e => { if (e.target.classList.contains('lb-sl')) close(); });
+  document.getElementById('lbX').onclick = close;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 })();
 </script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-PBJZ1WQNN8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-PBJZ1WQNN8");</script>
