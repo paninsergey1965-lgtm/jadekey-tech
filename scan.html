@@ -2066,8 +2066,9 @@ function showInfo(s) {
     };
     return;
   }
-  sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div>${s.mode && !s.of ? '<div class="btns"><button class="btn main" id="amOpen">Сменить режим</button></div>' : ''}<div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
+  if ($('amOpen')) $('amOpen').onclick = () => adminMode(s);
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
   $('del').onclick = async () => {
     if (!(await ownerOk())) return;
@@ -3215,6 +3216,47 @@ function showPath(s, P) {
   playWav(synthWav('ghanta')); bindSnd(() => synthWav('ghanta'));
   $('again').onclick = () => { pathShift = 0; loveStop(); hideSheet(); };
   if (isAdmin) $('ptNext').onclick = () => { pathShift++; showPath(s, P); };
+}
+
+// ---------- admin: switch a live stone to another mode ----------
+async function adminMode(s) {
+  if (!s || !isAdmin) return;
+  veil('Открываю…'); const p = await readPriv(s.id).catch(() => null); veil();
+  if (!p) { toast('Не нашёл данные камня'); return; }
+  const o = p.profile || {}, nm = o.name || o.to || s.name || '';
+  const P = { name: nm, to: o.to || nm, from: o.from || '', bday: o.bday || '', btime: o.btime || '', since: o.since || '', tone: o.tone || 'tender', kid: !!o.kid, midnight: o.midnight || '' };
+  let m = s.mode || 'tal';
+  const collect = () => { for (const [id, k] of [['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
+  const draw = () => {
+    let f = '';
+    if (m === 'tal') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'День рождения', P.bday, 'date');
+    else if (m === 'path') f = fld('amName', 'Как обращаться', P.name) + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + fld('amFrom', 'От кого', P.from);
+    else { f = fld('amTo', 'Кому (имя)', P.to) + fld('amFrom', 'От кого (имя)', P.from); if (m === 'love') f += fld('amSince', 'Вместе с', P.since, 'date'); }
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Сейчас: ${LIVE_MODES[s.mode] || '—'}</div><div class="sh-name">${esc(s.name || '')}</div></div></div>
+      <div class="h2">Новый режим</div><div class="seg" id="amMode">${Object.entries(LIVE_MODES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div>${f}
+      <p class="sh-note">Ссылка-подарок и привязка к телефону получателя не меняются.</p>
+      <div class="btns"><button class="btn" id="amCancel">Отмена</button><button class="btn main" id="amSave">Сохранить</button></div>`);
+    $('amMode').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { collect(); if (m === 'tal' || m === 'path') P.to = P.to || P.name; else P.name = P.name || P.to; m = b.dataset.m; draw(); });
+    $('amCancel').onclick = hideSheet;
+    $('amSave').onclick = async () => {
+      collect();
+      const solo = m === 'tal' || m === 'path';
+      if (solo ? !P.name : !P.to) { toast('Впиши имя'); return; }
+      const prof = m === 'fc' ? { to: P.to, from: P.from } : m === 'love' ? { to: P.to, from: P.from, since: P.since, tone: P.tone }
+        : m === 'ny' ? { to: P.to, from: P.from, kid: P.kid, midnight: P.midnight } : m === 'path' ? { name: P.name, bday: P.bday, btime: P.btime, from: P.from } : { name: P.name, bday: P.bday };
+      const pub = solo ? P.name : P.to;
+      veil('Сохраняю…');
+      try {
+        const tok = await authToken();
+        if (!tok) throw new Error('нужен вход администратора');
+        for (const x of [s, ...stones.filter(x => x.of === s.id)]) await fsReq('PATCH', `${COL}/${x.id}`, tok, { mode: m, name: pub }, ['mode', 'name']);
+        await fsReq('PATCH', `${COLV}/${s.id}`, tok, { profile: JSON.stringify(prof) }, ['profile']);
+        await loadStones(); hideSheet(); toast(`Режим: ${LIVE_MODES[m]}`);
+      } catch (e) { toast('Не получилось: ' + e.message, 6000); }
+      veil();
+    };
+  };
+  draw();
 }
 
 // ---------- tabs ----------
