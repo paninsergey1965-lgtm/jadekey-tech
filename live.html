@@ -2052,9 +2052,10 @@ $('search').oninput = renderColl;
 function showInfo(s) {
   if (s.mode) {
     const sides = stones.filter(x => x.of === s.id).length + 1;
-    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button><button class="row" id="amOpen"><span><b>Сменить режим</b><small>Путь, Талисман, Печенье, Новый год, Love</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
     $('again').onclick = hideSheet;
     $('lvOpen').onclick = () => showLive(s);
+    $('amOpen').onclick = () => adminMode(s);
     $('del').onclick = async () => {
       if (!(await ownerOk())) return;
       if (!confirm(`Удалить живой камень «${s.name || ''}»? Послания перестанут открываться.`)) return;
@@ -2064,9 +2065,8 @@ function showInfo(s) {
     };
     return;
   }
-  sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div>${s.mode && !s.of ? '<div class="btns"><button class="btn main" id="amOpen">Сменить режим</button></div>' : ''}<div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
-  if ($('amOpen')) $('amOpen').onclick = () => adminMode(s);
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
   $('del').onclick = async () => {
     if (!(await ownerOk())) return;
