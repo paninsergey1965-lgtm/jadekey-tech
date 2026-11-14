@@ -150,6 +150,12 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
 .lb-m{position:absolute;top:calc(env(safe-area-inset-top) + 10px);left:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:#ffffff1f;color:#fff;font:400 18px/42px var(--cap);cursor:pointer}
 .lb-dots{position:absolute;top:calc(env(safe-area-inset-top) + 26px);left:0;right:0;display:flex;gap:7px;justify-content:center;pointer-events:none}
 .lb-dots i{width:6px;height:6px;border-radius:50%;background:#ffffff40}.lb-dots i.on{background:#fff}
+
+/* gift film */
+.film{background:#0d1210;padding:56px 20px;display:flex;justify-content:center}
+.film-box{position:relative;width:100%;max-width:380px;border-radius:26px;overflow:hidden;box-shadow:0 24px 60px -30px #000}
+.film video{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;background:#111}
+.film-snd{position:absolute;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:0;background:#0009;color:#fff;font-size:20px;cursor:pointer;backdrop-filter:blur(6px)}
 </style>
 </head>
 <body>
@@ -176,6 +182,12 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
   <a class="ul" href="#how" data-t="howLink">Как это работает</a>
 </section>
 
+<section class="film" aria-label="JadeKey">
+  <div class="film-box">
+    <video id="film" src="/video/jadekey-gift.mp4" poster="/video/jadekey-gift.jpg" autoplay muted loop playsinline preload="metadata"></video>
+    <button class="film-snd" id="filmSnd" aria-label="Звук">🔇</button>
+  </div>
+</section>
 <section class="ui" id="screens">
   <h2 class="cap-l" data-t="uiT">Что откроет твой камень</h2>
   <p class="txt" data-t="uiP">Так выглядят послания. В твоём камне будут твои имена и твой день.</p>
@@ -348,6 +360,14 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
   row.addEventListener('click', e => { if (e.target.classList.contains('lb-sl')) close(); });
   document.getElementById('lbX').onclick = close;
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+</script>
+
+<script>
+(() => {
+  const v = document.getElementById('film'), b = document.getElementById('filmSnd');
+  if (!v || !b) return;
+  b.onclick = () => { v.muted = !v.muted; b.textContent = v.muted ? '🔇' : '🔊'; if (!v.muted) { v.currentTime = 0; v.play().catch(() => {}); } };
 })();
 </script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-PBJZ1WQNN8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-PBJZ1WQNN8");</script>
