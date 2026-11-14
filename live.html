@@ -237,6 +237,7 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 .sheet.path .pt-me small{display:block;color:#ffd99a;font-size:12px;letter-spacing:.04em}
 .sheet.path .pt-mew{font-family:var(--serif);font-size:23px;line-height:1.3;color:#fff;margin:7px 0 8px}
 .sheet.path .pt-skym{font-family:var(--serif);font-size:17px;line-height:1.38;color:#e3e8ff;text-align:center;margin:8px 0 10px}
+select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#8aa 50%),linear-gradient(135deg,#8aa 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
 
 </style>
 </head>
@@ -2874,13 +2875,13 @@ function liveRender() {
 function fld(id, label, v, type = 'text') { return `<label class="lbl" for="${id}">${label}</label><input class="fld" id="${id}" type="${type}" value="${esc(v || '')}" autocomplete="off">`; }
 function liveCollect() {
   const P = LV.p;
-  for (const [id, k] of [['lvName', 'name'], ['lvBday', 'bday'], ['lvBtime', 'btime'], ['lvTo', 'to'], ['lvFrom', 'from'], ['lvSince', 'since'], ['lvMid', 'midnight']]) { const e = $(id); if (e) P[k] = e.value.trim(); }
+  for (const [id, k] of [['lvName', 'name'], ['lvBday', 'bday'], ['lvBtime', 'btime'], ['lvBtz', 'btz'], ['lvTo', 'to'], ['lvFrom', 'from'], ['lvSince', 'since'], ['lvMid', 'midnight']]) { const e = $(id); if (e) P[k] = e.value.trim(); }
 }
 function liveForm() {
   const m = LV.mode, P = LV.p;
   let f = '';
   if (m === 'tal') f = fld('lvName', 'Имя владельца', P.name) + fld('lvBday', 'День рождения, по желанию', P.bday, 'date');
-  else if (m === 'path') f = fld('lvName', 'Как к тебе обращаться', P.name) + fld('lvBday', 'Дата рождения, по желанию', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + '<p class="sub" style="margin:6px 0 0">С датой рождения послания считаются по твоей Луне рождения.</p>' + fld('lvFrom', 'От кого, если это подарок', P.from);
+  else if (m === 'path') f = fld('lvName', 'Как к тебе обращаться', P.name) + fld('lvBday', 'Дата рождения, по желанию', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect('lvBtz', P.btz) + '<p class="sub" style="margin:6px 0 0">С датой рождения послания считаются по твоей Луне рождения.</p>' + fld('lvFrom', 'От кого, если это подарок', P.from);
   else {
     f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
     if (m === 'love') f += fld('lvSince', 'Вместе с, по желанию', P.since, 'date') + `<label class="lbl">Тон посланий</label><div class="seg" id="lvTone">${[['tender', 'Нежно'], ['fun', 'С юмором'], ['romantic', 'Романтично']].map(([k, n]) => `<button class="${(P.tone || 'tender') === k ? 'on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>`;
@@ -2896,7 +2897,7 @@ async function liveSave() {
   const P = LV.p, m = LV.mode;
   if (m === 'tal' || m === 'path' ? !P.name : !P.to) { toast('Впиши имя'); return; }
   const prof = m === 'fc' ? { to: P.to, from: P.from || '' } : m === 'love' ? { to: P.to, from: P.from || '', since: P.since || '', tone: P.tone || 'tender' }
-    : m === 'ny' ? { to: P.to, from: P.from || '', kid: !!P.kid, midnight: P.midnight || '' } : m === 'path' ? { name: P.name, bday: P.bday || '', btime: P.btime || '', from: P.from || '' } : { name: P.name, bday: P.bday || '' };
+    : m === 'ny' ? { to: P.to, from: P.from || '', kid: !!P.kid, midnight: P.midnight || '' } : m === 'path' ? { name: P.name, bday: P.bday || '', btime: P.btime || '', btz: P.btz || '', from: P.from || '' } : { name: P.name, bday: P.bday || '' };
   const pubName = m === 'tal' || m === 'path' ? P.name : P.to;
   LV.busy = true; lvNav(); veil('Оживляю камень…');
   const made = [];
@@ -3177,9 +3178,65 @@ function pathNext(start, key) {
 }
 const pathHM = d => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 // birth star: Moon's nakshatra at birth (time optional → noon)
+// birth city → time zone (historical offsets come from the browser's tz database)
+const BIRTH_CITIES = [
+  ['', 'Как в телефоне', 'Same as phone', '与手机相同'],
+  ['Europe/Kaliningrad', 'Калининград', 'Kaliningrad', '加里宁格勒'],
+  ['Europe/Moscow', 'Москва', 'Moscow', '莫斯科'],
+  ['Europe/Moscow|spb', 'Санкт-Петербург', 'Saint Petersburg', '圣彼得堡'],
+  ['Europe/Volgograd', 'Волгоград', 'Volgograd', '伏尔加格勒'],
+  ['Europe/Samara', 'Самара', 'Samara', '萨马拉'],
+  ['Asia/Yekaterinburg', 'Екатеринбург', 'Yekaterinburg', '叶卡捷琳堡'],
+  ['Asia/Omsk', 'Омск', 'Omsk', '鄂木斯克'],
+  ['Asia/Novosibirsk', 'Новосибирск', 'Novosibirsk', '新西伯利亚'],
+  ['Asia/Krasnoyarsk', 'Красноярск', 'Krasnoyarsk', '克拉斯诺亚尔斯克'],
+  ['Asia/Irkutsk', 'Иркутск', 'Irkutsk', '伊尔库茨克'],
+  ['Asia/Yakutsk', 'Якутск', 'Yakutsk', '雅库茨克'],
+  ['Asia/Vladivostok', 'Владивосток', 'Vladivostok', '符拉迪沃斯托克'],
+  ['Asia/Magadan', 'Магадан', 'Magadan', '马加丹'],
+  ['Asia/Kamchatka', 'Петропавловск-Камчатский', 'Petropavlovsk-Kamchatsky', '堪察加'],
+  ['Europe/Minsk', 'Минск', 'Minsk', '明斯克'],
+  ['Europe/Kyiv', 'Киев', 'Kyiv', '基辅'],
+  ['Asia/Almaty', 'Алматы', 'Almaty', '阿拉木图'],
+  ['Asia/Tashkent', 'Ташкент', 'Tashkent', '塔什干'],
+  ['Asia/Tbilisi', 'Тбилиси', 'Tbilisi', '第比利斯'],
+  ['Asia/Yerevan', 'Ереван', 'Yerevan', '埃里温'],
+  ['Asia/Baku', 'Баку', 'Baku', '巴库'],
+  ['Europe/Riga', 'Рига', 'Riga', '里加'],
+  ['Europe/Istanbul', 'Стамбул', 'Istanbul', '伊斯坦布尔'],
+  ['Asia/Dubai', 'Дубай', 'Dubai', '迪拜'],
+  ['Asia/Kolkata', 'Индия (Дели)', 'India (Delhi)', '印度（德里）'],
+  ['Asia/Bangkok', 'Бангкок', 'Bangkok', '曼谷'],
+  ['Asia/Shanghai', 'Китай (Пекин)', 'China (Beijing)', '中国（北京）'],
+  ['Asia/Tokyo', 'Токио', 'Tokyo', '东京'],
+  ['Europe/London', 'Лондон', 'London', '伦敦'],
+  ['Europe/Berlin', 'Берлин', 'Berlin', '柏林'],
+  ['Europe/Paris', 'Париж', 'Paris', '巴黎'],
+  ['Europe/Rome', 'Рим', 'Rome', '罗马'],
+  ['Asia/Jerusalem', 'Израиль', 'Israel', '以色列'],
+  ['America/New_York', 'Нью-Йорк', 'New York', '纽约'],
+  ['America/Los_Angeles', 'Лос-Анджелес', 'Los Angeles', '洛杉矶']
+];
+function tzSelect(id, v) {
+  const L = PL();
+  return `<label class="lbl" for="${id}">${['Город рождения', 'Birth city', '出生城市'][L]}</label><select class="fld" id="${id}">${BIRTH_CITIES.map(c => `<option value="${c[0]}"${c[0] === (v || '') ? ' selected' : ''}>${esc(c[1 + L])}</option>`).join('')}</select>`;
+}
+// offset (minutes) of an IANA zone at a given instant
+function tzOffset(tz, ms) {
+  const p = {}; new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(ms)).forEach(x => p[x.type] = x.value);
+  return (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - ms) / 6e4;
+}
+// local wall time in a zone → Date
+function zonedDate(day, time, tz) {
+  const [y, m, d] = day.split('-').map(Number), [hh, mm] = time.split(':').map(Number), wall = Date.UTC(y, m - 1, d, hh, mm);
+  let ms = wall - tzOffset(tz, wall) * 6e4; ms = wall - tzOffset(tz, ms) * 6e4;
+  return new Date(ms);
+}
 function birthNak(P) {
   if (!P.bday) return null;
-  const d = new Date(P.bday + 'T' + (P.btime || '12:00') + ':00');
+  const tz = (P.btz || '').split('|')[0];
+  let d;
+  try { d = tz ? zonedDate(P.bday, P.btime || '12:00', tz) : new Date(P.bday + 'T' + (P.btime || '12:00') + ':00'); } catch (e) { d = new Date(P.bday + 'T' + (P.btime || '12:00') + ':00'); }
   return isNaN(d) ? null : panchanga(d).nak;
 }
 function showPath(s, P) {
@@ -3227,13 +3284,13 @@ async function adminMode(s) {
   veil('Открываю…'); const p = await readPriv(s.id).catch(() => null); veil();
   if (!p) { toast('Не нашёл данные камня'); return; }
   const o = p.profile || {}, nm = o.name || o.to || s.name || '';
-  const P = { name: nm, to: o.to || nm, from: o.from || '', bday: o.bday || '', btime: o.btime || '', since: o.since || '', tone: o.tone || 'tender', kid: !!o.kid, midnight: o.midnight || '' };
+  const P = { name: nm, to: o.to || nm, from: o.from || '', bday: o.bday || '', btime: o.btime || '', btz: o.btz || '', since: o.since || '', tone: o.tone || 'tender', kid: !!o.kid, midnight: o.midnight || '' };
   let m = s.mode || 'tal';
-  const collect = () => { for (const [id, k] of [['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
+  const collect = () => { for (const [id, k] of [['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amBtz', 'btz'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
   const draw = () => {
     let f = '';
     if (m === 'tal') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'День рождения', P.bday, 'date');
-    else if (m === 'path') f = fld('amName', 'Как обращаться', P.name) + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + fld('amFrom', 'От кого', P.from);
+    else if (m === 'path') f = fld('amName', 'Как обращаться', P.name) + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + tzSelect('amBtz', P.btz) + fld('amFrom', 'От кого', P.from);
     else { f = fld('amTo', 'Кому (имя)', P.to) + fld('amFrom', 'От кого (имя)', P.from); if (m === 'love') f += fld('amSince', 'Вместе с', P.since, 'date'); }
     sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Сейчас: ${LIVE_MODES[s.mode] || '—'}</div><div class="sh-name">${esc(s.name || '')}</div></div></div>
       <div class="h2">Новый режим</div><div class="seg" id="amMode">${Object.entries(LIVE_MODES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div>${f}
@@ -3246,7 +3303,7 @@ async function adminMode(s) {
       const solo = m === 'tal' || m === 'path';
       if (solo ? !P.name : !P.to) { toast('Впиши имя'); return; }
       const prof = m === 'fc' ? { to: P.to, from: P.from } : m === 'love' ? { to: P.to, from: P.from, since: P.since, tone: P.tone }
-        : m === 'ny' ? { to: P.to, from: P.from, kid: P.kid, midnight: P.midnight } : m === 'path' ? { name: P.name, bday: P.bday, btime: P.btime, from: P.from } : { name: P.name, bday: P.bday };
+        : m === 'ny' ? { to: P.to, from: P.from, kid: P.kid, midnight: P.midnight } : m === 'path' ? { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz, from: P.from } : { name: P.name, bday: P.bday };
       const pub = solo ? P.name : P.to;
       veil('Сохраняю…');
       try {
