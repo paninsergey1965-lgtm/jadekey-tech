@@ -241,6 +241,8 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 .sheet.path .pt-skym{font-family:var(--serif);font-size:17px;line-height:1.38;color:#e3e8ff;text-align:center;margin:8px 0 10px}
 select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#8aa 50%),linear-gradient(135deg,#8aa 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
 
+.pt-all{text-align:center;font-size:12px;letter-spacing:.08em;color:rgba(200,205,255,.55);margin:14px 0 -6px}
+
 </style>
 </head>
 <body>
@@ -3429,7 +3431,7 @@ function showPath(s, P) {
     html += `<div class="pt-skyh">${T('Небо дня · на восходе', 'Sky of the day · at sunrise', '今日天象 · 日出时')} ${pathHM(sr)}</div>`;
     html += `<div class="pt-sky"><span>${T('Накшатра', 'Nakshatra', '月宿')}<b>${esc(N[L])}</b>${upto(nN, PATH_NAK[(pc.nak + 1) % 27][L])}</span><span>${T('Лунный день', 'Tithi', '太阴日')}<b>${esc(TI[L])}</b>${paksha ? `<i>${paksha}</i>` : ''}${upto(nT, TI2[L])}</span><span>${T('Планета дня', 'Planet', '值日星')}<b>${esc(V[L])}</b></span></div>`;
     const main = bday ? T(`С днём рождения${P.name ? ', ' + P.name : ''}! Новый круг твоего пути начинается сегодня — загадай, каким ты хочешь его пройти.`, `Happy birthday${P.name ? ', ' + P.name : ''}! A new circle of your path begins today — decide how you want to walk it.`, `生日快乐${P.name ? '，' + P.name : ''}！你的道路今天开启新的一轮——想想你希望怎样走过它。`) : N[6 + L];
-    html += `<div class="${personal ? 'pt-skym' : 'tl-wish'}">${esc(main)}</div><div class="pt-note">${esc(N[3 + L])}</div>`;
+    html += `${personal && !bday ? `<div class="pt-all">${T('Для всех сегодня', 'For everyone today', '今天对所有人')}</div>` : ''}<div class="${personal ? 'pt-skym' : 'tl-wish'}">${esc(main)}</div><div class="pt-note">${esc(N[3 + L])}</div>`;
     html += `<div class="pt-line"><b>${esc(TI[L])}.</b> ${esc(TI[3 + L])}</div><div class="pt-line">${esc(V[3 + L])}</div>`;
   }
   const W = PATH_WIS[(dn + h) % PATH_WIS.length], PR = pc ? (PATH_TPRAC[pc.tithi] || PATH_VPRAC[pc.vara][(h + Math.floor(dn / 7)) % 5]) : PATH_PRAC[(dn + h * 7) % PATH_PRAC.length];
