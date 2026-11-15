@@ -55,14 +55,23 @@ input:focus,select:focus,textarea:focus{outline:1.5px solid var(--ink);outline-o
 footer{background:var(--red);color:#fff;padding:36px 24px calc(40px + env(safe-area-inset-bottom))}
 footer div{max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;gap:10px 24px;font:500 11px/1.5 var(--cap);letter-spacing:.12em;text-transform:uppercase}
 footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6 var(--serif);opacity:.85}
+
+.tabs{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:-8px auto 28px;padding:0 16px}
+.tabs button{font:500 10px/1 var(--cap);letter-spacing:.1em;text-transform:uppercase;background:none;border:1px solid var(--line);color:var(--mute);padding:11px 12px;border-radius:999px;cursor:pointer}
+.tabs button.on{background:var(--ink,#1c1a17);color:#fff;border-color:transparent}
+.tabs button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.card[hidden]{display:none}
+.soon{grid-column:1/-1;text-align:center;color:var(--mute);padding:40px 24px 56px}
+.soon b{display:block;color:inherit;font:500 13px/1.4 var(--cap);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;color:#1c1a17}
 </style></head><body>
 <header class="top"><div><a class="cap l" href="/shop/">Каталог</a><a class="mark" href="/shop/">JADE<b>KEY</b></a><a class="cap r" href="/scan.html">Сканер</a></div></header>
 
 <section class="intro"><h1>Живые камни</h1><p>Каждый камень — в единственном экземпляре: второго такого рисунка в природе нет. После покупки наведите на него телефон в приложении JadeKey, выберите режим и имя — и камень начнёт каждый день открывать послание тому, кому вы его подарите. Оживить можно только камни JadeKey.</p></section>
-<section class="grid"><a class="card" href="/shop/p/wave-agate.html"><div class="ph"><img src="/img/stone-n10.jpg" alt="Агат «Розовая волна»" loading="lazy"></div>
-<h2 class="cap">Агат «Розовая волна»</h2><p>около 7 см</p><p class="pr">3 100 ₽</p><span class="ul">Подробнее</span></a><a class="card" href="/shop/p/amber-agate.html"><div class="ph"><img src="/img/stone-n8.jpg" alt="Агат «Изумрудный янтарь»" loading="lazy"></div>
-<h2 class="cap">Агат «Изумрудный янтарь»</h2><p>около 8 см</p><p class="pr"><s style="color:#9a918a;font-size:.8em;margin-right:8px">5 600 ₽</s>4 928 ₽ <span style="color:#a5192f;font-size:.75em">−12%</span></p><span class="ul">Подробнее</span></a><a class="card" href="/shop/p/rose-agate.html"><div class="ph"><img src="/img/stone-n1.jpg" alt="Розовый агат" loading="lazy"></div>
-<h2 class="cap">Розовый агат</h2><p>около 6 см</p><p class="pr">2 600 ₽</p><span class="ul">Подробнее</span></a></section>
+<nav class="tabs" id="tabs" aria-label="Разделы"><button class="on" data-f="all">Все</button><button data-f="her">Для неё</button><button data-f="him">Для него</button><button data-f="prem">Премиум</button></nav>
+<section class="grid" id="live"><a class="card" data-for="her" href="/shop/p/wave-agate.html"><div class="ph"><img src="/img/stone-n10.jpg" alt="Агат «Розовая волна»" loading="lazy"></div>
+<h2 class="cap">Агат «Розовая волна»</h2><p>около 7 см</p><p class="pr">3 100 ₽</p><span class="ul">Подробнее</span></a><a class="card" data-for="her him" href="/shop/p/amber-agate.html"><div class="ph"><img src="/img/stone-n8.jpg" alt="Агат «Изумрудный янтарь»" loading="lazy"></div>
+<h2 class="cap">Агат «Изумрудный янтарь»</h2><p>около 8 см</p><p class="pr"><s style="color:#9a918a;font-size:.8em;margin-right:8px">5 600 ₽</s>4 928 ₽ <span style="color:#a5192f;font-size:.75em">−12%</span></p><span class="ul">Подробнее</span></a><a class="card" data-for="her" href="/shop/p/rose-agate.html"><div class="ph"><img src="/img/stone-n1.jpg" alt="Розовый агат" loading="lazy"></div>
+<h2 class="cap">Розовый агат</h2><p>около 6 см</p><p class="pr">2 600 ₽</p><span class="ul">Подробнее</span></a><p class="soon" data-soon="him" hidden><b>Скоро</b>Тёмные полосатые агаты и кулоны на шнурке — сдержанные камни для него.</p><p class="soon" data-soon="prem" hidden><b>Скоро · Коллекция №1</b>Огромные живые камни в деревянной шкатулке. Всего пять, каждый — один из пяти.</p></section>
 <section class="sold-sec"><h2 class="cap">Уже нашли хозяев</h2><p>Эти камни проданы — каждый был в единственном экземпляре.</p></section>
 <section class="grid"><div class="card sold-card"><div class="ph"><img src="/img/stone-n9.jpg?v=2" alt="Агат «Орхидея»" loading="lazy"></div>
 <h2 class="cap">Агат «Орхидея»</h2><p>около 7,5 см</p><p class="pr"><span class="sold">Продан</span></p></div><div class="card sold-card"><div class="ph"><img src="/img/stone-n2.jpg" alt="Розовый агат с жеодой" loading="lazy"></div>
@@ -80,4 +89,19 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 </ol></section>
 <footer><div><a href="/shop/">Каталог</a><a href="/shop/delivery.html">Доставка и возврат</a><a href="/shop/oferta.html">Оферта</a><a href="/privacy.html">Конфиденциальность</a><a href="https://jadekey.tech">jadekey.tech</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></div>
 <small>ИП Панин Сергей Николаевич · ИНН 771501067019</small></footer>
+<script>
+(() => {
+  const tabs = document.getElementById('tabs'); if (!tabs) return;
+  const cards = [...document.querySelectorAll('#live .card')], soon = [...document.querySelectorAll('#live .soon')];
+  const show = f => {
+    tabs.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.f === f));
+    let n = 0;
+    cards.forEach(c => { const ok = f === 'all' || (c.dataset.for || '').split(' ').includes(f); c.hidden = !ok; if (ok) n++; });
+    soon.forEach(p => { p.hidden = p.dataset.soon !== f; });
+    try { history.replaceState(null, '', f === 'all' ? location.pathname : '#' + f); } catch (e) {}
+  };
+  tabs.onclick = e => { const b = e.target.closest('button'); if (b) show(b.dataset.f); };
+  const h = location.hash.slice(1); if (['her', 'him', 'prem'].includes(h)) show(h);
+})();
+</script>
 </body></html>
