@@ -367,7 +367,14 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
 (() => {
   const v = document.getElementById('film'), b = document.getElementById('filmSnd');
   if (!v || !b) return;
-  b.onclick = () => { v.muted = !v.muted; b.textContent = v.muted ? '🔇' : '🔊'; if (!v.muted) { v.currentTime = 0; v.play().catch(() => {}); } };
+  const mute = () => { v.muted = true; v.loop = true; b.textContent = '🔇'; v.play().catch(() => {}); };
+  b.onclick = () => {
+    if (!v.muted) { mute(); return; }
+    v.muted = false; v.loop = false; b.textContent = '🔊'; v.currentTime = 0; v.play().catch(() => {});
+  };
+  v.addEventListener('ended', mute);                 // со звуком ролик играет один раз, дальше снова тихо по кругу
+  if ('IntersectionObserver' in window) new IntersectionObserver(es => { es.forEach(e => { if (!e.isIntersecting && !v.muted) mute(); }); }, { threshold: 0.3 }).observe(v);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !v.muted) mute(); });
 })();
 </script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-PBJZ1WQNN8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-PBJZ1WQNN8");</script>
