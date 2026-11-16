@@ -80,7 +80,7 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 </form>
 <script>
 (() => {
-  const M = [['fc','Печенье',1490,'Печенье с предсказанием каждый день'],['ny','Новый год',2490,'Твой год здоровых привычек'],['love','Love',2990,'Каждый день новое признание'],['tal','Талисман',3490,'Пожелание, слово дня и ритуал'],['path','Путь',4990,'Джйотиш по дате рождения, Дао и практика']];
+  const M = [['fc','Печенье',1900,'Печенье с предсказанием каждый день'],['ny','Новый год',2900,'Твой год здоровых привычек'],['love','Love',3500,'Каждый день новое признание'],['tal','Талисман',3900,'Пожелание, слово дня и ритуал'],['path','Путь',5500,'Джйотиш по дате рождения, Дао и практика']];
   const q = new URLSearchParams(location.search), sid = (q.get('s') || '').slice(0, 64), from = q.get('m') || '';
   const f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go'), box = document.getElementById('modes');
   const fmt = n => n.toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
