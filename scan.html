@@ -2800,8 +2800,8 @@ const TAL_GRAHA = [
    'воле, здоровью, уверенности, отцу и начальству', 'will, health, confidence, father and those in charge',
    ['Сегодня твой свет виден издалека. Не прячь его.', 'Солнце светит всем одинаково — будь щедр сегодня.', 'Пусть сегодня хватит сил на главное.', 'Держи спину прямо: сегодня день достоинства.'],
    ['Today your light is seen from afar. Do not hide it.', 'The Sun shines on all alike — be generous today.', 'May you have strength for what matters today.', 'Stand tall: today is a day of dignity.'],
-   ['Встреть рассвет и предложи солнцу воду из стакана — арджья.', 'Позвони отцу или старшему в семье.', 'Выйди на солнечный свет хотя бы на 15 минут.'],
-   ['Greet the sunrise and offer it a glass of water — arghya.', 'Call your father or the eldest in your family.', 'Step into sunlight for at least 15 minutes.']],
+   ['Встреть рассвет или выйди утром на свет хотя бы на пару минут.', 'Позвони отцу или старшему в семье.', 'Выйди на солнечный свет хотя бы на 15 минут.'],
+   ['Greet the sunrise or step into morning light for a couple of minutes.', 'Call your father or the eldest in your family.', 'Step into sunlight for at least 15 minutes.']],
   ['Луна', 'Moon', 'Чандра', 'Жемчуг', 'Pearl', 'белый, серебристый', 'white, silver', '#e8eef8', 'Ом Сомая намаха',
    'чувствам, дому, покою, матери и воде', 'feelings, home, calm, mother and water',
    ['Береги свой покой — сегодня он дороже дел.', 'Пусть сердце будет мягким, как лунный свет.', 'Сегодня хорошо слушать себя и близких.', 'Вода смывает лишнее. Пусть уйдёт тревога.'],
@@ -2858,9 +2858,8 @@ function showTal(s, P) {
     <div class="tl-k" style="margin-top:12px">${bday ? T('Особый день', 'A special day') : T('Пожелание дня', 'Wish of the day')}</div><div class="tl-wish">${esc(wish)}</div>
     <div class="tl-g"><div class="tl-gh"><i style="background:${G[7]}"></i>${T('Сегодня день', 'Today is the day of')} ${E ? G[1] : ['Солнца', 'Луны', 'Марса', 'Меркурия', 'Юпитера', 'Венеры', 'Сатурна'][vara]} <span>· ${G[2]}</span></div>
       <div class="tl-row"><span>${T('Камень дня', 'Stone of the day')}<b>${E ? G[4] : G[3]}</b></span><span style="text-align:right">${T('Цвет дня', 'Colour of the day')}<b>${E ? G[6] : G[5]}</b></span></div>
-      <div class="tl-mn">${T('Мантра дня', 'Mantra of the day')}<b>${G[8]}</b><small>${T('повтори 9 или 108 раз', 'repeat 9 or 108 times')}</small></div>
       <div class="tl-fav">${T('День благоволит', 'The day favours')} ${E ? G[10] : G[9]}.</div></div>
-    <div class="tl-rit">${T('Упая дня', 'Remedy of the day')}: ${esc(upaya)}</div>
+    <div class="tl-rit">${T('Совет дня', 'Tip of the day')}: ${esc(upaya)}</div>
     ${lord ? `<div class="tl-lord">${T('Твоя планета по звезде рождения', 'Your planet by birth star')} — <b>${E ? lord[1] : lord[0]}</b>, ${T('её камень', 'its stone')} — <b>${E ? lord[3] : lord[2]}</b>. ${T('Это твой личный оберег по джйотишу.', 'This is your personal Jyotish amulet.')}</div>` : ''}
     <p class="sh-note" style="text-align:center;font-size:12px;opacity:.75">${T('Соответствия дней, планет и камней — по джйотишу (наваратна).', 'Day, planet and stone correspondences follow Jyotish (navaratna).')}</p>
     <div class="btns">${sndBtn()}${isAdmin ? `<button class="btn" id="tlNext">${T('Демо: завтра ›', 'Demo: tomorrow ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close')}</button></div>`);
