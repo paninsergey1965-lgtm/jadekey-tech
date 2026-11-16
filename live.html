@@ -240,6 +240,11 @@ canvas.fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#8aa 50%),linear-gradient(135deg,#8aa 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
 
 .pt-all{text-align:center;font-size:12px;letter-spacing:.08em;color:rgba(200,205,255,.55);margin:14px 0 -6px}
+.hab-cat{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9fe0ff;margin:14px 0 2px}
+.hab-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px;text-align:center}
+.hab-st span{background:#ffffff0d;border:1px solid #2a3d66;border-radius:12px;padding:10px 4px;font-size:12px;color:#9fb0d6}
+.hab-st b{display:block;font-family:var(--serif);font-size:22px;color:#ffe3a1;font-weight:400;margin-bottom:2px}
+#habDone[disabled]{opacity:.75}
 
 </style>
 </head>
@@ -297,6 +302,8 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
     <div id="formPart" style="display:none">
       <label class="lbl">Название</label>
       <input class="fld" id="fName" placeholder="Например, Агат розовый №3" autocomplete="off">
+      <label class="lbl">Режим, который купили</label>
+      <select class="fld" id="fBuy"><option value="">Любой — покупатель выберет сам</option><option value="fc">Печенье</option><option value="ny">Новый год</option><option value="love">Love</option><option value="tal">Талисман</option><option value="path">Путь</option></select>
       <label class="lbl">JK-номер</label>
       <input class="fld" id="fJk" placeholder="JK-000009" autocomplete="off" autocapitalize="characters">
       <label class="lbl">Контакты владельца</label>
@@ -2123,6 +2130,7 @@ async function openAdd(ctx = {}) {
   addCtx = ctx; addShot = null;
   for (const id in FIELDS) $(id).value = '';
   $('fLoveTo').value = ''; $('fLoveFrom').value = ''; $('fLoveSince').value = ''; $('fLoveTone').value = 'tender';
+  $('fBuy').value = (ctx.edit && ctx.edit.buy) || '';
   if (ctx.edit && ctx.edit.love) { const L = ctx.edit.love; $('fLoveTo').value = L.to || ''; $('fLoveFrom').value = L.from || ''; $('fLoveSince').value = L.since || ''; $('fLoveTone').value = L.tone || 'tender'; }
   const src = ctx.edit || ctx.legacy;
   if (src) {
@@ -2179,13 +2187,13 @@ $('btnSave').onclick = async () => {
   if (!name) { toast('Введи название'); return; }
   const contacts = {};
   for (const [id, k] of [['fPhone', 'phone'], ['fTg', 'tg'], ['fMail', 'email'], ['fSite', 'site']]) { const v = $(id).value.trim(); if (v) contacts[k] = v; }
-  const jk = $('fJk').value.trim().toUpperCase();
+  const jk = $('fJk').value.trim().toUpperCase(), buy = $('fBuy').value;
   const loveTo = $('fLoveTo').value.trim();
   const love = loveTo ? JSON.stringify({ to: loveTo, from: $('fLoveFrom').value.trim(), since: $('fLoveSince').value, tone: $('fLoveTone').value }) : '';
   veil('Сохраняю…');
   try {
     if (addCtx.edit) {
-      await fsPatch(COL, addCtx.edit.id, { name, jk, contacts: JSON.stringify(contacts), love });
+      await fsPatch(COL, addCtx.edit.id, { name, jk, contacts: JSON.stringify(contacts), love, buy });
     } else {
       if (!addShot) { toast('Сначала сними камень'); veil(); return; }
       if (stones.length) {   // do not register the same stone twice
@@ -2196,7 +2204,7 @@ $('btnSave').onclick = async () => {
       }
       const enc = encodePatches(addShot.f);
       const g = f32B64(gvecOf(addShot.f));
-      const doc = await fsCreate(COL, { name, jk, contacts: JSON.stringify(contacts), love, created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
+      const doc = await fsCreate(COL, { name, jk, buy, contacts: JSON.stringify(contacts), love, created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
       const id = doc.name.split('/').pop();
       try { await fsCreate(COLP, { idx: enc.idx, p: enc.p, sc: enc.sc }, id); }
       catch (e) { await fsDelete(COL, id); throw e; }
@@ -2216,9 +2224,9 @@ const COLV = 'jk2_private';
 const LIVE_MODES = { path: 'Путь', love: 'Love', ny: 'Новый год', tal: 'Талисман', fc: 'Печенье' };
 const LIVE_DESC = {
   path: 'Каждый день — небо дня по Джйотишу: накшатра, лунный день и планета дня, строка из Дао дэ цзин с номером главы и короткая практика. С датой рождения — лично для тебя.',
-  fc: 'Китайское печенье с предсказанием: каждый раз, когда наводишь телефон на камень, оно ломается и выпадает новое предсказание, счастливые числа и китайское слово дня.',
+  fc: 'Печенье с предсказанием: каждый день новое — наводишь телефон на камень, оно ломается, и выпадает предсказание, счастливые числа и китайское слово дня.',
   love: 'Каждый день новое послание от дарителя, с именами и счётчиком дней вместе.',
-  ny: 'С 1 декабря каждый день новое послание, а в новогоднюю полночь — главное поздравление от дарителя.',
+  ny: 'Твой год здоровых привычек: каждый день одно простое задание для тела или для головы. Отмечаешь «Сделал» и копишь серию дней. В новогоднюю полночь — поздравление от дарителя.',
   tal: 'Каждый день пожелание, слово дня и маленький ритуал.'
 };
 const ls = {
@@ -2383,6 +2391,130 @@ function fxFireworks() {
 }
 
 // ---------- texts ----------
+// Новый год = «Твой год здоровых привычек» (идея Насти): одно задание в день
+const HAB_ADULT = [
+  ['Тело', 'Сделай 10 приседаний, медленно и спокойно.'],
+  ['Вода', 'Начни утро со стакана тёплой воды.'],
+  ['Голова', 'Запиши три вещи, за которые ты сегодня благодарен.'],
+  ['Тело', 'Пройди сегодня на 2 000 шагов больше обычного.'],
+  ['Сон', 'Отложи телефон за 30 минут до сна.'],
+  ['Голова', 'Пять минут посиди в тишине, просто дыши.'],
+  ['Еда', 'Добавь к обеду порцию овощей.'],
+  ['Тело', 'Потянись утром одну минуту — руки вверх, спина длинная.'],
+  ['Голова', 'Напиши одному человеку что-то доброе без повода.'],
+  ['Вода', 'Поставь бутылку воды на стол и допей её до вечера.'],
+  ['Тело', 'Поднимись пешком хотя бы на два этажа.'],
+  ['Голова', 'Выключи уведомления на один час и сделай одно важное дело.'],
+  ['Еда', 'Сегодня ешь медленно: без телефона, без экрана.'],
+  ['Тело', 'Сделай 5 медленных наклонов вперёд, не сгибая колени.'],
+  ['Сон', 'Ложись сегодня на 20 минут раньше.'],
+  ['Голова', 'Убери один ящик или одну полку. Порядок снаружи — порядок внутри.'],
+  ['Тело', 'Прогуляйся 15 минут на свежем воздухе.'],
+  ['Голова', 'Вспомни один свой успех за этот год и похвали себя.'],
+  ['Еда', 'Замени один сладкий перекус на фрукт или орехи.'],
+  ['Тело', 'Постой в планке 20 секунд. Можно с колен.'],
+  ['Голова', 'Прочитай 10 страниц книги.'],
+  ['Вода', 'Выпей чашку травяного чая вместо кофе после обеда.'],
+  ['Тело', 'Покрути плечами 10 раз вперёд и 10 назад.'],
+  ['Голова', 'Подыши по схеме 4–4–4: вдох, пауза, выдох. Повтори 5 раз.'],
+  ['Сон', 'Проветри спальню перед сном.'],
+  ['Тело', 'Сделай 10 подъёмов на носки.'],
+  ['Голова', 'Напиши, чего ты хочешь от следующего месяца. Одно предложение.'],
+  ['Еда', 'Приготовь сегодня что-нибудь сам, пусть самое простое.'],
+  ['Тело', 'Потанцуй под одну любимую песню.'],
+  ['Голова', 'Позвони тому, по кому скучаешь.'],
+  ['Тело', 'Пройди одну остановку пешком.'],
+  ['Голова', 'Найди сегодня повод искренне рассмеяться.'],
+  ['Вода', 'Каждый раз, когда пьёшь кофе, выпей и стакан воды.'],
+  ['Тело', 'Сделай 10 отжиманий от стены или от стола.'],
+  ['Голова', 'Запиши одну тревогу на бумагу — и оставь её там.'],
+  ['Сон', 'Сегодня без экрана в кровати.'],
+  ['Еда', 'Позавтракай сегодня спокойно, сидя за столом.'],
+  ['Тело', 'Помассируй ладони и пальцы одну минуту.'],
+  ['Голова', 'Сделай одно дело, которое давно откладываешь. Самое маленькое.'],
+  ['Тело', 'Встань из-за стола и пройдись каждый час.'],
+  ['Голова', 'Посмотри на небо хотя бы одну минуту.'],
+  ['Еда', 'Сегодня без сладкого после 18:00.'],
+  ['Тело', 'Сделай вращения головой — медленно, по 5 раз в каждую сторону.'],
+  ['Голова', 'Скажи «нет» одной вещи, которая отнимает силы.'],
+  ['Вода', 'Начни день со стакана воды с лимоном.'],
+  ['Тело', '10 выпадов — по 5 на каждую ногу.'],
+  ['Голова', 'Выпиши три сильные стороны, которые в тебе ценят.'],
+  ['Сон', 'Встань завтра в то же время, что и сегодня.'],
+  ['Тело', 'Выйди на 10 минут на солнечный свет.'],
+  ['Голова', 'Сделай сегодня одно дело медленно и с удовольствием.'],
+  ['Еда', 'Съешь на ужин что-нибудь лёгкое и тёплое.'],
+  ['Тело', 'Сделай «кошку-корову»: 8 мягких прогибов спины.'],
+  ['Голова', 'Наведи порядок на рабочем столе телефона.'],
+  ['Голова', 'Поблагодари кого-нибудь вслух.'],
+  ['Тело', 'Поднимись по лестнице вместо лифта.'],
+  ['Голова', 'Пять минут ничего не делай. Совсем.'],
+  ['Вода', 'Посчитай сегодня стаканы воды. Цель — шесть.'],
+  ['Тело', 'Постой минуту на одной ноге, потом на другой.'],
+  ['Голова', 'Запиши мысль, которая тебя сегодня порадовала.'],
+  ['Сон', 'Перед сном вспомни три хороших момента дня.'],
+  ['Еда', 'Добавь в тарелку что-нибудь зелёное.'],
+  ['Тело', 'Сделай 15 медленных приседаний у стены.'],
+  ['Голова', 'Сегодня не спорь ни с кем в интернете.'],
+  ['Тело', 'Прогуляйся вечером 20 минут.'],
+  ['Голова', 'Сделай комплимент незнакомому человеку.'],
+  ['Голова', 'Разбери одну папку с фото и удали лишнее.'],
+  ['Тело', 'Разомни стопы: покатай их по мячику или бутылке.'],
+  ['Голова', 'Подумай, чему ты научился за последний месяц.'],
+  ['Еда', 'Выпей сегодня меньше сладких напитков, чем вчера.'],
+  ['Тело', 'Пять раз глубоко вдохни у открытого окна.'],
+  ['Голова', 'Напиши письмо себе через год. Короткое.'],
+  ['Сон', 'Сегодня в спальне без телевизора.'],
+  ['Тело', 'Сделай зарядку под одну песню.'],
+  ['Голова', 'Сделай сегодня что-то впервые.'],
+  ['Вода', 'Перед каждым приёмом пищи — стакан воды.'],
+  ['Тело', 'Пройди 7 000 шагов за день.'],
+  ['Голова', 'Обними близкого человека дольше обычного.'],
+  ['Голова', 'Найди 10 минут для хобби.'],
+  ['Тело', 'Потянись перед сном: руки вверх, затем к носкам.'],
+  ['Голова', 'Отпусти одну обиду. Просто реши её отпустить.'],
+  ['Еда', 'Купи сегодня один новый для себя овощ или фрукт.'],
+  ['Тело', 'Сделай 20 прыжков на месте или 20 шагов на месте с высоким коленом.'],
+  ['Голова', 'Выйди сегодня из дома без наушников и послушай город.'],
+  ['Сон', 'Поставь будильник на отход ко сну.'],
+  ['Тело', 'Сядь ровно: плечи вниз, макушка вверх. Вспоминай об этом весь день.'],
+  ['Голова', 'Посмотри старые фото, которые тебя радуют.'],
+  ['Голова', 'Спланируй завтрашний день за три минуты.'],
+  ['Тело', 'Сделай 10 медленных подъёмов рук в стороны.'],
+  ['Голова', 'Помоги кому-нибудь без просьбы.'],
+  ['Вода', 'Сегодня — день без газировки.']];
+const HAB_KID = [
+  ['Тело', 'Сделай 10 прыжков, как зайчик.'],
+  ['Голова', 'Нарисуй, что тебя сегодня порадовало.'],
+  ['Вода', 'Выпей стакан воды после прогулки.'],
+  ['Тело', 'Постой на одной ноге, как цапля, и посчитай до 10.'],
+  ['Голова', 'Скажи маме или папе три добрых слова.'],
+  ['Сон', 'Ложись сегодня спать вовремя, без споров.'],
+  ['Еда', 'Съешь сегодня один фрукт.'],
+  ['Тело', 'Потянись к небу, как жираф, 5 раз.'],
+  ['Голова', 'Убери свои игрушки на место.'],
+  ['Тело', 'Сделай 10 приседаний, как лягушка.'],
+  ['Голова', 'Прочитай сам или с кем-то одну сказку.'],
+  ['Еда', 'Попробуй сегодня новый овощ.'],
+  ['Тело', 'Погуляй на улице не меньше часа.'],
+  ['Голова', 'Помоги сегодня накрыть на стол.'],
+  ['Сон', 'Перед сном расскажи, что было хорошего.'],
+  ['Тело', 'Поползай, как медвежонок, через всю комнату.'],
+  ['Голова', 'Выучи одно новое слово.'],
+  ['Вода', 'Пей воду вместо сладкого сока сегодня.'],
+  ['Тело', 'Пройди по прямой линии, как канатоходец.'],
+  ['Голова', 'Сделай кому-нибудь маленький подарок своими руками.'],
+  ['Еда', 'Почисти зубы утром и вечером — две минуты.'],
+  ['Тело', 'Покружись 5 раз и постой ровно.'],
+  ['Голова', 'Обними всех, кого любишь.'],
+  ['Голова', 'Слепи что-нибудь из пластилина.'],
+  ['Тело', 'Попрыгай на скакалке или просто 20 раз на месте.'],
+  ['Голова', 'Посчитай до 20 и обратно.'],
+  ['Сон', 'Сегодня без мультиков перед сном — только книжка.'],
+  ['Тело', 'Помаши руками, как птица, 10 раз.'],
+  ['Голова', 'Нарисуй свою семью.'],
+  ['Еда', 'Съешь на завтрак кашу.']];
+const HAB_GOALS = [[3, 'Три дня'], [7, 'Неделя'], [21, 'Привычка'], [30, 'Месяц'], [100, 'Сотня'], [365, 'Год']];
 const NY_ADULT = [
   'Сегодня разреши себе ничего не успевать.', 'Загадай желание. Вечером расскажешь, какое.', 'Купи мандарины. Это обязательная часть плана.',
   'Включи музыку и потанцуй ровно одну песню.', 'Напиши тому, по кому скучаешь.', 'Сегодня вечер пледа и кино.',
@@ -2517,36 +2649,54 @@ const TAL_RIT = [
 
 // ---------- mode screens ----------
 let nyTimer = null, talShift = 0;
+let habShift = 0;
+function habStreak(done, today) {
+  let d = done.has(today) ? today : today - 1, n = 0;
+  while (done.has(d)) { n++; d--; }
+  return n;
+}
 function showNY(s, P) {
-  const now = NOW(), y = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-  const dec1 = new Date(y, 11, 1), ny = new Date(y + 1, 0, 1), end = new Date(y + 1, 0, 8);
-  const pool = P.kid ? LP('NY_KID', NY_KID) : LP('NY_ADULT', NY_ADULT), h = strHash(s.id), to = esc(P.to || ''), sign = P.kid ? 'Дед Мороз' : esc(P.from || '');
-  let body;
-  if (now >= ny) {
-    body = `<div class="ny-k">✦ 1 января ${y + 1}</div><div class="ny-big">С Новым годом${to ? ', ' + to : ''}!</div><div class="ny-msg">${esc(P.midnight || (P.kid ? 'Ты молодец! Пусть этот год будет полон чудес.' : 'Пусть этот год будет самым тёплым из всех.'))}</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}${now >= end ? '<p class="sh-note">Праздники позади, но поздравление остаётся с тобой.</p>' : ''}`;
-  } else if (now >= dec1) {
-    const d = now.getDate();
-    const grid = Array.from({ length: 31 }, (_, i) => `<span class="${i + 1 < d ? 'o' : i + 1 === d ? 't' : ''}">${i + 1}</span>`).join('');
-    const msg = d === 31 ? 'Сегодня последнее послание года. В полночь камень откроет главное поздравление.' : pool[(d - 1 + h) % pool.length];
-    body = `<div class="ny-k">✦ До Нового года</div><div class="ny-cd" id="nyCd"></div>${to ? `<div class="lv-to" style="color:#ffe3a1">${to},</div>` : ''}<div class="ny-msg">${esc(msg)}</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}<div class="adv">${grid}</div><p class="sh-note">Каждый день декабря — новое послание. Главное поздравление — в новогоднюю полночь.</p>`;
-  } else {
-    body = `<div class="ny-k">✦ Новогодний камень</div>${to ? `<div class="lv-to" style="color:#ffe3a1">${to},</div>` : ''}<div class="ny-msg">С 1 декабря каждый день здесь будет новое послание, а в новогоднюю ночь — главное поздравление.</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}<div class="ny-k">До первого послания</div><div class="ny-cd" id="nyCd"></div>`;
-  }
-  sheet(body + `<div class="btns">${sndBtn()}<button class="btn main" id="again">Закрыть</button></div>`);
+  const real = NOW(), now = new Date(real.getTime() + habShift * 864e5), y = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const ny = new Date(y + 1, 0, 1), end = new Date(y + 1, 0, 8), dn = dayNum(now), h = strHash(s.id);
+  const pool = P.kid ? HAB_KID : HAB_ADULT, [cat, task] = pool[(dn + h) % pool.length];
+  const key = 'hab_' + s.id, done = new Set(ls.list(key)), today = done.has(dn), streak = habStreak(done, dn);
+  const to = esc(P.to || ''), sign = P.kid ? 'Дед Мороз' : esc(P.from || '');
+  const goal = HAB_GOALS.find(g => g[0] > streak), got = HAB_GOALS.filter(g => g[0] <= streak).pop();
+  const week = Array.from({ length: 7 }, (_, i) => dn - 6 + i).map(d => `<span class="${done.has(d) ? 'o' : d === dn ? 't' : ''}">${new Date((d) * 864e5).getUTCDate()}</span>`).join('');
+  let head = '';
+  if (now >= ny && now < end) head = `<div class="ny-big">С Новым годом${to ? ', ' + to : ''}!</div><div class="ny-msg" style="font-size:20px">${esc(P.midnight || (P.kid ? 'Ты молодец! Пусть этот год будет полон чудес.' : 'Пусть этот год будет самым тёплым из всех.'))}</div>${sign ? `<div class="lv-from" style="color:#ffe3a1">— ${sign}</div>` : ''}`;
+  else if (now.getMonth() === 11) head = `<div class="ny-k" style="margin-bottom:2px">До Нового года</div><div class="ny-cd" id="nyCd" style="font-size:20px"></div>`;
+  const body = `${head}<div class="ny-k">✦ ${to ? to + ', твой' : 'Твой'} год здоровых привычек</div>
+    <div class="hab-cat">${cat} · задание дня</div><div class="ny-msg">${esc(task)}</div>
+    <div class="btns"><button class="btn main" id="habDone"${today ? ' disabled' : ''}>${today ? 'Сделано сегодня ✓' : 'Сделал ✓'}</button></div>
+    <div class="hab-st"><span><b>${streak}</b>${plural(streak, 'день', 'дня', 'дней')} подряд</span><span><b>${done.size}</b>всего</span><span><b>${got ? got[1] : '—'}</b>значок</span></div>
+    <div class="adv">${week}</div>
+    <p class="sh-note">${goal ? `До значка «${goal[1]}» — ${goal[0] - streak} ${plural(goal[0] - streak, 'день', 'дня', 'дней')}.` : 'Целый год привычек. Ты невероятный.'} Завтра будет новое задание.</p>
+    <p class="sh-note" style="font-size:12px;opacity:.7">Задания общие и не заменяют совет врача. Если что-то нельзя по здоровью — пропусти.</p>`;
+  sheet(body + `<div class="btns">${sndBtn()}${isAdmin ? '<button class="btn" id="habNext">Демо: завтра ›</button>' : ''}<button class="btn" id="again">Закрыть</button></div>`);
   $('sheet').classList.add('ny'); fxSnow();
-  const target = now < dec1 ? dec1 : ny, shift = now.getTime() - Date.now();
-  clearInterval(nyTimer);
-  const upd = () => {
-    const e = $('nyCd'); if (!e || !$('sheet').classList.contains('on')) { clearInterval(nyTimer); return; }
-    const t = Math.max(0, target - (Date.now() + shift)), dd = Math.floor(t / 864e5), hh = Math.floor(t / 36e5) % 24, mm = Math.floor(t / 6e4) % 60, ss = Math.floor(t / 1e3) % 60;
-    e.textContent = `${dd} ${plural(dd, 'день', 'дня', 'дней')} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
-    if (t === 0) { clearInterval(nyTimer); setTimeout(() => showNY(s, P), 800); }
+  $('habDone').onclick = () => {
+    if (done.has(dn)) return;
+    done.add(dn); ls.set(key, JSON.stringify([...done].slice(-800)));
+    const st = habStreak(done, dn), hit = HAB_GOALS.find(g => g[0] === st);
+    if (hit) { toast(`Новый значок: «${hit[1]}»!`, 4000); try { fxFireworks(); } catch (e) {} }
+    showNY(s, P);
   };
-  if ($('nyCd')) { upd(); nyTimer = setInterval(upd, 1000); }
-  if (now >= ny && now < end) { fxFireworks(); playWav(synthWav('fireworks')); setTimeout(() => { if ($('sheet').classList.contains('ny')) playWav(synthWav('bells')); }, 3600); }
+  clearInterval(nyTimer);
+  if ($('nyCd')) {
+    const shift = now.getTime() - Date.now();
+    const upd = () => {
+      const e = $('nyCd'); if (!e || !$('sheet').classList.contains('on')) { clearInterval(nyTimer); return; }
+      const t = Math.max(0, ny - (Date.now() + shift)), dd = Math.floor(t / 864e5), hh = Math.floor(t / 36e5) % 24, mm = Math.floor(t / 6e4) % 60, ss = Math.floor(t / 1e3) % 60;
+      e.textContent = `${dd} ${plural(dd, 'день', 'дня', 'дней')} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    };
+    upd(); nyTimer = setInterval(upd, 1000);
+  }
+  if (now >= ny && now < end && !habShift) { fxFireworks(); playWav(synthWav('fireworks')); setTimeout(() => { if ($('sheet').classList.contains('ny')) playWav(synthWav('bells')); }, 3600); }
   else playWav(synthWav('bells'));
   bindSnd(() => synthWav('bells'));
-  $('again').onclick = () => { loveStop(); clearInterval(nyTimer); hideSheet(); };
+  if (isAdmin) $('habNext').onclick = () => { habShift++; showNY(s, P); };
+  $('again').onclick = () => { habShift = 0; loveStop(); clearInterval(nyTimer); hideSheet(); };
 }
 function showTal(s, P) {
   const now = new Date(NOW().getTime() + talShift * 864e5), dn = dayNum(now), h = strHash(s.id);
@@ -2800,7 +2950,7 @@ async function openGift(id, claim) {
 
 // ---------- buyer: bring a stone to life ----------
 const camL = { vid: $('vidL'), ov: $('ovL'), msg: $('msgL'), bar: $('barL'), idle: $('idleL') };
-const LV = { step: 0, a: null, b: null, hidden: false, mode: 'path', p: {}, busy: false };
+const LV = { step: 0, a: null, b: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false };
 function stoneStats(cv) {
   const n = 64, t = document.createElement('canvas'); t.width = t.height = n;
   const g = t.getContext('2d'), m = cv.width * 0.25;
@@ -2853,6 +3003,7 @@ async function liveCapture(side) {
       if (r.state !== 'found') return fail('Не узнаю камень JadeKey. Оживить можно только камень из магазина JadeKey. Положи его на однотонный фон, свет сбоку, и сними ещё раз.');
       if (r.stone.mode || r.stone.of) { const m = r.stone.of || r.stone.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже оживлён.'); }
       LV.src = r.stone;
+      if (LIVE_MODES[r.stone.buy]) { LV.mode = r.stone.buy; LV.lock = true; }
     } else if (stones.length) {
       veil('Проверяю, нет ли такого камня…');
       const r = await identify(frames[0], t => veil(t));
@@ -2905,7 +3056,8 @@ function liveForm() {
     if (m === 'love') f += fld('lvSince', 'Вместе с, по желанию', P.since, 'date') + `<label class="lbl">Тон посланий</label><div class="seg" id="lvTone">${[['tender', 'Нежно'], ['fun', 'С юмором'], ['romantic', 'Романтично']].map(([k, n]) => `<button class="${(P.tone || 'tender') === k ? 'on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>`;
     else if (m === 'ny') f += `<label class="lbl">Кому подарок</label><div class="seg" id="lvKid"><button class="${!P.kid ? 'on' : ''}" data-k="0">Взрослому</button><button class="${P.kid ? 'on' : ''}" data-k="1">Ребёнку</button></div><p class="sub" style="margin:6px 0 0">${P.kid ? 'Окошки будут от Деда Мороза.' : ''}</p><label class="lbl" for="lvMid">Поздравление в полночь</label><textarea class="fld" id="lvMid" rows="3" placeholder="Например: пусть этот год будет самым тёплым из всех">${esc(P.midnight || '')}</textarea>`;
   }
-  $('lvForm').innerHTML = `<div class="seg" id="lvMode">${Object.entries(LIVE_MODES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${f}`;
+  const modes = LV.lock ? [[m, LIVE_MODES[m]]] : Object.entries(LIVE_MODES);
+  $('lvForm').innerHTML = `<div class="seg" id="lvMode">${modes.map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${LV.lock ? '<p class="sub" style="margin:6px 0 0">Этот режим куплен вместе с камнем. Другой режим можно открыть потом на сайте jadekey.tech.</p>' : ''}${f}`;
   $('lvForm').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { liveCollect(); LV.mode = b.dataset.m; liveForm(); });
   $('lvForm').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { liveCollect(); P.tone = b.dataset.t; liveForm(); });
   $('lvForm').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { liveCollect(); P.kid = b.dataset.k === '1'; liveForm(); });
@@ -2983,11 +3135,12 @@ async function mineSheet(s, kind) {
   const sb = shareButtons(link, giftText(s.mode, s.name || ''));
   sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
     <div class="h2">Ссылка для получателя</div>${sb.html}
-    <div class="rows"><button class="row" id="mOpen"><span><b>Открыть камень</b><small>Посмотреть, что видит получатель</small></span></button><button class="row" id="mShare"><span><b>${p.share ? 'Послания видят все, кто отсканирует' : 'Послания видит только получатель'}</b><small>Нажми, чтобы переключить</small></span></button><button class="row" id="mNew"><span><b>Новая ссылка</b><small>Старая перестанет работать, камень привяжется к новому телефону</small></span></button></div>
+    <div class="rows"><button class="row" id="mOpen"><span><b>Открыть камень</b><small>Посмотреть, что видит получатель</small></span></button>${inApp ? '' : '<button class="row" id="mUp"><span><b>Открыть другой режим</b><small>Путь, Талисман, Love, Новый год, Печенье — доплата разницы</small></span></button>'}<button class="row" id="mShare"><span><b>${p.share ? 'Послания видят все, кто отсканирует' : 'Послания видит только получатель'}</b><small>Нажми, чтобы переключить</small></span></button><button class="row" id="mNew"><span><b>Новая ссылка</b><small>Старая перестанет работать, камень привяжется к новому телефону</small></span></button></div>
     <div class="btns"><button class="btn danger" id="mDel">Удалить камень</button><button class="btn main" id="again">Закрыть</button></div>`);
   sb.bind();
   $('again').onclick = hideSheet;
   $('mOpen').onclick = () => showLive(s);
+  if ($('mUp')) $('mUp').onclick = () => { location.href = `/shop/upgrade.html?s=${encodeURIComponent(s.id)}&m=${encodeURIComponent(s.mode || '')}`; };
   $('mShare').onclick = async () => { try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { share: !p.share }, ['share']); mineSheet(s, kind); } catch (e) { toast('Не получилось: ' + e.message); } };
   $('mNew').onclick = async () => {
     if (!confirm('Сделать новую ссылку? Старая перестанет работать, а камень отвяжется от телефона получателя.')) return;
@@ -3014,7 +3167,7 @@ $('lvPaste').onclick = () => {
   if (m) openGift(m[1], m[2]); else if (v) toast('Это не ссылка-подарок');
 };
 $('lvStart').onclick = () => {
-  Object.assign(LV, { step: 0, a: null, b: null, src: null, hidden: false, mode: 'path', p: {}, busy: false });
+  Object.assign(LV, { step: 0, a: null, b: null, src: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
   $('lvHomeBox').style.display = 'none'; $('lvWiz').style.display = '';
   liveRender();
 };
