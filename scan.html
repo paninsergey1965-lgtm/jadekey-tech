@@ -3083,6 +3083,7 @@ async function showLive(s) {
   if (!p) { showTeaser(s); return; }
   if (myUid() && p.recipient === myUid()) remember(s.id, 'got');
   const P = p.profile || {};
+  talShift = habShift = fcShift = pathShift = 0;
   if (s.mode === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: P.to || '', from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
   else if (s.mode === 'ny') showNY(s, P);
   else if (s.mode === 'fc') showFortune(s, P);
