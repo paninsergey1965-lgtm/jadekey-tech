@@ -257,6 +257,8 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 .fc-hn em{font-style:normal;font-size:12px;letter-spacing:.06em;color:#3a1a0c;margin-top:2px}
 .fc-src{text-align:center;font-size:11px;color:#8a6a50;margin-top:6px;letter-spacing:.02em}
 .fc-pred{font-size:21px}
+.fc-up{text-align:center;font-size:13px;color:#ffd9b0;margin:4px 8px 12px;line-height:1.4}
+.fc-up a{color:#ffe3a1;text-decoration:underline;white-space:nowrap}
 
 </style>
 </head>
@@ -2236,7 +2238,7 @@ const COLV = 'jk2_private';
 const LIVE_MODES = { path: 'Путь', love: 'Love', ny: 'Новый год', tal: 'Талисман', fc: 'Печенье' };
 const LIVE_DESC = {
   path: 'Каждый день — небо дня по Джйотишу: накшатра, лунный день и планета дня, строка из Дао дэ цзин с номером главы и короткая практика. С датой рождения — лично для тебя.',
-  fc: 'Печенье с предсказанием по «Книге перемен» (И цзин): каждый день — одна из 64 гексаграмм с советом, счастливые числа по китайской традиции и китайское слово дня.',
+  fc: 'Печенье с советом дня по «Книге перемен» (И цзин): каждый день — одна из 64 гексаграмм, счастливые числа по китайской традиции и китайское слово дня. Личный расчёт по звезде рождения — в режиме «Путь».',
   love: 'Каждый день новое послание от дарителя, с именами и счётчиком дней вместе.',
   ny: 'Твой год здоровых привычек: каждый день одно простое задание для тела или для головы. Отмечаешь «Сделал» и копишь серию дней. В новогоднюю полночь — поздравление от дарителя.',
   tal: 'Каждый день пожелание, слово дня и маленький ритуал.'
@@ -2976,7 +2978,7 @@ function showFortune(s, P, again) {
   const w = FC_WORD[(day + h) % FC_WORD.length], lang = window.JK_LANG || 'ru';
   const L = PL(), T = (ru, en, zh) => [ru, en, zh][L];
   const to = esc(P.to || ''), from = esc(P.from || '');
-  sheet(`<div class="fc-k">✦ ${to ? to + ', ' + T('твоё предсказание', 'your fortune', '你的签') : T('Твоё предсказание', 'Your fortune', '你的签')}</div>
+  sheet(`<div class="fc-k">✦ ${to ? to + ', ' + T('твой совет дня', 'your advice for today', '你今天的卦') : T('Твой совет дня', 'Your advice for today', '你今天的卦')}</div>
     <div class="fc-ck"><span class="l">🥠</span><span class="r">🥠</span></div>
     <div class="fc-paper"><div class="fc-hex"><div class="fc-gua">${lines}</div><div class="fc-hn"><b>${X[0]}</b><span>${X[1]}</span><em>${i + 1} · ${esc(L === 0 ? X[2] : X[3])}</em></div></div>
       <div class="fc-pred">${esc(L === 0 ? X[5] : X[6])}</div>
@@ -2986,6 +2988,7 @@ function showFortune(s, P, again) {
     <div class="fc-word"><b>${w[0]}</b><div><i>${w[1]}</i>${lang === 'zh' ? '' : `<span>${lang === 'en' ? w[3] : w[2]}</span>`}<small>Китайское слово дня</small></div></div>
     ${from ? `<div class="fc-from">Печенье от: ${from}</div>` : ''}
     <p class="sh-note" style="text-align:center">${T('Новое печенье — завтра.', 'A new cookie tomorrow.', '明天会有新的幸运饼干。')}</p>
+    <p class="fc-up">${T('Хочешь узнать свой личный день по звезде рождения? Это режим «Путь».', 'Want your personal day by your birth star? That is the Path mode.', '想按出生星宿了解你的个人运势？请选择「道路」模式。')}${inApp ? '' : ` <a href="/shop/upgrade.html?m=fc&s=${encodeURIComponent(s.id)}">${T('Открыть Путь', 'Open Path', '开启道路')}</a>`}</p>
     <div class="btns">${sndBtn()}${isAdmin ? '<button class="btn" id="fcNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
   $('sheet').classList.add('fc');
   playWav(synthWav('crack')); bindSnd(() => synthWav('crack'));
