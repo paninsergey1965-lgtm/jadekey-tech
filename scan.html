@@ -2805,43 +2805,43 @@ function showNY(s, P) {
 // Талисман по джйотишу: планета дня (вара) → её камень (наваратна), цвет, биджа-мантра, чему благоволит день, упая. 0 = воскресенье.
 // [планета рус, англ, санскрит, камень рус, англ, цвет рус, англ, css, мантра, благоволит рус, англ, [пожелания рус], [пожелания англ], [упаи рус], [упаи англ]]
 const TAL_GRAHA = [
-  ['Солнце', 'Sun', 'Сурья', 'Рубин', 'Ruby', 'красный, оранжевый', 'red, orange', '#e0442a', 'Ом Сурьяя намаха',
+  ['Солнце', 'Sun', '☉', 'Топаз', 'Topaz', 'золотой, жёлтый', 'gold, yellow', '#e0a82a', '',
    'воле, здоровью, уверенности, отцу и начальству', 'will, health, confidence, father and those in charge',
    ['Сегодня твой свет виден издалека. Не прячь его.', 'Солнце светит всем одинаково — будь щедр сегодня.', 'Пусть сегодня хватит сил на главное.', 'Держи спину прямо: сегодня день достоинства.'],
    ['Today your light is seen from afar. Do not hide it.', 'The Sun shines on all alike — be generous today.', 'May you have strength for what matters today.', 'Stand tall: today is a day of dignity.'],
    ['Встреть рассвет или выйди утром на свет хотя бы на пару минут.', 'Позвони отцу или старшему в семье.', 'Выйди на солнечный свет хотя бы на 15 минут.'],
    ['Greet the sunrise or step into morning light for a couple of minutes.', 'Call your father or the eldest in your family.', 'Step into sunlight for at least 15 minutes.']],
-  ['Луна', 'Moon', 'Чандра', 'Жемчуг', 'Pearl', 'белый, серебристый', 'white, silver', '#e8eef8', 'Ом Сомая намаха',
+  ['Луна', 'Moon', '☽', 'Лунный камень', 'Moonstone', 'серебристый, белый', 'silver, white', '#e8eef8', '',
    'чувствам, дому, покою, матери и воде', 'feelings, home, calm, mother and water',
    ['Береги свой покой — сегодня он дороже дел.', 'Пусть сердце будет мягким, как лунный свет.', 'Сегодня хорошо слушать себя и близких.', 'Вода смывает лишнее. Пусть уйдёт тревога.'],
    ['Guard your calm — today it is worth more than tasks.', 'Let your heart be soft as moonlight.', 'A good day to listen to yourself and those close.', 'Water washes away the excess. Let worry go.'],
    ['Выпей стакан чистой воды медленно, с благодарностью.', 'Позвони маме или тому, кто о тебе заботился.', 'Вечером посмотри на луну хотя бы минуту.'],
    ['Drink a glass of clean water slowly, with gratitude.', 'Call your mother or someone who cared for you.', 'In the evening look at the moon for a minute.']],
-  ['Марс', 'Mars', 'Мангала', 'Красный коралл', 'Red coral', 'красный', 'red', '#c8202a', 'Ом Ангаракая намаха',
+  ['Марс', 'Mars', '♂', 'Гранат', 'Garnet', 'красный', 'red', '#c8202a', '',
    'смелости, энергии, спорту и защите близких', 'courage, energy, sport and protecting your own',
    ['Сегодня хватит смелости на то, что откладывал.', 'Энергии много — направь её в дело, не в спор.', 'Будь сильным и добрым одновременно.', 'Сегодня ты можешь больше, чем думаешь.'],
    ['Today you have courage for what you postponed.', 'Plenty of energy — put it into work, not quarrels.', 'Be strong and kind at once.', 'Today you can do more than you think.'],
    ['Сделай зарядку или пробежку — дай Марсу выход.', 'Защити того, кто слабее, хотя бы словом.', 'Надень что-то красное.'],
    ['Exercise or run — give Mars an outlet.', 'Stand up for someone weaker, even with a word.', 'Wear something red.']],
-  ['Меркурий', 'Mercury', 'Будха', 'Изумруд', 'Emerald', 'зелёный', 'green', '#2f9a5a', 'Ом Будхая намаха',
+  ['Меркурий', 'Mercury', '☿', 'Агат', 'Agate', 'оранжевый, пёстрый', 'orange, mixed', '#e08a2a', '',
    'учёбе, разговорам, переговорам, письмам и торговле', 'study, talks, negotiations, writing and trade',
    ['Сегодня слова попадают в цель. Скажи главное.', 'Хороший день учиться и договариваться.', 'Ум ясный — реши то, что давно путалось.', 'Лёгкость и остроумие сегодня с тобой.'],
    ['Today words hit the mark. Say what matters.', 'A good day to learn and to agree.', 'A clear mind — solve what was tangled.', 'Lightness and wit are with you today.'],
    ['Прочитай 10 страниц или выучи что-то новое.', 'Напиши письмо или сообщение, которое откладывал.', 'Добавь в день зелень — в еду, в одежду или цветок на стол.'],
    ['Read ten pages or learn something new.', 'Write the message you have been postponing.', 'Add green to your day — in food, clothes or a plant on the desk.']],
-  ['Юпитер', 'Jupiter', 'Гуру (Брихаспати)', 'Жёлтый сапфир', 'Yellow sapphire', 'жёлтый', 'yellow', '#e8b820', 'Ом Гураве намаха',
+  ['Юпитер', 'Jupiter', '♃', 'Аметист', 'Amethyst', 'синий, фиолетовый', 'blue, purple', '#6a4fc0', '',
    'мудрости, учителям, детям, благословению и щедрости', 'wisdom, teachers, children, blessing and generosity',
    ['Сегодня благословение на твоей стороне.', 'Щедрость вернётся к тебе вдвойне.', 'Хороший день спросить совета у мудрого.', 'Пусть рядом будут те, кто учит тебя добру.'],
    ['Today blessing is on your side.', 'Generosity will return to you twice over.', 'A good day to ask the wise for advice.', 'May those who teach you good be near.'],
    ['Поблагодари своего учителя — словом или сообщением.', 'Угости кого-нибудь сладким.', 'Надень что-то жёлтое.'],
    ['Thank your teacher — in words or a message.', 'Treat someone to something sweet.', 'Wear something yellow.']],
-  ['Венера', 'Venus', 'Шукра', 'Алмаз', 'Diamond', 'белый, розовый', 'white, pink', '#f1b6c8', 'Ом Шукрая намаха',
+  ['Венера', 'Venus', '♀', 'Изумруд', 'Emerald', 'зелёный, розовый', 'green, pink', '#3fae7a', '',
    'любви, красоте, искусству, удовольствию и согласию', 'love, beauty, art, pleasure and harmony',
    ['Сегодня день красоты — в тебе и вокруг.', 'Любовь отвечает любовью. Скажи тёплое слово.', 'Порадуй себя чем-то красивым.', 'Пусть сегодня будет легко и нежно.'],
    ['Today is a day of beauty — in you and around you.', 'Love answers love. Say a warm word.', 'Treat yourself to something beautiful.', 'May today be light and tender.'],
    ['Подари кому-нибудь цветок или маленький подарок.', 'Включи любимую музыку и побудь с ней.', 'Надень что-то белое или розовое.'],
    ['Give someone a flower or a small gift.', 'Put on music you love and stay with it.', 'Wear something white or pink.']],
-  ['Сатурн', 'Saturn', 'Шани', 'Синий сапфир', 'Blue sapphire', 'тёмно-синий, чёрный', 'dark blue, black', '#283a7a', 'Ом Шанайшчарая намаха',
+  ['Сатурн', 'Saturn', '♄', 'Оникс', 'Onyx', 'чёрный, тёмно-серый', 'black, dark grey', '#3a3a48', '',
    'терпению, порядку, честному труду и помощи старшим', 'patience, order, honest work and helping elders',
    ['Сегодня терпение сильнее спешки.', 'Честный труд сегодня приносит прочное.', 'Не торопись — всё сложится в свой срок.', 'Наведи порядок — и станет легче.'],
    ['Today patience is stronger than haste.', 'Honest work today builds what lasts.', 'Do not rush — everything comes in its time.', 'Bring order and things get easier.'],
@@ -2857,6 +2857,21 @@ const TAL_SOFT = [
   ['Не спорь с днём — переждать тоже умение.', 'Do not fight the day — waiting is a skill too.'],
   ['Сделай малое хорошо, большое — потом.', 'Do the small thing well; the big one can come later.'],
 ];
+// западная традиция: знак зодиака по дате рождения, его управитель (индекс дня недели) и камень знака
+const TAL_ZOD = [ // [ru, en, с MMDD, управитель 0..6 (Вс..Сб), камень ru, en]
+  ['Козерог', 'Capricorn', 1222, 6, 'гранат', 'garnet'], ['Водолей', 'Aquarius', 120, 6, 'аметист', 'amethyst'], ['Рыбы', 'Pisces', 219, 4, 'аквамарин', 'aquamarine'],
+  ['Овен', 'Aries', 321, 2, 'алмаз', 'diamond'], ['Телец', 'Taurus', 420, 5, 'изумруд', 'emerald'], ['Близнецы', 'Gemini', 521, 3, 'агат', 'agate'],
+  ['Рак', 'Cancer', 621, 1, 'лунный камень', 'moonstone'], ['Лев', 'Leo', 723, 0, 'перидот', 'peridot'], ['Дева', 'Virgo', 823, 3, 'сапфир', 'sapphire'],
+  ['Весы', 'Libra', 923, 5, 'опал', 'opal'], ['Скорпион', 'Scorpio', 1023, 2, 'топаз', 'topaz'], ['Стрелец', 'Sagittarius', 1122, 4, 'бирюза', 'turquoise'],
+];
+function zodiacOf(bday) {
+  if (!bday || bday.length < 10) return null;
+  const md = +bday.slice(5, 7) * 100 + +bday.slice(8, 10);
+  let z = TAL_ZOD[0];
+  for (const r of TAL_ZOD) if (r[2] <= md && r[2] !== 1222) z = r;
+  if (md >= 1222 || md < 120) z = TAL_ZOD[0];
+  return z;
+}
 const TAL_NAKLORD = [['Кету', 'Ketu', 'кошачий глаз', "cat's eye"], ['Венера', 'Venus', 'алмаз', 'diamond'], ['Солнце', 'Sun', 'рубин', 'ruby'], ['Луна', 'Moon', 'жемчуг', 'pearl'], ['Марс', 'Mars', 'красный коралл', 'red coral'], ['Раху', 'Rahu', 'гессонит', 'hessonite'], ['Юпитер', 'Jupiter', 'жёлтый сапфир', 'yellow sapphire'], ['Сатурн', 'Saturn', 'синий сапфир', 'blue sapphire'], ['Меркурий', 'Mercury', 'изумруд', 'emerald']];
 function showTal(s, P) {
   const now = new Date(NOW().getTime() + talShift * 864e5), dn = dayNum(now), h = strHash(s.id), L = PL(), E = L !== 0;
@@ -2868,19 +2883,18 @@ function showTal(s, P) {
   const wish = bday ? (E ? `Happy birthday${P.name ? ', ' + P.name : ''}! May this year bring all you dream of.` : `С днём рождения${P.name ? ', ' + P.name : ''}! Пусть этот год принесёт всё, о чём ты мечтаешь.`) : tone === 'bad' ? TAL_SOFT[(dn + h) % TAL_SOFT.length][E ? 1 : 0] : (E ? G[12] : G[11])[(wk + h) % 4];
   const upaya = (E ? G[14] : G[13])[(wk + h) % 3];
   const date = now.toLocaleDateString(({en:'en-GB',zh:'zh-CN'})[window.JK_LANG]||'ru-RU', { day: 'numeric', month: 'long', weekday: 'long' });
-  let bn = null; try { bn = birthNak(P); } catch (e) {}
-  const lord = bn == null ? null : TAL_NAKLORD[bn % 9];
-  const alt = birthNakAlt(P), alt2 = alt && TAL_NAKLORD[alt[0] % 9] !== TAL_NAKLORD[alt[1] % 9] ? alt.map(n => TAL_NAKLORD[n % 9]) : null;
+  const Z = zodiacOf(P.bday);
+  const PN = ['Солнце', 'Луна', 'Марс', 'Меркурий', 'Юпитер', 'Венера', 'Сатурн'];
   const T = (ru, en) => E ? en : ru;
   sheet(`<div class="tl-k">✦ ${T('Твой талисман', 'Your talisman')}</div><img class="tl-img" src="${s.thumb || ''}" alt=""><div class="sh-name" style="text-align:center">${esc(P.name || '')}</div>
     <div class="pt-date" style="text-align:center">${esc(date)}</div>
     <div class="tl-k" style="margin-top:12px">${bday ? T('Особый день', 'A special day') : T('Пожелание дня', 'Wish of the day')}</div><div class="tl-wish">${esc(wish)}</div>
-    <div class="tl-g"><div class="tl-gh"><i style="background:${G[7]}"></i>${T('Сегодня день', 'Today is the day of')} ${E ? G[1] : ['Солнца', 'Луны', 'Марса', 'Меркурия', 'Юпитера', 'Венеры', 'Сатурна'][vara]} <span>· ${G[2]}</span></div>
+    <div class="tl-g"><div class="tl-gh"><i style="background:${G[7]}"></i>${T('Сегодня день', 'Today is the day of')} ${E ? G[1] : ['Солнца', 'Луны', 'Марса', 'Меркурия', 'Юпитера', 'Венеры', 'Сатурна'][vara]} <span>${G[2]}</span></div>
       <div class="tl-row"><span>${T('Камень дня', 'Stone of the day')}<b>${E ? G[4] : G[3]}</b></span><span style="text-align:right">${T('Цвет дня', 'Colour of the day')}<b>${E ? G[6] : G[5]}</b></span></div>
       <div class="tl-fav">${tone === 'bad' ? `${T('Сегодня мягко: день помогает', 'Gently today: the day helps with')} ${E ? G[10] : G[9]}, ${T('но не новым начинаниям', 'but not with new beginnings')}.` : `${T('День благоволит', 'The day favours')} ${E ? G[10] : G[9]}.`}</div></div>
     <div class="tl-rit">${T('Совет дня', 'Tip of the day')}: ${esc(upaya)}</div>
-    ${alt2 ? `<div class="tl-lord">${T('В день твоего рождения Луна сменила звезду, поэтому твоя планета —', 'On your birthday the Moon changed stars, so your planet is')} <b>${E ? alt2[0][1] : alt2[0][0]}</b> ${T('или', 'or')} <b>${E ? alt2[1][1] : alt2[1][0]}</b>, ${T('камень —', 'stone —')} <b>${E ? alt2[0][3] : alt2[0][2]}</b> ${T('или', 'or')} <b>${E ? alt2[1][3] : alt2[1][2]}</b>. ${T('Укажи время рождения, чтобы знать точно.', 'Add your birth time to know for sure.')}</div>` : lord ? `<div class="tl-lord">${T('Твоя планета по звезде рождения', 'Your planet by birth star')} — <b>${E ? lord[1] : lord[0]}</b>, ${T('её камень', 'its stone')} — <b>${E ? lord[3] : lord[2]}</b>. ${T('Это твой личный оберег по джйотишу.', 'This is your personal Jyotish amulet.')}</div>` : ''}
-    <p class="sh-note" style="text-align:center;font-size:12px;opacity:.75">${T('Соответствия дней, планет и камней — по джйотишу (наваратна).', 'Day, planet and stone correspondences follow Jyotish (navaratna).')}</p>
+    ${Z ? `<div class="tl-lord">${T('Твой знак', 'Your sign')} — <b>${E ? Z[1] : Z[0]}</b>, ${T('управитель', 'ruler')} — <b>${E ? TAL_GRAHA[Z[3]][1] : PN[Z[3]]}</b>, ${T('твой камень', 'your stone')} — <b>${E ? Z[5] : Z[4]}</b>.${Z[3] === vara ? ' ' + (tone === 'bad' ? T('Сегодня день твоей планеты — береги силы для своего.', 'Today is your planet\'s day — save your strength for what is yours.') : T('Сегодня день твоей планеты — твой день силы.', 'Today is your planet\'s day — your day of strength.')) : ''}</div>` : `<div class="tl-lord">${T('Укажи день рождения — и талисман узнает твой знак и твой камень.', 'Add your birthday and the talisman will know your sign and your stone.')}</div>`}
+    <p class="sh-note" style="text-align:center;font-size:12px;opacity:.75">${T('Планеты дней недели, знаки и камни — по западной астрологической традиции.', 'Weekday planets, signs and stones follow the Western astrological tradition.')}</p>
     <div class="btns">${sndBtn()}${demoOk() ? `<button class="btn" id="tlNext">${T('Демо: завтра ›', 'Demo: tomorrow ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close')}</button></div>`);
   $('sheet').classList.add('tal'); fxRise(['✦', '·', '✧'], [G[7], '#d5c6ff', '#ffffff'], 24);
   playWav(synthWav('bowl')); bindSnd(() => synthWav('bowl'));
@@ -3240,7 +3254,7 @@ function liveCollect() {
 function liveForm() {
   const m = LV.mode, P = LV.p;
   let f = '';
-  if (m === 'tal') f = fld('lvName', 'Имя владельца', P.name) + fld('lvBday', 'День рождения, по желанию', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect('lvBtz', P.btz);
+  if (m === 'tal') f = fld('lvName', 'Имя владельца', P.name) + fld('lvBday', 'День рождения, по желанию', P.bday, 'date');
   else if (m === 'path') f = fld('lvName', 'Как к тебе обращаться', P.name) + fld('lvBday', 'Дата рождения, по желанию', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect('lvBtz', P.btz) + '<p class="sub" style="margin:6px 0 0">С датой рождения послания считаются по твоей Луне рождения.</p>' + fld('lvFrom', 'От кого, если это подарок', P.from);
   else {
     f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
@@ -3952,7 +3966,7 @@ async function adminMode(s) {
   const collect = () => { for (const [id, k] of [['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amBtz', 'btz'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
   const draw = () => {
     let f = '';
-    if (m === 'tal') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'День рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + tzSelect('amBtz', P.btz);
+    if (m === 'tal') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'День рождения', P.bday, 'date');
     else if (m === 'path') f = fld('amName', 'Как обращаться', P.name) + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + tzSelect('amBtz', P.btz) + fld('amFrom', 'От кого', P.from);
     else { f = fld('amTo', 'Кому (имя)', P.to) + fld('amFrom', 'От кого (имя)', P.from); if (m === 'love') f += fld('amSince', 'Вместе с', P.since, 'date'); }
     sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Сейчас: ${LIVE_MODES[s.mode] || '—'}</div><div class="sh-name">${esc(s.name || '')}</div></div></div>
