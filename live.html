@@ -1397,7 +1397,7 @@ async function adminLogin() {
   if (isExpert) { if (confirm('Выйти из режима эксперта?')) { setExpert(false); toast('Режим эксперта выключен'); } return; }
   const pw = prompt('Пароль администратора');
   if (!pw) return;
-  if ((await sha(pw.trim())) === EXPERT_H) { setExpert(true); toast('Режим эксперта включён'); return; }
+  if (!window.Capacitor && (await sha(pw.trim())) === EXPERT_H) { setExpert(true); toast('Режим эксперта включён'); return; }
   veil('Вход…');
   try {
     const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: pw, returnSecureToken: true }) });
@@ -4042,7 +4042,7 @@ $('nLive').onclick = () => { tab('live'); liveHome(); };
   document.querySelectorAll('input,textarea').forEach(x => { x.style.webkitUserSelect = 'text'; });
 })();
 try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
-try { if (localStorage.getItem('jk2_exp')) setExpert(true); } catch (e) {}
+try { if (localStorage.getItem('jk2_exp') && !window.Capacitor) setExpert(true); } catch (e) {}
 document.getElementById('btnExp').onclick = () => expertPanel();
 if (new URLSearchParams(location.search).has('love')) {
   document.body.classList.add('love');
