@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Проверка уведомления</title>
+<style>body{font:18px/1.5 -apple-system,sans-serif;padding:24px;max-width:520px;margin:auto}button{font-size:18px;padding:14px 20px;border-radius:12px;border:0;background:#1d6b4f;color:#fff;width:100%}pre{white-space:pre-wrap;background:#f3f3f3;padding:12px;border-radius:8px}</style>
+</head><body>
+<h2>Проверка уведомления в Telegram</h2>
+<p>Повторяет уведомление о тестовом платеже 100 ₽ (платёж перепроверяется в ЮKassa).</p>
+<button id="b">Отправить уведомление</button>
+<pre id="o"></pre>
+<script>
+document.getElementById('b').onclick = async () => {
+  const o = document.getElementById('o'); o.textContent = 'Отправляю…';
+  try {
+    const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'payment.succeeded', object: { id: '328e1bcd-000f-5000-b000-1933a92488c9' } })
+    });
+    o.textContent = 'Ответ функции: ' + r.status + ' ' + (await r.text());
+  } catch (e) { o.textContent = 'Ошибка: ' + e; }
+};
+</script>
+</body></html>
