@@ -275,7 +275,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 
 <!-- ============ SCAN ============ -->
 <section class="view on" id="vScan">
-  <div class="top"><div class="word">Jade<i>Key</i></div><div class="tb"><button class="tbtn" id="btnLang">EN</button><div class="chip" id="chip">Загружаю модель…</div></div></div>
+  <div class="top"><div class="word">Jade<i>Key</i></div><div class="tb"><button class="tbtn" id="btnExp" title="Режим эксперта" style="display:none;width:auto;padding:0 12px;font-size:13px">Эксперт</button><button class="tbtn" id="btnLang">EN</button><div class="chip" id="chip">Загружаю модель…</div></div></div>
   <div class="stage">
     <video id="vidS" playsinline muted autoplay></video>
     <canvas class="ov" id="ovS"></canvas>
@@ -1394,8 +1394,10 @@ async function authToken() {
   return AUTH.id;
 }
 async function adminLogin() {
+  if (isExpert) { if (confirm('Выйти из режима эксперта?')) { setExpert(false); toast('Режим эксперта выключен'); } return; }
   const pw = prompt('Пароль администратора');
   if (!pw) return;
+  if ((await sha(pw.trim())) === EXPERT_H) { setExpert(true); toast('Режим эксперта включён'); return; }
   veil('Вход…');
   try {
     const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: pw, returnSecureToken: true }) });
@@ -1412,7 +1414,14 @@ function adminLogout() {
   try { localStorage.removeItem('jk2_rt'); } catch (e) {}
   AUTH.id = null; setAdmin(false); tab('scan'); toast('Режим администратора выключен');
 }
-let isAdmin = false;
+let isAdmin = false, isExpert = false;
+const EXPERT_H = '067b2f38f1493a2960c8880b30196836fae6436b5f2ccf8a97ac64d9eeaa8f55';
+const demoOk = () => isAdmin || isExpert;
+function setExpert(on) {
+  isExpert = !!on;
+  try { on ? localStorage.setItem('jk2_exp', '1') : localStorage.removeItem('jk2_exp'); } catch (e) {}
+  const b = document.getElementById('btnExp'); if (b) b.style.display = isExpert ? '' : 'none';
+}
 function setAdmin(on) {
   isAdmin = !!on;
   $('nColl').style.display = isAdmin ? '' : 'none';
@@ -2017,7 +2026,7 @@ function showLove(s) {
   msg = msg.replace(/\{days\}/g, days);
   const date = now.toLocaleDateString(({en:'en-GB',zh:'zh-CN'})[window.JK_LANG]||'ru-RU', { day: 'numeric', month: 'long' });
   const pic = LOVE_PICS[(dayNo + h * 7) % LOVE_PICS.length];
-  sheet(`<div class="lv-top"><span class="lv-heart">♥</span> JadeKey Love</div><div class="lv-pic">${pic}</div><div class="lv-to">${esc(L.to)},</div><div class="lv-msg">${esc(msg)}</div>${L.from ? `<div class="lv-from">— ${esc(L.from)}</div>` : ''}<div class="lv-meta"><span>${days ? 'День ' + days + ' вместе' : ''}</span><span>${date}</span></div><p class="sh-note">Новое послание появится завтра. Открыть его может только этот камень.</p><div class="btns"><button class="btn" id="lvSnd" style="flex:0 0 58px;padding-left:0;padding-right:0" title="Звук">${loveMuted() ? '🔇' : '🔊'}</button>${isAdmin ? '<button class="btn" id="lvNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
+  sheet(`<div class="lv-top"><span class="lv-heart">♥</span> JadeKey Love</div><div class="lv-pic">${pic}</div><div class="lv-to">${esc(L.to)},</div><div class="lv-msg">${esc(msg)}</div>${L.from ? `<div class="lv-from">— ${esc(L.from)}</div>` : ''}<div class="lv-meta"><span>${days ? 'День ' + days + ' вместе' : ''}</span><span>${date}</span></div><p class="sh-note">Новое послание появится завтра. Открыть его может только этот камень.</p><div class="btns"><button class="btn" id="lvSnd" style="flex:0 0 58px;padding-left:0;padding-right:0" title="Звук">${loveMuted() ? '🔇' : '🔊'}</button>${demoOk() ? '<button class="btn" id="lvNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
   $('sheet').classList.add('love'); loveRain();
   const tuneNo = (dayNo + h) % LOVE_TUNES.length;
   lovePlay(tuneNo);
@@ -2026,7 +2035,7 @@ function showLove(s) {
     $('lvSnd').textContent = m ? '🔇' : '🔊'; if (m) loveStop(); else lovePlay(tuneNo);
   };
   $('again').onclick = () => { loveShift = 0; loveStop(); hideSheet(); };
-  if (isAdmin) $('lvNext').onclick = () => { loveShift++; showLove(s); };
+  if (demoOk()) $('lvNext').onclick = () => { loveShift++; showLove(s); };
 }
 async function showFound(r) {
   let s = r.stone;
@@ -2262,7 +2271,7 @@ const dayNum = d => Math.floor((d.getTime() - d.getTimezoneOffset() * 6e4) / 864
 const plural = (n, a, b, c) => n % 10 === 1 && n % 100 !== 11 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c;
 const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
 // ?date=2026-12-05 lets the admin preview another day
-const NOW = () => { const q = new URLSearchParams(location.search).get('date'); if (q && isAdmin) { const d = new Date(q + 'T' + new Date().toTimeString().slice(0, 8)); if (!isNaN(d)) return d; } return new Date(); };
+const NOW = () => { const q = new URLSearchParams(location.search).get('date'); if (q && demoOk()) { const d = new Date(q + 'T' + new Date().toTimeString().slice(0, 8)); if (!isNaN(d)) return d; } return new Date(); };
 
 // ---------- phone identity (Firebase anonymous sign-in) ----------
 const ANON = { id: null, exp: 0, uid: null };
@@ -2766,7 +2775,7 @@ function showNY(s, P) {
     <div class="adv hab-wk">${week}</div>
     <p class="sh-note">${goal ? `До значка «${goal[1]}» — ${goal[0] - streak} ${plural(goal[0] - streak, 'день', 'дня', 'дней')}.` : 'Целый год привычек. Ты невероятный.'} Завтра будет новое задание.</p>
     <p class="sh-note" style="font-size:12px;opacity:.7">Задания общие и не заменяют совет врача. Если что-то нельзя по здоровью — пропусти.</p>`;
-  sheet(body + `<div class="btns">${sndBtn()}${isAdmin ? '<button class="btn" id="habNext">Демо: завтра ›</button>' : ''}<button class="btn" id="again">Закрыть</button></div>`);
+  sheet(body + `<div class="btns">${sndBtn()}${demoOk() ? '<button class="btn" id="habNext">Демо: завтра ›</button>' : ''}<button class="btn" id="again">Закрыть</button></div>`);
   $('sheet').classList.add('ny'); fxSnow();
   $('habDone').onclick = () => {
     if (done.has(dn)) return;
@@ -2788,7 +2797,7 @@ function showNY(s, P) {
   if (now >= ny && now < end && !habShift) { fxFireworks(); playWav(synthWav('fireworks')); setTimeout(() => { if ($('sheet').classList.contains('ny')) playWav(synthWav('bells')); }, 3600); }
   else playWav(synthWav('bells'));
   bindSnd(() => synthWav('bells'));
-  if (isAdmin) $('habNext').onclick = () => { habShift++; showNY(s, P); };
+  if (demoOk()) $('habNext').onclick = () => { habShift++; showNY(s, P); };
   $('again').onclick = () => { habShift = 0; loveStop(); clearInterval(nyTimer); hideSheet(); };
 }
 // Талисман по джйотишу: планета дня (вара) → её камень (наваратна), цвет, биджа-мантра, чему благоволит день, упая. 0 = воскресенье.
@@ -2870,11 +2879,11 @@ function showTal(s, P) {
     <div class="tl-rit">${T('Совет дня', 'Tip of the day')}: ${esc(upaya)}</div>
     ${alt2 ? `<div class="tl-lord">${T('В день твоего рождения Луна сменила звезду, поэтому твоя планета —', 'On your birthday the Moon changed stars, so your planet is')} <b>${E ? alt2[0][1] : alt2[0][0]}</b> ${T('или', 'or')} <b>${E ? alt2[1][1] : alt2[1][0]}</b>, ${T('камень —', 'stone —')} <b>${E ? alt2[0][3] : alt2[0][2]}</b> ${T('или', 'or')} <b>${E ? alt2[1][3] : alt2[1][2]}</b>. ${T('Укажи время рождения, чтобы знать точно.', 'Add your birth time to know for sure.')}</div>` : lord ? `<div class="tl-lord">${T('Твоя планета по звезде рождения', 'Your planet by birth star')} — <b>${E ? lord[1] : lord[0]}</b>, ${T('её камень', 'its stone')} — <b>${E ? lord[3] : lord[2]}</b>. ${T('Это твой личный оберег по джйотишу.', 'This is your personal Jyotish amulet.')}</div>` : ''}
     <p class="sh-note" style="text-align:center;font-size:12px;opacity:.75">${T('Соответствия дней, планет и камней — по джйотишу (наваратна).', 'Day, planet and stone correspondences follow Jyotish (navaratna).')}</p>
-    <div class="btns">${sndBtn()}${isAdmin ? `<button class="btn" id="tlNext">${T('Демо: завтра ›', 'Demo: tomorrow ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close')}</button></div>`);
+    <div class="btns">${sndBtn()}${demoOk() ? `<button class="btn" id="tlNext">${T('Демо: завтра ›', 'Demo: tomorrow ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close')}</button></div>`);
   $('sheet').classList.add('tal'); fxRise(['✦', '·', '✧'], [G[7], '#d5c6ff', '#ffffff'], 24);
   playWav(synthWav('bowl')); bindSnd(() => synthWav('bowl'));
   $('again').onclick = () => { talShift = 0; loveStop(); hideSheet(); };
-  if (isAdmin) $('tlNext').onclick = () => { talShift++; showTal(s, P); };
+  if (demoOk()) $('tlNext').onclick = () => { talShift++; showTal(s, P); };
 }
 const FC_PRED = [
   'Скоро ты получишь хорошую новость, которую давно ждёшь.', 'Твоя смелость откроет дверь, которую другие считают закрытой.', 'Неожиданная встреча принесёт радость.',
@@ -3075,11 +3084,11 @@ function showFortune(s, P, again) {
     ${from ? `<div class="fc-from">Печенье от: ${from}</div>` : ''}
     <p class="sh-note" style="text-align:center">${T('Новое печенье — завтра.', 'A new cookie tomorrow.', '明天会有新的幸运饼干。')}</p>
     <p class="fc-up">${T('Хочешь узнать свой личный день по звезде рождения? Это режим «Путь».', 'Want your personal day by your birth star? That is the Path mode.', '想按出生星宿了解你的个人运势？请选择「道路」模式。')}${inApp ? '' : ` <a href="/shop/upgrade.html?m=fc&s=${encodeURIComponent(s.id)}">${T('Открыть Путь', 'Open Path', '开启道路')}</a>`}</p>
-    <div class="btns">${sndBtn()}${isAdmin ? '<button class="btn" id="fcNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
+    <div class="btns">${sndBtn()}${demoOk() ? '<button class="btn" id="fcNext">Демо: завтра ›</button>' : ''}<button class="btn main" id="again">Закрыть</button></div>`);
   $('sheet').classList.add('fc');
   playWav(synthWav('crack')); bindSnd(() => synthWav('crack'));
   fxRise(['✦', '·', '✧'], ['#ffd987', '#ffb070', '#ffffff'], 18);
-  if (isAdmin) $('fcNext').onclick = () => { fcShift++; showFortune(s, P, true); };
+  if (demoOk()) $('fcNext').onclick = () => { fcShift++; showFortune(s, P, true); };
   $('again').onclick = () => { fcShift = 0; loveStop(); hideSheet(); };
 }
 function showTeaser(s) {
@@ -3922,12 +3931,12 @@ function showPath(s, P) {
   }
   const W = PATH_WIS[(dn + h) % PATH_WIS.length], PR = pc ? (PATH_TPRAC[pc.tithi] || PATH_VPRAC[pc.vara][(h + Math.floor(dn / 7)) % 5]) : PATH_PRAC[(dn + h * 7) % PATH_PRAC.length];
   html += `<div class="pt-wis">«${esc(W[L])}»<small>${PATH_SRC[W[3]][L]}${W[4]}${L === 2 ? '章' : ''}</small></div><div class="tl-rit">${T('Практика дня', 'Practice of the day', '今日修习')}: ${esc(PR[L])}</div>`;
-  html += `<p class="sh-note" style="text-align:center">${T('Новое послание откроется завтра.', 'A new message opens tomorrow.', '明天会打开新的讯息。')}</p><div class="btns">${sndBtn()}${isAdmin ? `<button class="btn" id="ptNext">${T('Демо: завтра ›', 'Demo: tomorrow ›', '演示：明天 ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close', '关闭')}</button></div>`;
+  html += `<p class="sh-note" style="text-align:center">${T('Новое послание откроется завтра.', 'A new message opens tomorrow.', '明天会打开新的讯息。')}</p><div class="btns">${sndBtn()}${demoOk() ? `<button class="btn" id="ptNext">${T('Демо: завтра ›', 'Demo: tomorrow ›', '演示：明天 ›')}</button>` : ''}<button class="btn main" id="again">${T('Закрыть', 'Close', '关闭')}</button></div>`;
   sheet(html);
   $('sheet').classList.add('tal', 'path'); fxRise(['✦', '·', '☾'], ['#ffe2a8', '#c9d4ff', '#ffffff'], 22);
   playWav(synthWav('ghanta')); bindSnd(() => synthWav('ghanta'));
   $('again').onclick = () => { pathShift = 0; loveStop(); hideSheet(); };
-  if (isAdmin) $('ptNext').onclick = () => { pathShift++; showPath(s, P); };
+  if (demoOk()) $('ptNext').onclick = () => { pathShift++; showPath(s, P); };
 }
 
 // ---------- admin: switch a live stone to another mode ----------
@@ -3971,6 +3980,36 @@ async function adminMode(s) {
   draw();
 }
 
+
+// ---------- expert: preview any mode without a stone ----------
+function expertPanel() {
+  const modes = [['path', 'Путь'], ['tal', 'Талисман'], ['fc', 'Печенье'], ['ny', 'Год привычек'], ['love', 'Любовь']];
+  let E = {}; try { E = JSON.parse(localStorage.getItem('jk2_exp_p') || '{}'); } catch (e) {}
+  const m = E.m || 'path';
+  sheet(`<div class="sh-head"><div><div class="sh-state">Режим эксперта</div><div class="sh-name">Просмотр режимов</div><div class="sh-note" style="margin:0;font-size:13px">Без камня: введи данные и смотри любой режим, кнопка «Демо: завтра» листает дни.</div></div></div>
+    <label class="lbl" for="exM">Режим</label><select class="fld" id="exM">${modes.map(([k, n]) => `<option value="${k}"${k === m ? ' selected' : ''}>${n}</option>`).join('')}</select>
+    ${fld('exName', 'Имя', E.name)}${fld('exBday', 'Дата рождения', E.bday, 'date')}${fld('exBtime', 'Время рождения', E.btime, 'time')}<label class="lbl" for="exBtz">Город рождения</label>${tzSelect('exBtz', E.btz)}
+    ${fld('exFrom', 'От кого (для Любви и Года)', E.from)}
+    <label class="lbl"><input type="checkbox" id="exKid"${E.kid ? ' checked' : ''}> Детский вариант (Год привычек)</label>
+    ${fld('exDate', 'Смотреть на дату (пусто — сегодня)', E.date, 'date')}
+    <div class="btns"><button class="btn" id="again">Закрыть</button><button class="btn main" id="exGo">Показать</button></div>`);
+  $('again').onclick = hideSheet;
+  $('exGo').onclick = () => {
+    const v = id => ($(id) || {}).value || '';
+    E = { m: v('exM'), name: v('exName').trim(), bday: v('exBday'), btime: v('exBtime'), btz: v('exBtz'), from: v('exFrom').trim(), kid: $('exKid').checked, date: v('exDate') };
+    try { localStorage.setItem('jk2_exp_p', JSON.stringify(E)); } catch (e) {}
+    const days = E.date ? Math.round((new Date(E.date + 'T12:00:00') - new Date(new Date().toDateString() + ' 12:00:00')) / 864e5) : 0;
+    talShift = habShift = fcShift = pathShift = loveShift = days;
+    const P = { name: E.name, to: E.name, from: E.from, bday: E.bday, btime: E.btime, btz: E.btz, kid: E.kid, tone: 'tender' };
+    const st = { id: 'expert-' + (E.name || 'demo'), name: E.name, mode: E.m };
+    if (E.m === 'love') showLove({ id: st.id, love: { to: E.name || 'Любимая', from: E.from, since: '', tone: 'tender' } });
+    else if (E.m === 'ny') showNY(st, P);
+    else if (E.m === 'fc') showFortune(st, P);
+    else if (E.m === 'path') showPath(st, P);
+    else showTal(st, P);
+  };
+}
+
 // ---------- tabs ----------
 function tab(name) {
   hideSheet();
@@ -4003,6 +4042,8 @@ $('nLive').onclick = () => { tab('live'); liveHome(); };
   document.querySelectorAll('input,textarea').forEach(x => { x.style.webkitUserSelect = 'text'; });
 })();
 try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
+try { if (localStorage.getItem('jk2_exp')) setExpert(true); } catch (e) {}
+document.getElementById('btnExp').onclick = () => expertPanel();
 if (new URLSearchParams(location.search).has('love')) {
   document.body.classList.add('love');
   const w = document.querySelector('#vScan .word'); if (w) w.innerHTML = 'Jade<i>Key</i> <i>♥</i>';
