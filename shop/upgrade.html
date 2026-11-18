@@ -129,7 +129,7 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
       const u = new URLSearchParams({ am: sid, to: t }); if (d.nm) u.set('nm', d.nm.trim().slice(0, 20)); if (d.bd) u.set('bd', d.bd); if (d.bt) u.set('bt', d.bt);
       note = 'https://jadekey.tech/scan.html?' + u.toString();
     } else note = 'Смена режима, камень «' + d.stone.trim() + '»' + (d.nm ? ' · ' + d.nm : '') + (d.bd ? ' · ДР ' + d.bd : '') + (d.bt ? ' ' + d.bt : '');
-    const body = { id: 'up:' + d.from + '-' + t, name: d.name, phone: d.phone, email: d.email, delivery: 'pickup', address: '', comment: (note + (d.comment ? ' · ' + d.comment : '')).slice(0, 200) };
+    const body = { id: 'up:' + d.from + '-' + t, sid, nm: (d.nm || '').trim(), bd: d.bd || '', bt: d.bt || '', name: d.name, phone: d.phone, email: d.email, delivery: 'pickup', address: '', comment: (note + (d.comment ? ' · ' + d.comment : '')).slice(0, 200) };
     const label = go.textContent; go.disabled = true; go.textContent = 'Переходим к оплате…';
     try {
       const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
