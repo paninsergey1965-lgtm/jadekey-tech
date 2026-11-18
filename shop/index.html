@@ -29,6 +29,13 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 .how{background:var(--stone);text-align:center;padding:56px 24px;margin-top:40px}
 .how ol{list-style:none;display:grid;gap:26px;max-width:960px;margin:30px auto 0}
 .how li p{color:var(--mute);max-width:32ch;margin:6px auto 0}
+.swap{max-width:960px;margin:34px auto 0;background:#fff;border:1px solid var(--line);border-top:3px solid var(--red);padding:30px 22px 26px;text-align:center}
+.swap h3{font:500 26px/1.2 "Cormorant Garamond",var(--serif);margin:0 0 10px;color:var(--ink)}
+.swap p{color:var(--mute);max-width:44ch;margin:0 auto 18px}
+.swap .modes{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 22px}
+.swap .modes span{font:500 12px/1 var(--cap);letter-spacing:.08em;border:1px solid var(--line);padding:9px 12px;color:var(--ink)}
+.swap a.go{display:inline-block;background:var(--red);color:#fff;font:600 13px/1 var(--cap);letter-spacing:.14em;text-transform:uppercase;padding:18px 30px;text-decoration:none}
+.swap a.go:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .how .n{display:block;font:400 24px/1 "Cormorant Garamond",var(--serif);color:var(--red);margin-bottom:8px}
 @media(min-width:800px){.how ol{grid-template-columns:repeat(3,1fr)}}
 .prod{max-width:1100px;margin:auto;display:grid;gap:0}
@@ -89,9 +96,10 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 <section class="how"><h2 class="cap">Как это работает</h2><ol>
 <li><span class="n">I</span><h3 class="cap">Выберите камень и режим</h3><p>Оплатите онлайн картой или через СБП.</p></li>
 <li><span class="n">II</span><h3 class="cap">Получите посылку</h3><p>Доставим камень СДЭК или Почтой России по всей стране. Доставка уже включена в цену.</p></li>
-<li><span class="n">III</span><h3 class="cap">Оживите камень</h3><p>Откройте JadeKey, наведите телефон на камень, впишите имя — и отправьте ссылку-подарок тому, кому дарите. Захотите другой режим — <a href="/shop/upgrade.html" style="color:inherit;text-decoration:underline">смените его за доплату</a>.</p></li>
-</ol></section>
-<footer><div><a href="/shop/">Каталог</a><a href="/shop/delivery.html">Доставка и возврат</a><a href="/shop/oferta.html">Оферта</a><a href="/privacy.html">Конфиденциальность</a><a href="https://jadekey.tech">jadekey.tech</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></div>
+<li><span class="n">III</span><h3 class="cap">Оживите камень</h3><p>Откройте JadeKey, наведите телефон на камень, впишите имя — и отправьте ссылку-подарок тому, кому дарите. Захотите другой режим — смените его за доплату.</p></li>
+</ol>
+<div class="swap" id="swap"><h3>Уже есть камень? Смените режим</h3><p>Камень остаётся тот же — меняется то, что он говорит. Доплачиваете только разницу в цене.</p><div class="modes"><span>Путь</span><span>Талисман</span><span>Луна</span><span>Печенье</span><span>Love</span></div><a class="go" href="/shop/upgrade.html">Сменить режим</a></div></section>
+<footer><div><a href="/shop/">Каталог</a><a href="/shop/upgrade.html">Сменить режим</a><a href="/shop/delivery.html">Доставка и возврат</a><a href="/shop/oferta.html">Оферта</a><a href="/privacy.html">Конфиденциальность</a><a href="https://jadekey.tech">jadekey.tech</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></div>
 <small>ИП Панин Сергей Николаевич · ИНН 771501067019, ОГРНИП 324774600501998</small></footer>
 <script>
 (() => {
