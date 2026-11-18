@@ -2149,7 +2149,7 @@ function showInfo(s) {
     if (!(await ownerOk())) return;
     if (!confirm(`Удалить «${s.name}»?`)) return;
     veil('Удаляю…');
-    try { await fsDelete(COLP, s.id); await fsDelete(COL, s.id); patchCache.delete(s.id); await loadStones(); hideSheet(); }
+    try { for (const x of [...stones.filter(x => x.of === s.id && !x.mode), s]) { await fsDelete(COLP, x.id).catch(() => {}); await fsDelete(COL, x.id); patchCache.delete(x.id); } await loadStones(); hideSheet(); }
     catch (e) { toast('Не удалось удалить: ' + e.message); }
     veil();
   };
