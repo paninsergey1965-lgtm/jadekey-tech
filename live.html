@@ -285,6 +285,11 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 @media (max-width:360px){.ln-gb{grid-template-columns:1fr}}
 .sheet.luna .pt-sky{display:grid;grid-template-columns:1fr 1fr;row-gap:12px}.sheet.luna .pt-sky b{font-size:18px}.sheet.luna .pt-sky i{font-size:12px}
 
+.mtog{display:flex;gap:4px;margin:2px auto 12px;padding:3px;border-radius:999px;background:#ffffff14;width:max-content}
+.mtog button{border:0;background:none;color:inherit;opacity:.7;font:600 13px/1 var(--sans,-apple-system,sans-serif);padding:9px 16px;border-radius:999px;cursor:pointer}
+.mtog button.on{background:#ffffffe6;color:#141414;opacity:1}
+.mup{display:block;text-align:center;margin:14px 0 4px;font-size:13px;color:inherit;opacity:.75;text-decoration:underline;text-underline-offset:3px}
+
 </style>
 </head>
 <body>
@@ -3133,6 +3138,21 @@ function showTeaser(s) {
   $('again').onclick = hideSheet;
   $('want').onclick = () => { hideSheet(); tab('live'); liveHome(); };
 }
+// Love stone: Печенье is included for free — a toggle on the sheet; paid modes are bought on the site (never inside the apps)
+const UP_RANK = { fc: 1, love: 2, luna: 3, tal: 4, path: 5 };
+function liveExtras(s, view) {
+  const sh = $('sheet'), g = sh && sh.querySelector('.grab'); if (!g) return;
+  if (s.mode === 'love') {
+    g.insertAdjacentHTML('afterend', `<div class="mtog" role="group" aria-label="Режим"><button data-v="love" class="${view !== 'fc' ? 'on' : ''}">Love</button><button data-v="fc" class="${view === 'fc' ? 'on' : ''}">Печенье</button></div>`);
+    sh.querySelectorAll('.mtog [data-v]').forEach(b => b.onclick = () => { if (b.classList.contains('on')) return; ls.set('jk2_view_' + s.id, b.dataset.v); loveStop(); showLive(s); });
+  }
+  const fu = sh.querySelector('.fc-up');
+  if (fu && s.mode !== 'fc') fu.remove();
+  if (!inApp && (UP_RANK[s.mode] || 0) < 5 && !(fu && s.mode === 'fc')) {
+    const u = `/shop/upgrade.html?s=${encodeURIComponent(s.id)}&m=${s.mode === 'ny' ? 'luna' : s.mode}`;
+    sh.insertAdjacentHTML('beforeend', `<a class="mup" href="${u}">Подключить другой режим — Луна, Талисман, Путь</a>`);
+  }
+}
 async function showLive(s) {
   veil('Открываю…');
   let p = null; try { p = await readPriv(s.id); } catch (e) {}
@@ -3141,11 +3161,14 @@ async function showLive(s) {
   if (myUid() && p.recipient === myUid()) remember(s.id, 'got');
   const P = p.profile || {};
   talShift = habShift = fcShift = pathShift = lunaShift = 0;
-  if (s.mode === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: P.to || '', from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
+  const view = s.mode === 'love' && ls.get('jk2_view_' + s.id) === 'fc' ? 'fc' : s.mode;
+  if (view === 'fc' && s.mode === 'love') showFortune(s, P);
+  else if (s.mode === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: P.to || '', from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
   else if (s.mode === 'luna' || s.mode === 'ny') showLuna(s, P);
   else if (s.mode === 'fc') showFortune(s, P);
   else if (s.mode === 'path') showPath(s, P);
   else showTal(s, P);
+  liveExtras(s, view);
 }
 
 // ---------- gift link: ?g=<stone>.<claim> ----------
@@ -4060,14 +4083,24 @@ function showLuna(s, P) {
   if (demoOk()) $('lnNext').onclick = () => { lunaShift++; showLuna(s, P); };
 }
 
+// ---------- admin: deep link from the Telegram payment message ----------
+async function adminDeepLink() {
+  const q = new URLSearchParams(location.search), id = q.get('am'); if (!id) return;
+  if (!isAdmin || !(await authToken())) { toast('Войди как администратор и открой ссылку ещё раз', 6000); return; }
+  if (!stones.length) await loadStones();
+  const s = stones.find(x => x.id === id);
+  if (!s) { toast('Камень не найден: ' + id, 6000); return; }
+  adminMode(s, { m: q.get('to'), nm: q.get('nm') || '', bd: q.get('bd') || '', bt: q.get('bt') || '' });
+}
 // ---------- admin: switch a live stone to another mode ----------
-async function adminMode(s) {
+async function adminMode(s, pre) {
   if (!s || !isAdmin) return;
   veil('Открываю…'); const p = await readPriv(s.id).catch(() => null); veil();
   if (!p) { toast('Не нашёл данные камня'); return; }
   const o = p.profile || {}, nm = o.name || o.to || s.name || '';
   const P = { name: nm, to: o.to || nm, from: o.from || '', bday: o.bday || '', btime: o.btime || '', btz: o.btz || '', since: o.since || '', tone: o.tone || 'tender', kid: !!o.kid, midnight: o.midnight || '' };
   let m = s.mode || 'tal';
+  if (pre) { if (LIVE_MODES[pre.m]) m = pre.m; if (pre.nm) { P.name = pre.nm; P.to = P.to || pre.nm; } if (pre.bd) P.bday = pre.bd; if (pre.bt) P.btime = pre.bt; }
   const collect = () => { for (const [id, k] of [['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amBtz', 'btz'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
   const draw = () => {
     let f = '';
@@ -4308,9 +4341,9 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
   };
 }
 
-loadStones();
+loadStones().then(() => adminDeepLink());
 window.__coi.then(() => { loadModel(); liveInit(); });
-if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
+if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showLuna, liveExtras, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
   if (inApp) $('lvPaste').style.display = '';
   // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly

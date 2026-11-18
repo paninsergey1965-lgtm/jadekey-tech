@@ -70,10 +70,11 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 <h1>Сменить режим камня</h1>
 <p>Камень уже у тебя, и ты хочешь, чтобы он стал другим: например, был Печеньем, а станет Путём. Платишь только разницу, камень остаётся тот же. Ссылка-подарок и всё, что получатель уже видел, сохраняются.</p>
 <form id="f" novalidate>
-  <label>Какой режим у камня сейчас<select name="from" id="from">
+  <label id="fromL">Какой режим у камня сейчас<select name="from" id="from">
     <option value="">— выбери —</option><option value="fc">Печенье</option><option value="love">Love</option><option value="luna">Луна</option><option value="tal">Талисман</option><option value="path">Путь</option></select></label>
   <label id="stoneL">Как назван камень или кому подарен — чтобы мы его нашли<input name="stone" id="stone" placeholder="например: «для Анны» или «Ночной шторм»"></label>
   <fieldset class="modes" id="modes" style="display:none"><legend>Чем станет камень</legend></fieldset>
+  <div id="who" style="display:none"><label>Как обращаться к владельцу камня<input name="nm" id="nm" maxlength="40"></label><label><span id="bdL">Дата рождения владельца — по желанию</span><input name="bd" id="bd" type="date"></label><label id="btL" style="display:none">Время рождения — по желанию, точнее расчёт<input name="bt" id="bt" type="time"></label></div>
   <label>Имя<input name="name" autocomplete="name" required></label>
   <label>Телефон — напишем, когда режим сменится<input name="phone" type="tel" autocomplete="tel" required></label>
   <label>Эл. почта — для чека<input name="email" type="email" autocomplete="email" required></label>
@@ -91,18 +92,26 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   const fmt = n => n.toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
   if (M.some(x => x[0] === q.get('m'))) sel.value = q.get('m');
   if (sid) document.getElementById('stoneL').style.display = 'none';
-  const cost = (a, b) => Math.max(b[2] - a[2], 490);
+  if (sid && M.some(x => x[0] === q.get('m'))) document.getElementById('fromL').style.display = 'none';
+  const who = document.getElementById('who'), SOLO = ['luna', 'tal', 'path'];
+  // Love includes Печенье for free, so a Love stone never pays for Печенье; only upgrades to a dearer mode are sold
+  const base = c => c[2];
+  const cost = (a, b) => b[2] - base(a);
   const draw = () => {
     const cur = M.find(x => x[0] === sel.value);
     if (!cur) { box.style.display = 'none'; go.disabled = true; go.textContent = 'Выбери режимы'; return; }
     const prev = (box.querySelector('input:checked') || {}).value;
-    const opts = M.filter(x => x[0] !== cur[0]);
+    const opts = M.filter(x => x[2] > base(cur) && !(cur[0] === 'love' && x[0] === 'fc'));
+    if (!opts.length) { box.innerHTML = '<legend>Чем станет камень</legend><p>У камня уже самый полный режим — «Путь».</p>'; box.style.display = ''; who.style.display = 'none'; go.disabled = true; go.textContent = 'Нечего менять'; return; }
     box.innerHTML = '<legend>Чем станет камень</legend>' + opts.map(x => `<label class="md"><input type="radio" name="to" value="${x[0]}"${x[0] === prev ? ' checked' : ''}><b>${x[1]}</b><i>${fmt(cost(cur, x))} ₽</i><small>${x[3]}</small></label>`).join('');
     box.style.display = '';
     upd();
   };
   const upd = () => {
     const cur = M.find(x => x[0] === sel.value), t = M.find(x => x[0] === (box.querySelector('input:checked') || {}).value);
+    const tm = t && t[0]; who.style.display = SOLO.includes(tm) ? '' : 'none';
+    document.getElementById('btL').style.display = tm === 'path' ? '' : 'none';
+    document.getElementById('bdL').textContent = tm === 'path' ? 'Дата рождения владельца' : 'Дата рождения владельца — по желанию';
     go.disabled = !(cur && t); go.textContent = cur && t ? 'Оплатить ' + fmt(cost(cur, t)) + ' ₽ · ' + cur[1] + ' → ' + t[1] : 'Выбери, чем станет камень';
   };
   sel.onchange = draw; box.onchange = upd; draw();
@@ -113,8 +122,14 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
     if (!d.from || !t) { err.textContent = 'Выбери, какой режим сейчас и каким он станет.'; return; }
     if (!sid && !d.stone.trim()) { err.textContent = 'Напиши, как назван камень или кому подарен — иначе мы его не найдём.'; return; }
     if (!d.name.trim() || !d.phone.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { err.textContent = 'Заполните имя, телефон и почту — на неё придёт чек.'; return; }
-    const who = sid ? 'id ' + sid : '«' + d.stone.trim() + '»';
-    const body = { id: 'up:' + d.from + '-' + t, name: d.name, phone: d.phone, email: d.email, delivery: 'pickup', address: '', comment: ('Смена режима, камень ' + who + (d.comment ? ' · ' + d.comment : '')).slice(0, 200) };
+    if (SOLO.includes(t) && !(d.nm || '').trim()) { err.textContent = 'Напиши, как обращаться к владельцу камня.'; return; }
+    if (t === 'path' && !d.bd) { err.textContent = 'Для «Пути» нужна дата рождения владельца.'; return; }
+    let note;
+    if (sid) {
+      const u = new URLSearchParams({ am: sid, to: t }); if (d.nm) u.set('nm', d.nm.trim().slice(0, 20)); if (d.bd) u.set('bd', d.bd); if (d.bt) u.set('bt', d.bt);
+      note = 'https://jadekey.tech/scan.html?' + u.toString();
+    } else note = 'Смена режима, камень «' + d.stone.trim() + '»' + (d.nm ? ' · ' + d.nm : '') + (d.bd ? ' · ДР ' + d.bd : '') + (d.bt ? ' ' + d.bt : '');
+    const body = { id: 'up:' + d.from + '-' + t, name: d.name, phone: d.phone, email: d.email, delivery: 'pickup', address: '', comment: (note + (d.comment ? ' · ' + d.comment : '')).slice(0, 200) };
     const label = go.textContent; go.disabled = true; go.textContent = 'Переходим к оплате…';
     try {
       const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
