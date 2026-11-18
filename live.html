@@ -2207,13 +2207,13 @@ async function processShot(cv) {
   veil('Запоминаю камень…'); await tick();
   try {
     const r = await stoneFeatures(cv, 0, null);
-    if (!r) { toast('Камень на кадре не найден, попробуй ещё'); setAddMode('cam'); return; }
+    if (!r) { veil(); toast('Камень на кадре не найден, попробуй ещё'); setAddMode('cam'); return; }
     const n = r.f.mask.filter(Boolean).length;
     const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(r.f.cv, 0, 0, 240, 240);
     const shot = { cv, f: r.f, thumb: t.toDataURL('image/jpeg', 0.8), n, hue: r.b.hue };
     if (addSide === 2) {
-      if (verdictOf(scoreAgainst(addShot.f, r.f)) === 'yes') { toast('Это та же сторона. Переверни камень и сними снова', 4500); addSide = 0; setAddMode('form'); return; }
-      addShot2 = shot; addSide = 0; drawSide2(); setAddMode('form'); return;
+      if (verdictOf(scoreAgainst(addShot.f, r.f)) === 'yes') { veil(); toast('Это та же сторона. Переверни камень и сними снова', 4500); addSide = 0; setAddMode('form'); return; }
+      addShot2 = shot; addSide = 0; drawSide2(); setAddMode('form'); veil(); return;
     }
     addShot = shot;
     $('shotImg').src = addShot.thumb;
