@@ -349,7 +349,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <label class="lbl">Название</label>
       <input class="fld" id="fName" placeholder="Например, Агат розовый №3" autocomplete="off">
       <label class="lbl">Режим, который купили</label>
-      <select class="fld" id="fBuy"><option value="">Любой — покупатель выберет сам</option><option value="fc">Печенье</option><option value="luna">Луна</option><option value="love">Love + Печенье</option><option value="tal">Талисман</option><option value="path">Путь</option></select>
+      <select class="fld" id="fBuy"><option value="">Любой — покупатель выберет сам</option><option value="fc">Печенье</option><option value="love">Love + Печенье</option><option value="luna">Луна</option><option value="tal">Талисман</option><option value="path">Путь</option></select>
       <label class="lbl">JK-номер</label>
       <input class="fld" id="fJk" placeholder="JK-000009" autocomplete="off" autocapitalize="characters">
       <label class="lbl">Контакты владельца</label>
@@ -2127,7 +2127,7 @@ $('search').oninput = renderColl;
 function showInfo(s) {
   if (s.mode) {
     const sides = stones.filter(x => x.of === s.id).length + 1;
-    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button><button class="row" id="amOpen"><span><b>Сменить режим</b><small>Путь, Талисман, Печенье, Новый год, Love</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button><button class="row" id="amOpen"><span><b>Сменить режим</b><small>Печенье, Love, Луна, Талисман, Путь</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
     $('again').onclick = hideSheet;
     $('lvOpen').onclick = () => showLive(s);
     $('amOpen').onclick = () => adminMode(s);
@@ -2297,7 +2297,7 @@ $('btnSave').onclick = async () => {
 //  Живые камни: покупатель сам оживляет камень, получатель открывает по ссылке
 // =====================================================================
 const COLV = 'jk2_private';
-const LIVE_MODES = { path: 'Путь', love: 'Love', luna: 'Луна', tal: 'Талисман', fc: 'Печенье' };
+const LIVE_MODES = { fc: 'Печенье', love: 'Love', luna: 'Луна', tal: 'Талисман', path: 'Путь' };
 const LIVE_DESC = {
   path: 'Каждый день — небо дня по Джйотишу: накшатра, лунный день и планета дня, строка из Дао дэ цзин с номером главы и короткая практика. С датой рождения — лично для тебя.',
   fc: 'Печенье с советом дня по «Книге перемен» (И цзин): каждый день — одна из 64 гексаграмм, счастливые числа по китайской традиции и китайское слово дня. Личный расчёт по звезде рождения — в режиме «Путь».',
@@ -4176,7 +4176,7 @@ async function adminMode(s, pre) {
 
 // ---------- expert: preview any mode without a stone ----------
 function expertPanel() {
-  const modes = [['path', 'Путь'], ['tal', 'Талисман'], ['fc', 'Печенье'], ['luna', 'Луна'], ['love', 'Любовь']];
+  const modes = [['fc', 'Печенье'], ['love', 'Любовь'], ['luna', 'Луна'], ['tal', 'Талисман'], ['path', 'Путь']];
   let E = {}; try { E = JSON.parse(localStorage.getItem('jk2_exp_p') || '{}'); } catch (e) {}
   const m = E.m || 'path';
   sheet(`<div class="sh-head"><div><div class="sh-state">Режим эксперта</div><div class="sh-name">Просмотр режимов</div><div class="sh-note" style="margin:0;font-size:13px">Без камня: введи данные и смотри любой режим, кнопка «Демо: завтра» листает дни.</div></div></div>
