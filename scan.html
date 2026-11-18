@@ -288,7 +288,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 @media (max-width:360px){.ln-gb{grid-template-columns:1fr}}
 .sheet.luna .pt-sky{display:grid;grid-template-columns:1fr 1fr;row-gap:12px}.sheet.luna .pt-sky b{font-size:18px}.sheet.luna .pt-sky i{font-size:12px}
 
-.mtog{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:2px auto 12px;padding:3px;border-radius:22px;background:#ffffff14;width:max-content;max-width:100%}
+.mtog{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:14px auto 12px;padding:3px;border-radius:22px;background:#ffffff14;width:max-content;max-width:100%}
 .mtog button{border:0;background:none;color:inherit;opacity:.7;font:600 12.5px/1 var(--sans,-apple-system,sans-serif);padding:9px 11px;border-radius:999px;cursor:pointer}
 .mtog button.on{background:#ffffffe6;color:#141414;opacity:1}
 .mup{display:block;text-align:center;margin:14px 0 4px;font-size:13px;color:inherit;opacity:.75;text-decoration:underline;text-underline-offset:3px}
@@ -3170,7 +3170,7 @@ function liveExtras(s, view) {
   const sh = $('sheet'), g = sh && sh.querySelector('.grab'); if (!g) return;
   const tier = s.mode === 'ny' ? 'luna' : s.mode, open = unlockedModes(tier);
   if (open.length > 1) {
-    g.insertAdjacentHTML('afterend', `<div class="mtog" role="group" aria-label="Режим">${open.map(k => `<button data-v="${k}" class="${k === view ? 'on' : ''}">${LIVE_MODES[k]}</button>`).join('')}</div>`);
+    const bt = [...sh.querySelectorAll('.btns')].pop(); (bt || g).insertAdjacentHTML(bt ? 'beforebegin' : 'afterend', `<div class="mtog" role="group" aria-label="Режим">${open.map(k => `<button data-v="${k}" class="${k === view ? 'on' : ''}">${LIVE_MODES[k]}</button>`).join('')}</div>`);
     sh.querySelectorAll('.mtog [data-v]').forEach(b => b.onclick = () => { if (b.classList.contains('on')) return; ls.set('jk2_view_' + s.id, b.dataset.v); loveStop(); showLive(s); });
   }
   const fu = sh.querySelector('.fc-up');
