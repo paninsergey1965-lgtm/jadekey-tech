@@ -285,8 +285,8 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 @media (max-width:360px){.ln-gb{grid-template-columns:1fr}}
 .sheet.luna .pt-sky{display:grid;grid-template-columns:1fr 1fr;row-gap:12px}.sheet.luna .pt-sky b{font-size:18px}.sheet.luna .pt-sky i{font-size:12px}
 
-.mtog{display:flex;gap:4px;margin:2px auto 12px;padding:3px;border-radius:999px;background:#ffffff14;width:max-content}
-.mtog button{border:0;background:none;color:inherit;opacity:.7;font:600 13px/1 var(--sans,-apple-system,sans-serif);padding:9px 16px;border-radius:999px;cursor:pointer}
+.mtog{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:2px auto 12px;padding:3px;border-radius:22px;background:#ffffff14;width:max-content;max-width:100%}
+.mtog button{border:0;background:none;color:inherit;opacity:.7;font:600 12.5px/1 var(--sans,-apple-system,sans-serif);padding:9px 11px;border-radius:999px;cursor:pointer}
 .mtog button.on{background:#ffffffe6;color:#141414;opacity:1}
 .mup{display:block;text-align:center;margin:14px 0 4px;font-size:13px;color:inherit;opacity:.75;text-decoration:underline;text-underline-offset:3px}
 
@@ -3140,17 +3140,19 @@ function showTeaser(s) {
 }
 // Love stone: Печенье is included for free — a toggle on the sheet; paid modes are bought on the site (never inside the apps)
 const UP_RANK = { fc: 1, love: 2, luna: 3, tal: 4, path: 5 };
+const unlockedModes = tier => Object.keys(UP_RANK).filter(k => UP_RANK[k] <= Math.max(UP_RANK[tier] || 2, 2));
 function liveExtras(s, view) {
   const sh = $('sheet'), g = sh && sh.querySelector('.grab'); if (!g) return;
-  if (s.mode === 'love') {
-    g.insertAdjacentHTML('afterend', `<div class="mtog" role="group" aria-label="Режим"><button data-v="love" class="${view !== 'fc' ? 'on' : ''}">Love</button><button data-v="fc" class="${view === 'fc' ? 'on' : ''}">Печенье</button></div>`);
+  const tier = s.mode === 'ny' ? 'luna' : s.mode, open = unlockedModes(tier);
+  if (open.length > 1) {
+    g.insertAdjacentHTML('afterend', `<div class="mtog" role="group" aria-label="Режим">${open.map(k => `<button data-v="${k}" class="${k === view ? 'on' : ''}">${LIVE_MODES[k]}</button>`).join('')}</div>`);
     sh.querySelectorAll('.mtog [data-v]').forEach(b => b.onclick = () => { if (b.classList.contains('on')) return; ls.set('jk2_view_' + s.id, b.dataset.v); loveStop(); showLive(s); });
   }
   const fu = sh.querySelector('.fc-up');
-  if (fu && s.mode !== 'fc') fu.remove();
-  if (!inApp && (UP_RANK[s.mode] || 0) < 5 && !(fu && s.mode === 'fc')) {
-    const u = `/shop/upgrade.html?s=${encodeURIComponent(s.id)}&m=${s.mode === 'ny' ? 'luna' : s.mode}`;
-    sh.insertAdjacentHTML('beforeend', `<a class="mup" href="${u}">Подключить другой режим — Луна, Талисман, Путь</a>`);
+  if (fu) fu.remove();
+  if (!inApp && (UP_RANK[tier] || 0) < 5) {
+    const u = `/shop/upgrade.html?s=${encodeURIComponent(s.id)}&m=${tier}`, more = Object.keys(UP_RANK).filter(k => !open.includes(k)).map(k => LIVE_MODES[k]).join(', ');
+    sh.insertAdjacentHTML('beforeend', `<a class="mup" href="${u}">Открыть ещё режимы — ${more}</a>`);
   }
 }
 async function showLive(s) {
@@ -3161,13 +3163,15 @@ async function showLive(s) {
   if (myUid() && p.recipient === myUid()) remember(s.id, 'got');
   const P = p.profile || {};
   talShift = habShift = fcShift = pathShift = lunaShift = 0;
-  const view = s.mode === 'love' && ls.get('jk2_view_' + s.id) === 'fc' ? 'fc' : s.mode;
-  if (view === 'fc' && s.mode === 'love') showFortune(s, P);
-  else if (s.mode === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: P.to || '', from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
-  else if (s.mode === 'luna' || s.mode === 'ny') showLuna(s, P);
-  else if (s.mode === 'fc') showFortune(s, P);
-  else if (s.mode === 'path') showPath(s, P);
-  else showTal(s, P);
+  // a stone's mode is its tier: every cheaper mode is unlocked too (Love always includes Печенье)
+  const tier = s.mode === 'ny' ? 'luna' : s.mode, open = unlockedModes(tier), pick = ls.get('jk2_view_' + s.id);
+  const view = open.includes(pick) ? pick : tier;
+  const Q = Object.assign({}, P, { name: P.name || P.to || '', to: P.to || P.name || '' });
+  if (view === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: Q.to, from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
+  else if (view === 'luna') showLuna(s, Q);
+  else if (view === 'fc') showFortune(s, Q);
+  else if (view === 'path') showPath(s, Q);
+  else showTal(s, Q);
   liveExtras(s, view);
 }
 
@@ -4120,12 +4124,14 @@ async function adminMode(s, pre) {
       const prof = m === 'fc' ? { to: P.to, from: P.from } : m === 'love' ? { to: P.to, from: P.from, since: P.since, tone: P.tone }
         : m === 'luna' ? { name: P.name, bday: P.bday } : m === 'path' ? { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz, from: P.from } : { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz };
       const pub = solo ? P.name : P.to;
+      Object.keys(prof).forEach(k => { if (prof[k] === '' && o[k]) delete prof[k]; });
+      const merged = Object.assign({}, o, prof);
       veil('Сохраняю…');
       try {
         const tok = await authToken();
         if (!tok) throw new Error('нужен вход администратора');
         for (const x of [s, ...stones.filter(x => x.of === s.id)]) await fsReq('PATCH', `${COL}/${x.id}`, tok, { mode: m, name: pub }, ['mode', 'name']);
-        await fsReq('PATCH', `${COLV}/${s.id}`, tok, { profile: JSON.stringify(prof) }, ['profile']);
+        await fsReq('PATCH', `${COLV}/${s.id}`, tok, { profile: JSON.stringify(merged) }, ['profile']);
         await loadStones(); hideSheet(); toast(`Режим: ${LIVE_MODES[m]}`);
       } catch (e) { toast('Не получилось: ' + e.message, 6000); }
       veil();

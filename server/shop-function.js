@@ -103,7 +103,9 @@ async function applyMode(sid, from, to, m) {
   const q = await fs('POST', ':runQuery', { structuredQuery: { from: [{ collectionId: 'jk2_stones' }], where: { fieldFilter: { field: { fieldPath: 'of' }, op: 'EQUAL', value: str(sid) } } } });
   const ids = [sid].concat((q || []).filter(x => x.document).map(x => x.document.name.split('/').pop()));
   for (const id of ids) await fs('PATCH', '/jk2_stones/' + id + '?updateMask.fieldPaths=mode&updateMask.fieldPaths=name', { fields: { mode: str(to), name: str(pub) } });
-  await fs('PATCH', '/jk2_private/' + sid + '?updateMask.fieldPaths=profile', { fields: { profile: str(JSON.stringify(prof)) } });
+  // keep everything the stone already had (names, dates) — cheaper modes stay available to switch back to
+  Object.keys(prof).forEach(k => { if (prof[k] === '' && old[k]) delete prof[k]; });
+  await fs('PATCH', '/jk2_private/' + sid + '?updateMask.fieldPaths=profile', { fields: { profile: str(JSON.stringify(Object.assign({}, old, prof))) } });
   return 'Режим сменён автоматически: ' + NAMES[from] + ' → ' + NAMES[to] + ' (' + name + ')';
 }
 
