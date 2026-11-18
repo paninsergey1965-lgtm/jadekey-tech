@@ -3291,7 +3291,7 @@ async function liveCapture(side) {
     }
     const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(A.f.cv, 0, 0, 240, 240);
     LV[side === 'A' ? 'a' : 'b'] = { f: A.f, hue: A.b.hue, thumb: t.toDataURL('image/jpeg', 0.8) };
-    lvVerdict('ok', side === 'A' ? 'Сторона А готова. Теперь переверни камень.' : 'Обе стороны готовы. Камень узнаётся любой стороной.');
+    lvVerdict('ok', side === 'A' ? (LV.srcBack && LV.srcBack.length && !isAdmin ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.') : 'Обе стороны готовы. Камень узнаётся любой стороной.');
   } catch (e) { fail('Ошибка: ' + e.message); }
   finally { veil(); LV.busy = false; stopCam(); lvNav(); }
 }
@@ -3314,7 +3314,7 @@ function liveRender() {
   $('lvH').textContent = ['Сторона А', 'Переверни камень', 'Кому и чем станет камень', 'Камень ожил'][st];
   $('lvSub').textContent = ['Положи камень на белый лист бумаги. Не сканируй под лампой сверху — от неё блик: лучше у окна днём или с лампой сбоку. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', 'Режим можно будет поменять позже.', ''][st];
   lvQ(null); lvVerdict('', '');
-  if (st === 0 && LV.a) lvVerdict('ok', 'Сторона А готова. Теперь переверни камень.');
+  if (st === 0 && LV.a) lvVerdict('ok', LV.srcBack && LV.srcBack.length ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.');
   if (st === 1 && LV.b) lvVerdict('ok', 'Обе стороны готовы.');
   if (st === 1 && LV.hidden) lvVerdict('ok', LV.srcBack && LV.srcBack.length ? 'Обе стороны этого камня уже сняты в магазине JadeKey — жми «Далее».' : 'Хватит одной стороны.');
   if (st === 2) liveForm();
@@ -3451,14 +3451,15 @@ $('lvPaste').onclick = () => {
   if (m) openGift(m[1], m[2]); else if (v) toast('Это не ссылка-подарок');
 };
 $('lvStart').onclick = () => {
-  Object.assign(LV, { step: 0, a: null, b: null, src: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
+  Object.assign(LV, { step: 0, a: null, b: null, src: null, srcBack: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
   $('lvHomeBox').style.display = 'none'; $('lvWiz').style.display = '';
   liveRender();
 };
 $('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
 $('lvHidden').onclick = () => { if (LV.busy) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
-$('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; liveRender(); };
-$('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; liveRender(); };
+const skipB = () => LV.srcBack && LV.srcBack.length && LV.a;
+$('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; if (LV.step === 1 && skipB()) LV.step = 0; liveRender(); };
+$('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; if (LV.step === 1 && skipB()) { LV.hidden = true; LV.b = null; LV.step = 2; } liveRender(); };
 
 // install as an app (Chrome on Android)
 let installEv = null;
