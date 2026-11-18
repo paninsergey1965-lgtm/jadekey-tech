@@ -4127,7 +4127,7 @@ async function adminDeepLink() {
   if (!stones.length) await loadStones();
   const s = stones.find(x => x.id === id);
   if (!s) { toast('Камень не найден: ' + id, 6000); return; }
-  adminMode(s, { m: q.get('to'), nm: q.get('nm') || '', bd: q.get('bd') || '', bt: q.get('bt') || '' });
+  adminMode(s, { m: q.get('to'), nm: q.get('nm') || '', bd: q.get('bd') || '', bt: q.get('bt') || '', bz: q.get('bz') || '' });
 }
 // ---------- admin: switch a live stone to another mode ----------
 async function adminMode(s, pre) {
@@ -4137,7 +4137,7 @@ async function adminMode(s, pre) {
   const o = p.profile || {}, nm = o.name || o.to || s.name || '';
   const P = { name: nm, to: o.to || nm, from: o.from || '', bday: o.bday || '', btime: o.btime || '', btz: o.btz || '', since: o.since || '', tone: o.tone || 'tender', kid: !!o.kid, midnight: o.midnight || '' };
   let m = s.mode || 'tal';
-  if (pre) { if (LIVE_MODES[pre.m]) m = pre.m; if (pre.nm) { P.name = pre.nm; P.to = P.to || pre.nm; } if (pre.bd) P.bday = pre.bd; if (pre.bt) P.btime = pre.bt; }
+  if (pre) { if (LIVE_MODES[pre.m]) m = pre.m; if (pre.nm) { P.name = pre.nm; P.to = P.to || pre.nm; } if (pre.bd) P.bday = pre.bd; if (pre.bt) P.btime = pre.bt; if (pre.bz) P.btz = pre.bz; }
   const collect = () => { for (const [id, k] of [['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amBtz', 'btz'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
   const draw = () => {
     let f = '';

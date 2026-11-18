@@ -40,7 +40,7 @@ async function pay(b) {
   const value = p.price.toFixed(2); // price always from the server
   const up = /^up:([a-z]+)-([a-z]+)$/.exec(b.id || '');
   const sid = up && /^[A-Za-z0-9]{10,40}$/.test(b.sid || '') ? b.sid : '';
-  const upm = sid ? { sid, nm: s(b.nm, 40), bd: /^\d{4}-\d\d-\d\d$/.test(b.bd || '') ? b.bd : '', bt: /^\d\d:\d\d$/.test(b.bt || '') ? b.bt : '' } : {};
+  const upm = sid ? { sid, nm: s(b.nm, 40), bd: /^\d{4}-\d\d-\d\d$/.test(b.bd || '') ? b.bd : '', bt: /^\d\d:\d\d$/.test(b.bt || '') ? b.bt : '', bz: /^[A-Za-z_\/+\-|]{0,40}$/.test(b.bz || '') ? (b.bz || '') : '' } : {};
   const r = await fetch('https://api.yookassa.ru/v3/payments', {
     method: 'POST',
     headers: { Authorization: auth(), 'Content-Type': 'application/json', 'Idempotence-Key': crypto.randomUUID() },
@@ -95,7 +95,7 @@ async function applyMode(sid, from, to, m) {
   try { const pv = await fs('GET', '/jk2_private/' + sid); old = JSON.parse(((pv.fields || {}).profile || {}).stringValue || '{}'); } catch (e) {}
   const name = (m.nm || old.name || old.to || '').trim();
   if (!name) throw new Error('нет имени владельца');
-  const bday = m.bd || old.bday || '', btime = m.bt || old.btime || '', btz = old.btz || '';
+  const bday = m.bd || old.bday || '', btime = m.bt || old.btime || '', btz = m.bz || old.btz || '';
   if (to === 'path' && !bday) throw new Error('для «Пути» нет даты рождения');
   const prof = to === 'luna' ? { name, bday } : to === 'path' ? { name, bday, btime, btz, from: old.from || '' } : to === 'tal' ? { name, bday, btime, btz } : { to: old.to || name, from: old.from || '' };
   const pub = to === 'fc' || to === 'love' ? (old.to || name) : name;
