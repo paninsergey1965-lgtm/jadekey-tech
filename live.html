@@ -1678,7 +1678,7 @@ async function identify(cv, status = () => {}) {
 
 // ---------- sheet ----------
 function openLink(url) { if (/^(tel:|mailto:)/.test(url)) location.href = url; else window.open(url, '_blank'); }
-function sheet(html) { const s = $('sheet'); s.classList.remove('love', 'ny', 'tal', 'path', 'luna'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
+function sheet(html) { const s = $('sheet'); s.classList.remove('love', 'ny', 'tal', 'path', 'luna', 'fc'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
 function hideSheet() { $('sheet').classList.remove('on'); }
 function contactRows(c) {
   const defs = [['phone', '📞', 'Телефон', v => 'tel:' + v], ['tg', '✈️', 'Telegram', v => 'https://t.me/' + v.replace('@', '')], ['email', '✉️', 'Email', v => 'mailto:' + v], ['site', '🔗', 'Сайт', v => /^https?:/.test(v) ? v : 'https://' + v]];
