@@ -135,6 +135,7 @@ body.love .gem{stroke:#ff8fb1}
 .cambox .hud{padding:10px}
 .shot{display:flex;gap:14px;align-items:center;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
 .shot img{width:96px;height:96px;border-radius:12px;object-fit:cover;flex:none}
+.side2{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px;font-size:13px;color:var(--mute)}.side2 .btn{flex:none;padding:12px 16px}.side2 img{width:56px;height:56px;border-radius:10px;object-fit:cover}.side2 .lnk{color:var(--jade);font-size:13px;background:none;border:0;padding:4px 0}
 .shot b{display:block;font-family:var(--serif);font-weight:400;font-size:20px}
 .shot span{color:var(--mute);font-size:13px}
 .lbl{display:block;margin:14px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
@@ -344,12 +345,13 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
     </div>
     <div id="shotPart" style="display:none">
       <div class="shot"><img id="shotImg" alt=""><div><b id="shotTitle">Камень найден</b><span id="shotInfo"></span><br><button id="btnRetake" style="color:var(--jade);font-size:14px;padding:6px 0">Переснять</button></div></div>
+      <div class="side2" id="side2"></div>
     </div>
     <div id="formPart" style="display:none">
       <label class="lbl">Название</label>
       <input class="fld" id="fName" placeholder="Например, Агат розовый №3" autocomplete="off">
       <label class="lbl">Режим, который купили</label>
-      <select class="fld" id="fBuy"><option value="">Любой — покупатель выберет сам</option><option value="fc">Печенье</option><option value="luna">Луна</option><option value="love">Love</option><option value="tal">Талисман</option><option value="path">Путь</option></select>
+      <select class="fld" id="fBuy"><option value="">Любой — покупатель выберет сам</option><option value="fc">Печенье</option><option value="luna">Луна</option><option value="love">Love + Печенье</option><option value="tal">Талисман</option><option value="path">Путь</option></select>
       <label class="lbl">JK-номер</label>
       <input class="fld" id="fJk" placeholder="JK-000009" autocomplete="off" autocapitalize="characters">
       <label class="lbl">Контакты владельца</label>
@@ -1473,6 +1475,8 @@ async function loadStones() {
     // a catalog stone whose features were taken over by a living stone is hidden from search
     const liveG = new Set(stones.filter(s => s.mode && s.g).map(s => s.g));
     stones.forEach(s => { s.consumed = !s.mode && !s.of && !!s.g && liveG.has(s.g); });
+    const gone = new Set(stones.filter(s => s.consumed).map(s => s.id));
+    stones.forEach(s => { if (!s.mode && s.of && (gone.has(s.of) || liveG.has(s.g))) s.consumed = true; });
   } catch (e) { stones = []; toast('Коллекция не загрузилась: ' + e.message, 4500); }
   renderColl();
 }
@@ -2173,7 +2177,7 @@ async function ownerOkOld() {
 }
 
 // ---------- add / edit ----------
-let addShot = null, addCtx = {};
+let addShot = null, addShot2 = null, addSide = 0, addCtx = {};
 const FIELDS = { fName: 'name', fJk: 'jk', fPhone: 'phone', fTg: 'tg', fMail: 'email', fSite: 'site' };
 function setAddMode(mode) {   // 'cam' | 'form'
   $('camPart').style.display = mode === 'cam' ? '' : 'none';
@@ -2182,7 +2186,7 @@ function setAddMode(mode) {   // 'cam' | 'form'
 }
 async function openAdd(ctx = {}) {
   if (!(await ownerOk())) return;
-  addCtx = ctx; addShot = null;
+  addCtx = ctx; addShot = null; addShot2 = null; addSide = 0; drawSide2();
   for (const id in FIELDS) $(id).value = '';
   $('fLoveTo').value = ''; $('fLoveFrom').value = ''; $('fLoveSince').value = ''; $('fLoveTone').value = 'tender';
   $('fBuy').value = (ctx.edit && ctx.edit.buy) || '';
@@ -2208,7 +2212,12 @@ async function processShot(cv) {
     if (!r) { toast('Камень на кадре не найден, попробуй ещё'); setAddMode('cam'); return; }
     const n = r.f.mask.filter(Boolean).length;
     const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(r.f.cv, 0, 0, 240, 240);
-    addShot = { cv, f: r.f, thumb: t.toDataURL('image/jpeg', 0.8), n, hue: r.b.hue };
+    const shot = { cv, f: r.f, thumb: t.toDataURL('image/jpeg', 0.8), n, hue: r.b.hue };
+    if (addSide === 2) {
+      if (verdictOf(scoreAgainst(addShot.f, r.f)) === 'yes') { toast('Это та же сторона. Переверни камень и сними снова', 4500); addSide = 0; setAddMode('form'); return; }
+      addShot2 = shot; addSide = 0; drawSide2(); setAddMode('form'); return;
+    }
+    addShot = shot;
     $('shotImg').src = addShot.thumb;
     $('shotInfo').textContent = `${n} участков рисунка`;
     setAddMode('form');
@@ -2234,7 +2243,14 @@ $('fileAdd').onchange = async e => {
   cv.getContext('2d').drawImage(p, 0, 0, cv.width, cv.height);
   await processShot(cv);
 };
-$('btnRetake').onclick = () => { addShot = null; setAddMode('cam'); };
+$('btnRetake').onclick = () => { addShot = null; addShot2 = null; addSide = 0; drawSide2(); setAddMode('cam'); };
+function drawSide2() {
+  const b = $('side2'); if (!b) return;
+  b.innerHTML = addShot2 ? `<img src="${addShot2.thumb}" alt=""><span>Вторая сторона снята · ${addShot2.n} участков</span><button class="lnk" id="side2X" type="button">Убрать</button>`
+    : `<button class="btn" id="side2Go" type="button">Снять вторую сторону</button><span>чтобы камень узнавался любой стороной</span>`;
+  const g = $('side2Go'); if (g) g.onclick = () => { addSide = 2; setAddMode('cam'); };
+  const x = $('side2X'); if (x) x.onclick = () => { addShot2 = null; drawSide2(); };
+}
 $('btnCancel').onclick = () => { stopCam(); addShot = null; tab('coll'); };
 
 $('btnSave').onclick = async () => {
@@ -2248,7 +2264,7 @@ $('btnSave').onclick = async () => {
   veil('Сохраняю…');
   try {
     if (addCtx.edit) {
-      await fsPatch(COL, addCtx.edit.id, { name, jk, contacts: JSON.stringify(contacts), love, buy });
+      for (const x of [addCtx.edit, ...stones.filter(x => x.of === addCtx.edit.id && !x.mode)]) await fsPatch(COL, x.id, { name, jk, contacts: JSON.stringify(contacts), love, buy });
     } else {
       if (!addShot) { toast('Сначала сними камень'); veil(); return; }
       if (stones.length) {   // do not register the same stone twice
@@ -2263,9 +2279,16 @@ $('btnSave').onclick = async () => {
       const id = doc.name.split('/').pop();
       try { await fsCreate(COLP, { idx: enc.idx, p: enc.p, sc: enc.sc }, id); }
       catch (e) { await fsDelete(COL, id); throw e; }
+      if (addShot2) {
+        const e2 = encodePatches(addShot2.f);
+        const d2 = await fsCreate(COL, { name, jk, buy, contacts: JSON.stringify(contacts), love, created: Date.now(), thumb: addShot2.thumb, g: f32B64(gvecOf(addShot2.f)), G: addShot2.f.G, hue: addShot2.hue ?? 0, n: e2.n, of: id });
+        const id2 = d2.name.split('/').pop();
+        try { await fsCreate(COLP, { idx: e2.idx, p: e2.p, sc: e2.sc }, id2); }
+        catch (e) { await fsDelete(COL, id2); throw e; }
+      }
     }
     await loadStones();
-    addShot = null; stopCam();
+    addShot = null; addShot2 = null; stopCam();
     tab('coll'); toast('Сохранено');
   } catch (e) { toast('Не сохранилось: ' + e.message, 5500); }
   veil();
@@ -3255,8 +3278,12 @@ async function liveCapture(side) {
       veil('Ищу камень в коллекции JadeKey…');
       const r = await identify(frames[0], t => veil(t));
       if (r.state !== 'found') return fail('Не узнаю камень JadeKey. Оживить можно только камень из магазина JadeKey. Положи его на белый лист бумаги, не под лампой сверху, и сними ещё раз.');
-      if (r.stone.mode || r.stone.of) { const m = r.stone.of || r.stone.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже оживлён.'); }
-      LV.src = r.stone;
+      let cs = r.stone;
+      if (cs.of && !cs.mode) cs = stones.find(x => x.id === cs.of) || cs;   // the shop shot both sides: either side opens the stone
+      if (cs.mode || cs.of) { const m = cs.of || cs.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже оживлён.'); }
+      LV.src = cs;
+      LV.srcBack = stones.filter(x => x.of === cs.id && !x.mode);
+      if (LV.srcBack.length) { LV.hidden = true; LV.b = null; }
       { const bm = r.stone.buy === 'ny' ? 'luna' : r.stone.buy; if (LIVE_MODES[bm]) { LV.mode = bm; LV.lock = true; } }
     } else if (stones.length) {
       veil('Проверяю, нет ли такого камня…');
@@ -3291,7 +3318,7 @@ function liveRender() {
   lvQ(null); lvVerdict('', '');
   if (st === 0 && LV.a) lvVerdict('ok', 'Сторона А готова. Теперь переверни камень.');
   if (st === 1 && LV.b) lvVerdict('ok', 'Обе стороны готовы.');
-  if (st === 1 && LV.hidden) lvVerdict('ok', 'Хватит одной стороны.');
+  if (st === 1 && LV.hidden) lvVerdict('ok', LV.srcBack && LV.srcBack.length ? 'Обе стороны этого камня уже сняты в магазине JadeKey — жми «Далее».' : 'Хватит одной стороны.');
   if (st === 2) liveForm();
   lvNav();
 }
@@ -3341,6 +3368,12 @@ async function liveSave() {
       const doc = await fsReq('POST', COL, tok, { name: pubName, mode: m, owner: uid, of: '', created: Date.now(), thumb: c.thumb || LV.a.thumb, g: c.g, G: c.G, hue: c.hue ?? 0, n: c.n });
       id = doc.name.split('/').pop(); made.push([COL, id]);
       await fsReq('POST', `${COLP}?documentId=${id}`, tok, { idx: pp.idx, p: pp.p, sc: pp.sc }); made.push([COLP, id]);
+      for (const cb of LV.srcBack || []) {
+        const jb = await fsCall(`${BASE}/${COLP}/${cb.id}?key=${FS.key}`), pb = fromFs(jb.fields);
+        const db = await fsReq('POST', COL, tok, { name: pubName, mode: m, owner: uid, of: id, created: Date.now(), thumb: cb.thumb || '', g: cb.g, G: cb.G, hue: cb.hue ?? 0, n: cb.n });
+        const bid = db.name.split('/').pop(); made.push([COL, bid]);
+        await fsReq('POST', `${COLP}?documentId=${bid}`, tok, { idx: pb.idx, p: pb.p, sc: pb.sc }); made.push([COLP, bid]);
+      }
     } else id = await side(LV.a, '');
     if (LV.b && !LV.hidden) await side(LV.b, id);
     const claim = rnd(14);
@@ -4351,7 +4384,7 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 
 loadStones().then(() => adminDeepLink());
 window.__coi.then(() => { loadModel(); liveInit(); });
-if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showLuna, liveExtras, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
+if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
   if (inApp) $('lvPaste').style.display = '';
   // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly
