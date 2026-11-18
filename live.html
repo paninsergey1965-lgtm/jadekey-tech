@@ -349,7 +349,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <label class="lbl">Название</label>
       <input class="fld" id="fName" placeholder="Например, Агат розовый №3" autocomplete="off">
       <label class="lbl">Режим, который купили</label>
-      <select class="fld" id="fBuy"><option value="">Любой — покупатель выберет сам</option><option value="fc">Печенье</option><option value="love">Love + Печенье</option><option value="luna">Луна</option><option value="tal">Талисман</option><option value="path">Путь</option></select>
+      <select class="fld" id="fBuy"><option value="fc">Печенье</option><option value="love" selected>Love + Печенье</option><option value="luna">Луна</option><option value="tal">Талисман</option><option value="path">Путь</option></select>
       <label class="lbl">JK-номер</label>
       <input class="fld" id="fJk" placeholder="JK-000009" autocomplete="off" autocapitalize="characters">
       <label class="lbl">Контакты владельца</label>
@@ -2187,7 +2187,7 @@ async function openAdd(ctx = {}) {
   addCtx = ctx; addShot = null; addShot2 = null; addSide = 0; drawSide2();
   for (const id in FIELDS) $(id).value = '';
   $('fLoveTo').value = ''; $('fLoveFrom').value = ''; $('fLoveSince').value = ''; $('fLoveTone').value = 'tender';
-  $('fBuy').value = (ctx.edit && ctx.edit.buy) || '';
+  $('fBuy').value = (ctx.edit && ctx.edit.buy) || 'love';
   if (ctx.edit && ctx.edit.love) { const L = ctx.edit.love; $('fLoveTo').value = L.to || ''; $('fLoveFrom').value = L.from || ''; $('fLoveSince').value = L.since || ''; $('fLoveTone').value = L.tone || 'tender'; }
   const src = ctx.edit || ctx.legacy;
   if (src) {
@@ -3282,7 +3282,7 @@ async function liveCapture(side) {
       LV.src = cs;
       LV.srcBack = stones.filter(x => x.of === cs.id && !x.mode);
       if (LV.srcBack.length) { LV.hidden = true; LV.b = null; }
-      { const bm = r.stone.buy === 'ny' ? 'luna' : r.stone.buy; if (LIVE_MODES[bm]) { LV.mode = bm; LV.lock = true; } }
+      { const b0 = cs.buy || r.stone.buy || 'love', bm = b0 === 'ny' ? 'luna' : b0; LV.mode = LIVE_MODES[bm] ? bm : 'love'; LV.lock = true; }
     } else if (stones.length) {
       veil('Проверяю, нет ли такого камня…');
       const r = await identify(frames[0], t => veil(t));
