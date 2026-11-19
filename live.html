@@ -325,6 +325,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
   <div class="page">
     <h1>Коллекция</h1>
     <div class="sub" id="collSub">Загружаю…</div>
+    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px">Датасет: подключить</button>
     <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
     <div class="grid" id="grid"></div>
   </div>
@@ -1455,6 +1456,7 @@ function setAdmin(on) {
   isAdmin = !!on;
   $('nColl').style.display = isAdmin ? '' : 'none';
   $('nAdd').style.display = isAdmin ? '' : 'none';
+  if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
 }
 async function authHeaders() {
   const t = await authToken();
@@ -2111,6 +2113,7 @@ $('shutter').onclick = async () => {
     }
     if (!best) { camS.msg.textContent = 'Не получилось, попробуй ещё'; return; }
     camS.msg.textContent = 'Готов';
+    dsSave(best.cv, { kind: 'scan', result: best.state, stone: best.stone ? (best.stone.of || best.stone.id) : '', name: best.stone ? best.stone.name : '', ratio: best.res ? +best.res.ratio.toFixed(3) : null, inl: best.res ? best.res.inl.length : null });
     if (best.state === 'found') showFound(best);
     else if (best.state === 'unsure') showUnknown({ ...best }, best.cv);
     else showUnknown(best, best.cv);
@@ -2208,6 +2211,42 @@ async function openAdd(ctx = {}) {
   if (ctx.fromCv) { await processShot(ctx.fromCv); return; }
   setAddMode('cam');
 }
+// ---------- dataset: admin-only photo archive in the private GitHub repo jadekey-dataset ----------
+const DS_REPO = 'paninsergey1965-lgtm/jadekey-dataset';
+const dsTok = () => (isAdmin && ls.get('jk2_ds_tok')) || '';
+async function dsPut(path, b64, msg) {
+  const r = await fetch(`https://api.github.com/repos/${DS_REPO}/contents/${path}`, { method: 'PUT', headers: { Authorization: 'Bearer ' + dsTok(), Accept: 'application/vnd.github+json' }, body: JSON.stringify({ message: msg, content: b64 }) });
+  if (!r.ok) throw new Error('GitHub ' + r.status);
+}
+function dsSave(cv, meta) {
+  if (!cv || !dsTok()) return;
+  setTimeout(async () => {
+    try {
+      const d = new Date(), day = d.toISOString().slice(0, 10), stamp = d.toISOString().replace(/[:.]/g, '-');
+      const base = `${meta.kind}/${day}/${stamp}_${meta.stone || 'none'}${meta.side ? '_' + meta.side : ''}`;
+      const jpg = cv.toDataURL('image/jpeg', 0.9).split(',')[1];
+      await dsPut(base + '.jpg', jpg, `${meta.kind} ${meta.stone || ''}`);
+      const info = Object.assign({ at: d.toISOString(), w: cv.width, h: cv.height, ua: navigator.userAgent, backend: typeof backend !== 'undefined' ? backend : '' }, meta);
+      await dsPut(base + '.json', btoa(unescape(encodeURIComponent(JSON.stringify(info, null, 1)))), 'meta');
+      dsCount(1);
+    } catch (e) { console.warn('dataset', e); if (/401|403|404/.test(e.message)) toast('Датасет: ключ GitHub не подходит', 4000); }
+  }, 300);
+}
+function dsCount(add) { const n = (+ls.get('jk2_ds_n') || 0) + (add || 0); ls.set('jk2_ds_n', String(n)); const b = $('dsBtn'); if (b) b.textContent = dsTok() ? `Датасет · ${n}` : 'Датасет: подключить'; }
+function dsSetup() {
+  sheet(`<div class="sh-head"><div><div class="sh-state">Датасет</div><div class="sh-name">Снимки для обучения</div></div></div>
+    <p class="sh-note">Каждая регистрация и каждый твой скан сохраняются в закрытый репозиторий GitHub jadekey-dataset. Только на этом телефоне и только у админа.</p>
+    <input class="fld" id="dsIn" type="password" placeholder="Ключ GitHub (github_pat_…)" value="${dsTok() ? '••••••••' : ''}" autocomplete="off">
+    <div class="btns"><button class="btn" id="dsOff">Отключить</button><button class="btn main" id="dsOk">Сохранить</button></div>`);
+  $('dsOk').onclick = async () => {
+    const v = $('dsIn').value.trim(); if (!v || v.startsWith('•')) { hideSheet(); return; }
+    ls.set('jk2_ds_tok', v);
+    try { const r = await fetch(`https://api.github.com/repos/${DS_REPO}`, { headers: { Authorization: 'Bearer ' + v } }); if (!r.ok) throw new Error(r.status); toast('Датасет подключён'); }
+    catch (e) { ls.set('jk2_ds_tok', ''); toast('Ключ не подошёл (' + e.message + ')', 5000); }
+    dsCount(0); hideSheet();
+  };
+  $('dsOff').onclick = () => { ls.set('jk2_ds_tok', ''); dsCount(0); hideSheet(); toast('Датасет отключён'); };
+}
 async function processShot(cv) {
   if (!extractor) { toast('Модель ещё загружается'); setAddMode('cam'); return; }
   veil('Запоминаю камень…'); await tick();
@@ -2281,6 +2320,8 @@ $('btnSave').onclick = async () => {
       const g = f32B64(gvecOf(addShot.f));
       const doc = await fsCreate(COL, { name, jk, buy, contacts: JSON.stringify(contacts), love, created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
       const id = doc.name.split('/').pop();
+      dsSave(addShot.cv, { kind: 'reg', stone: id, side: 'A', name });
+      if (addShot2) dsSave(addShot2.cv, { kind: 'reg', stone: id, side: 'B', name });
       try { await fsCreate(COLP, { idx: enc.idx, p: enc.p, sc: enc.sc }, id); }
       catch (e) { await fsDelete(COL, id); throw e; }
       if (addShot2) {
