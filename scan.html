@@ -295,7 +295,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 
 .sheet.mem{background:#0a0a0b}.mem-frame{display:block;width:100%;height:72vh;border:0;border-radius:14px;background:#0a0a0b}
 
-.day-pill{border:1px solid #ffffff2e;background:#0009;color:#e8efe9;border-radius:20px;padding:7px 14px;font:13px/1.2 inherit;letter-spacing:.02em}
+.day-pill{display:block;margin:0 auto 18px;border:1px solid #ffffff2e;background:#0009;color:#e8efe9;border-radius:20px;padding:7px 14px;font:13px/1.2 inherit;letter-spacing:.02em}
 .day-pill[hidden]{display:none}
 
 </style>
@@ -309,6 +309,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
     <video id="vidS" playsinline muted autoplay></video>
     <canvas class="ov" id="ovS"></canvas>
     <div class="idle" id="idleS">
+      <button class="day-pill" id="dayPill" type="button" hidden></button>
       <svg class="gem" viewBox="0 0 64 64" fill="none" stroke="#3fd8a2" stroke-width="1.6" stroke-linejoin="round"><path d="M32 6 54 22 46 54H18L10 22Z"/><path d="M10 22h44M32 6l-9 16 9 32 9-32z"/></svg>
       <h2>Покажи камень</h2>
       <p>Положи камень на белый лист бумаги. Не сканируй под лампой сверху — от неё блик. Лучше у окна днём или так, чтобы лампа была сбоку. Держи телефон прямо над камнем.</p>
@@ -317,7 +318,6 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <div class="msg" id="msgS">Готов</div>
       <div class="sharp"><i id="barS"></i></div>
       <button class="shutter" id="shutter" aria-label="Сканировать"><b></b></button>
-      <button class="day-pill" id="dayPill" type="button" hidden></button>
     </div>
   </div>
 </section>
