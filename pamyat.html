@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>JadeKey Память — прототип</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=PT+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0b;--card:#141416;--line:#26262a;--ink:#ece7dd;--dim:#9a948a;--gold:#c9a86a}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 "PT Serif",Georgia,serif;min-height:100vh}
+.wrap{max-width:460px;margin:0 auto;padding:28px 20px 60px}
+.brand{text-align:center;font:400 15px/1 "Cormorant Garamond",serif;letter-spacing:.4em;color:var(--dim);padding-left:.4em}
+.brand b{font-weight:400;color:var(--gold)}
+.tag{text-align:center;color:var(--dim);font-size:13px;margin-top:6px}
+form{margin-top:26px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+label{display:block;font-size:12px;color:var(--dim);margin:12px 0 5px;letter-spacing:.06em}
+input,select{width:100%;background:#0e0e10;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:15px "PT Serif",serif;-webkit-appearance:none}
+.row{display:flex;gap:10px}.row>div{flex:1}
+button{margin-top:18px;width:100%;background:var(--gold);color:#16130d;border:0;border-radius:12px;padding:14px;font:500 15px "PT Serif",serif;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.mem{display:none;margin-top:26px;text-align:center}
+.candle{width:34px;height:96px;margin:0 auto 14px;position:relative}
+.candle .wax{position:absolute;bottom:0;left:9px;width:16px;height:58px;border-radius:3px;background:linear-gradient(#efe6d2,#c9bea6)}
+.candle .wick{position:absolute;bottom:58px;left:16px;width:2px;height:7px;background:#3a3026}
+.candle .flame{position:absolute;bottom:62px;left:9px;width:16px;height:30px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#fff6d6 0 18%,#ffd27a 38%,#ff9d2e 62%,transparent 70%);filter:blur(.4px);transform-origin:50% 100%;animation:fl 2.6s ease-in-out infinite}
+.candle .glow{position:absolute;bottom:40px;left:-38px;width:110px;height:110px;border-radius:50%;background:radial-gradient(#ffb44a33,transparent 65%)}
+@keyframes fl{0%,100%{transform:scaleY(1) skewX(0)}30%{transform:scaleY(1.06) skewX(-2deg)}60%{transform:scaleY(.95) skewX(2deg)}}
+@media (prefers-reduced-motion:reduce){.candle .flame{animation:none}}
+.name{font:500 32px/1.15 "Cormorant Garamond",serif;letter-spacing:.02em}
+.years{color:var(--dim);margin-top:4px}
+.today{margin-top:18px;font-size:15px}
+.today b{color:var(--gold);font-weight:400}
+.box{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;text-align:left}
+.box h3{font:400 12px/1 "PT Serif",serif;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:10px}
+.prayer{font-style:italic;font-size:17px;line-height:1.6}
+.src{color:var(--dim);font-size:12px;margin-top:8px}
+.list{list-style:none;padding:0}
+.list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line);font-size:15px}
+.list li:first-child{border-top:0}
+.list li span:last-child{color:var(--dim);white-space:nowrap}
+.list li.now span{color:var(--gold)}
+.hint{font-size:15px}
+.note{color:var(--dim);font-size:12px;text-align:center;margin-top:22px}
+.edit{background:none;color:var(--dim);border:1px solid var(--line);margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">JADE<b>KEY</b> · ПАМЯТЬ</div>
+  <p class="tag">Прототип: что увидит семья, когда наведёт телефон на камень</p>
+
+  <form id="f">
+    <label for="nm">Имя (как в поминальной записке)</label>
+    <input id="nm" required value="Николай" autocomplete="off">
+    <label for="sx">Пол</label>
+    <select id="sx"><option value="m">мужской</option><option value="f">женский</option></select>
+    <div class="row">
+      <div><label for="bd">Дата рождения</label><input id="bd" type="date" value="1948-05-12"></div>
+      <div><label for="dd">Дата кончины</label><input id="dd" type="date" required></div>
+    </div>
+    <label for="an">День ангела, по желанию</label>
+    <input id="an" type="date">
+    <label for="td">Посмотреть на дату (для проверки)</label>
+    <input id="td" type="date">
+    <button type="submit">Показать, как откроется камень</button>
+  </form>
+
+  <section class="mem" id="mem" aria-live="polite">
+    <div class="candle" aria-hidden="true"><div class="glow"></div><div class="wax"></div><div class="wick"></div><div class="flame"></div></div>
+    <div class="name" id="oName"></div>
+    <div class="years" id="oYears"></div>
+    <p class="today" id="oToday"></p>
+
+    <div class="box" id="oDayBox" style="display:none"><h3 id="oDayT"></h3><p class="hint" id="oDay"></p></div>
+
+    <div class="box"><h3>Молитва</h3><p class="prayer" id="oPrayer"></p><p class="src" id="oSrc"></p></div>
+
+    <div class="box"><h3>Ближайшие дни памяти</h3><ul class="list" id="oList"></ul></div>
+
+    <button class="edit" id="back" type="button">Изменить данные</button>
+    <p class="note">Дни считаются по православной традиции: день кончины — первый день. Пасха и родительские субботы рассчитаны по церковному календарю.</p>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const DAY = 864e5;
+const D = (y, m, d) => new Date(Date.UTC(y, m - 1, d));
+const iso = d => d.toISOString().slice(0, 10);
+const parse = s => { if (!s) return null; const [y, m, d] = s.split('-').map(Number); return D(y, m, d); };
+const add = (d, n) => new Date(d.getTime() + n * DAY);
+const diff = (a, b) => Math.round((a - b) / DAY);
+const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WD = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+const fmt = d => `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`;
+const fmtY = d => `${fmt(d)} ${d.getUTCFullYear()}`;
+const plural = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? b : c; };
+
+// Orthodox Easter: Meeus Julian algorithm, + Julian→Gregorian offset (13 days for 1900–2099)
+function pascha(y) {
+  const a = y % 4, b = y % 7, c = y % 19, d = (19 * c + 15) % 30, e = (2 * a + 4 * b - d + 34) % 7;
+  const m = Math.floor((d + e + 114) / 31), day = ((d + e + 114) % 31) + 1;
+  const off = Math.floor(y / 100) - Math.floor(y / 400) - 2;
+  return add(D(y, m, day), off);
+}
+function parentDays(y) {
+  const p = pascha(y), out = [
+    [add(p, -57), 'Вселенская родительская (мясопустная) суббота'],
+    [add(p, -36), 'Родительская суббота 2-й седмицы Великого поста'],
+    [add(p, -29), 'Родительская суббота 3-й седмицы Великого поста'],
+    [add(p, -22), 'Родительская суббота 4-й седмицы Великого поста'],
+    [add(p, 9), 'Радоница'],
+    [D(y, 5, 9), 'Поминовение усопших воинов'],
+    [add(p, 48), 'Троицкая родительская суббота']];
+  let ds = D(y, 11, 8); do { ds = add(ds, -1); } while (ds.getUTCDay() !== 6);
+  out.push([ds, 'Дмитриевская родительская суббота']);
+  return out;
+}
+
+const PRAYERS = [
+  [s => `Упокой, Господи, душу ${s.f ? 'усопшей рабы Твоей' : 'усопшего раба Твоего'} ${s.nm}, и прости ${s.f ? 'ей' : 'ему'} все согрешения вольные и невольные, и даруй ${s.f ? 'ей' : 'ему'} Царствие Небесное.`, 'Краткая заупокойная молитва'],
+  [s => `Со святыми упокой, Христе, душу ${s.f ? 'рабы Твоей' : 'раба Твоего'} ${s.nm}, идеже несть болезнь, ни печаль, ни воздыхание, но жизнь бесконечная.`, 'Кондак заупокойный'],
+  [s => `Вечная память ${s.f ? 'рабе Божией' : 'рабу Божию'} ${s.nm}.`, 'Возглашение на панихиде'],
+  [() => 'Господь — Пастырь мой; я ни в чём не буду нуждаться: Он покоит меня на злачных пажитях и водит меня к водам тихим, подкрепляет душу мою.', 'Псалом 22, синодальный перевод'],
+  [() => 'Живущий под кровом Всевышнего под сенью Всемогущего покоится.', 'Псалом 90, синодальный перевод'],
+  [() => 'Блаженны плачущие, ибо они утешатся.', 'Евангелие от Матфея 5:4, синодальный перевод'],
+  [() => 'Я есмь воскресение и жизнь; верующий в Меня, если и умрет, оживет.', 'Евангелие от Иоанна 11:25, синодальный перевод']
+];
+
+const CUSTOM = {
+  3: ['Третий день', 'В этот день совершается погребение и первое поминовение. Принято подать записку об упокоении и помолиться о душе.'],
+  9: ['Девятый день', 'Принято заказать панихиду или подать записку в храм, собраться близким и помянуть добрым словом.'],
+  40: ['Сороковой день', 'Особый день памяти. Принято заказать сорокоуст и панихиду, помолиться дома, собрать родных и навестить место упокоения.'],
+  year: ['Годовщина', 'Принято заказать панихиду, навестить место упокоения, собраться семьёй и вспомнить.'],
+  angel: ['День ангела', 'Принято подать записку об упокоении и помянуть в молитве в день святого, чьё имя носил человек.'],
+  parent: ['Родительский день', 'Церковь поминает всех усопших. Принято подать записку в храм и навестить место упокоения.']
+};
+
+function show(e) {
+  if (e) e.preventDefault();
+  const nm = $('nm').value.trim() || 'Имя', f = $('sx').value === 'f';
+  const bd = parse($('bd').value), dd = parse($('dd').value), an = parse($('an').value);
+  if (!dd) { $('dd').focus(); return; }
+  const td = parse($('td').value) || (() => { const n = new Date(); return D(n.getFullYear(), n.getMonth() + 1, n.getDate()); })();
+  const s = { nm, f };
+  $('oName').textContent = nm;
+  $('oYears').textContent = (bd ? `${fmtY(bd)} — ` : '') + fmtY(dd);
+
+  const n = diff(td, dd) + 1; // day of death = day 1
+  const yrs = td.getUTCFullYear() - dd.getUTCFullYear() - ((td.getUTCMonth() * 40 + td.getUTCDate()) < (dd.getUTCMonth() * 40 + dd.getUTCDate()) ? 1 : 0);
+  $('oToday').innerHTML = n < 1 ? 'Дата ещё не наступила.' : n <= 365
+    ? `Сегодня <b>${n}-й день</b> памяти, ${WD[td.getUTCDay()]}, ${fmt(td)}.`
+    : `<b>${yrs} ${plural(yrs, 'год', 'года', 'лет')}</b> памяти · ${n} ${plural(n, 'день', 'дня', 'дней')}`;
+
+  // events
+  const ev = [];
+  for (const k of [3, 9, 40]) ev.push([add(dd, k - 1), CUSTOM[k][0], k]);
+  for (let y = dd.getUTCFullYear() + 1; y <= td.getUTCFullYear() + 2; y++) ev.push([D(y, dd.getUTCMonth() + 1, dd.getUTCDate()), `Годовщина · ${y - dd.getUTCFullYear()} ${plural(y - dd.getUTCFullYear(), 'год', 'года', 'лет')}`, 'year']);
+  if (an) for (let y = td.getUTCFullYear(); y <= td.getUTCFullYear() + 1; y++) ev.push([D(y, an.getUTCMonth() + 1, an.getUTCDate()), 'День ангела', 'angel']);
+  for (let y = td.getUTCFullYear(); y <= td.getUTCFullYear() + 1; y++) for (const [d, t] of parentDays(y)) if (d >= dd) ev.push([d, t, 'parent']);
+  ev.sort((a, b) => a[0] - b[0]);
+
+  const todayEv = ev.find(x => +x[0] === +td);
+  if (todayEv) { const c = CUSTOM[todayEv[2]]; $('oDayT').textContent = `Сегодня · ${todayEv[1]}`; $('oDay').textContent = c[1]; $('oDayBox').style.display = ''; }
+  else $('oDayBox').style.display = 'none';
+
+  const up = ev.filter(x => x[0] >= td).slice(0, 5);
+  $('oList').innerHTML = up.map(([d, t]) => { const k = diff(d, td); return `<li class="${k === 0 ? 'now' : ''}"><span>${t}</span><span>${k === 0 ? 'сегодня' : fmt(d) + (d.getUTCFullYear() !== td.getUTCFullYear() ? ' ' + d.getUTCFullYear() : '')}</span></li>`; }).join('') || '<li><span>—</span><span></span></li>';
+
+  // prayer: special days get the burial prayer, other days rotate
+  const pi = todayEv ? 0 : (Math.max(n, 1) - 1) % PRAYERS.length;
+  $('oPrayer').textContent = PRAYERS[pi][0](s);
+  $('oSrc').textContent = PRAYERS[pi][1];
+
+  $('f').style.display = 'none'; $('mem').style.display = 'block'; window.scrollTo(0, 0);
+}
+$('f').onsubmit = show;
+$('back').onclick = () => { $('mem').style.display = 'none'; $('f').style.display = ''; };
+// demo default: death 38 days ago so the 40th day is close
+(() => { const t = new Date(); const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - 37 * DAY); $('dd').value = iso(d); })();
+</script>
+</body>
+</html>
