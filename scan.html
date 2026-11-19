@@ -3242,6 +3242,7 @@ function lvQ(o) {
   $('lvQ').innerHTML = `<span class="${o.frames >= 2 ? 'ok' : ''}">Кадры ${'●'.repeat(o.frames || 0)}${'○'.repeat(2 - (o.frames || 0))}</span><span class="${cls(o.light)}">Свет ${mark(o.light)}</span><span class="${cls(o.pat)}">Рисунок ${mark(o.pat)}</span>`;
 }
 function lvVerdict(kind, text) { const v = $('lvV'); v.className = 'verdict' + (kind ? ' ' + kind : ''); v.textContent = text || ''; }
+const lvTO = (p, ms = 30000) => Promise.race([p, new Promise((_, rj) => setTimeout(() => rj(new Error('hang')), ms))]);
 async function liveCapture(side) {
   if (!extractor) { toast('Модель ещё загружается, подожди немного'); return; }
   LV.busy = true; lvQ({ frames: 0 }); lvVerdict('', ''); lvNav();
@@ -3256,12 +3257,12 @@ async function liveCapture(side) {
       frames.push(cv); lvQ({ frames: k + 1 });
     }
     stopCam(); veil('Проверяю камень…'); await tick();
-    const A = await stoneFeatures(frames[0], 0, null);
+    const A = await lvTO(stoneFeatures(frames[0], 0, null));
     if (!A) return fail('Камень на кадре не найден. Положи его на белый лист бумаги и сними ещё раз.');
     const st = stoneStats(A.f.cv), n = A.f.mask.filter(Boolean).length;
     let self = null;
     for (const q of [0, 90, 180, 270]) {
-      const B = await stoneFeatures(frames[1], q, A.b.hue);
+      const B = await lvTO(stoneFeatures(frames[1], q, A.b.hue));
       if (!B) continue;
       const r = scoreAgainst(A.f, B.f);
       if (!self || r.inl.length > self.inl.length) self = r;
@@ -3276,7 +3277,7 @@ async function liveCapture(side) {
     if (!isAdmin && side === 'A') {
       // only a JadeKey stone from the collection that nobody has brought to life yet
       veil('Ищу камень в коллекции JadeKey…');
-      const r = await identify(frames[0], t => veil(t));
+      const r = await lvTO(identify(frames[0], t => veil(t)), 60000);
       if (r.state !== 'found') return fail('Не узнаю камень JadeKey. Оживить можно только камень из магазина JadeKey. Положи его на белый лист бумаги, не под лампой сверху, и сними ещё раз.');
       let cs = r.stone;
       if (cs.of && !cs.mode) cs = stones.find(x => x.id === cs.of) || cs;   // the shop shot both sides: either side opens the stone
@@ -3287,14 +3288,14 @@ async function liveCapture(side) {
       { const b0 = cs.buy || r.stone.buy || 'love', bm = b0 === 'ny' ? 'luna' : b0; LV.mode = LIVE_MODES[bm] ? bm : 'love'; LV.lock = true; }
     } else if (stones.length) {
       veil('Проверяю, нет ли такого камня…');
-      const r = await identify(frames[0], t => veil(t));
+      const r = await lvTO(identify(frames[0], t => veil(t)), 60000);
       if (r.state === 'found' && !(LV.src && r.stone.id === LV.src.id && side === 'B')) { const m = r.stone.of || r.stone.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже кто-то оживил. Возьми другой камень.'); }
       if (r.state === 'found') return fail('Похоже, это та же сторона. Переверни камень и сними снова.');
     }
     const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(A.f.cv, 0, 0, 240, 240);
     LV[side === 'A' ? 'a' : 'b'] = { f: A.f, hue: A.b.hue, thumb: t.toDataURL('image/jpeg', 0.8) };
     lvVerdict('ok', side === 'A' ? (LV.srcBack && LV.srcBack.length && !isAdmin ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.') : 'Обе стороны готовы. Камень узнаётся любой стороной.');
-  } catch (e) { fail('Ошибка: ' + e.message); }
+  } catch (e) { fail(e.message === 'hang' ? 'Сканер завис: телефон долго держал страницу в фоне. Обнови страницу (стрелка в адресной строке) и сними ещё раз.' : 'Ошибка: ' + e.message); }
   finally { veil(); LV.busy = false; stopCam(); lvNav(); }
 }
 function lvNav() {
@@ -4205,6 +4206,12 @@ function expertPanel() {
     else showTal(st, P);
   };
 }
+
+// iOS drops the GPU while a tab sits in the background; after a long pause start fresh
+(() => { let hid = 0; document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { hid = Date.now(); return; }
+  if (hid && Date.now() - hid > 20 * 60 * 1000 && !LV.busy && !LV.a && LV.step === 0 && !(typeof addShot !== 'undefined' && addShot)) location.reload();
+}); })();
 
 // ---------- tabs ----------
 function tab(name) {
