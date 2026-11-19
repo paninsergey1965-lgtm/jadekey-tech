@@ -60,6 +60,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .done{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:15px;cursor:pointer}
 .done input{width:22px;height:22px;accent-color:var(--gold)}
 .dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}.dots b{width:10px;height:10px;border-radius:50%;background:#2a2a2e}.dots b.r{background:var(--gold)}.dots b.t{outline:1px solid var(--gold)}
+.nav{display:flex;gap:10px;margin-top:14px}.nav button{margin:0;flex:1;background:var(--card);color:var(--ink);border:1px solid var(--line);padding:11px}
 </style>
 </head>
 <body>
@@ -88,6 +89,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
     <div class="name" id="oName"></div>
     <div class="years" id="oYears"></div>
     <p class="today" id="oToday"></p>
+    <div class="nav"><button type="button" id="prev">‹ День назад</button><button type="button" id="next">День вперёд ›</button></div>
+    <div class="nav"><button type="button" id="j40">40-й день</button><button type="button" id="jnow">Сегодня</button></div>
 
     <div class="box" id="oDayBox" style="display:none"><h3 id="oDayT"></h3><p class="hint" id="oDay"></p></div>
 
@@ -239,12 +242,14 @@ function forty(s, n, dd) {
   };
   $('o40r').open = false; $('o40r').dataset.k = '';
 }
+let VIEW = null, DD = null;
 function show(e) {
   if (e) e.preventDefault();
   const nm = $('nm').value.trim() || 'Имя', f = $('sx').value === 'f';
   const bd = parse($('bd').value), dd = parse($('dd').value), an = parse($('an').value);
   if (!dd) { $('dd').focus(); return; }
-  const td = parse($('td').value) || (() => { const n = new Date(); return D(n.getFullYear(), n.getMonth() + 1, n.getDate()); })();
+  const td = VIEW || parse($('td').value) || (() => { const n = new Date(); return D(n.getFullYear(), n.getMonth() + 1, n.getDate()); })();
+  VIEW = td; DD = dd;
   const s = { nm, f };
   $('oName').textContent = nm;
   $('oYears').textContent = (bd ? `${fmtY(bd)} — ` : '') + fmtY(dd);
@@ -277,9 +282,14 @@ function show(e) {
 
   fullPrayers(s);
   forty(s, n, dd);
-  $('f').style.display = 'none'; $('mem').style.display = 'block'; window.scrollTo(0, 0);
+  $('f').style.display = 'none'; $('mem').style.display = 'block'; if (e) window.scrollTo(0, 0);
 }
-$('f').onsubmit = show;
+$('f').onsubmit = e => { VIEW = null; show(e); };
+const go = d => { VIEW = d; const y = window.scrollY; show(); window.scrollTo(0, y); };
+$('prev').onclick = () => go(add(VIEW, -1));
+$('next').onclick = () => go(add(VIEW, 1));
+$('j40').onclick = () => go(add(DD, 39));
+$('jnow').onclick = () => { const n = new Date(); go(D(n.getFullYear(), n.getMonth() + 1, n.getDate())); };
 $('back').onclick = () => { $('mem').style.display = 'none'; $('f').style.display = ''; };
 // demo default: death 38 days ago so the 40th day is close
 (() => { const t = new Date(); const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - 37 * DAY); $('dd').value = iso(d); })();
