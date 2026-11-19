@@ -49,6 +49,17 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .full summary::after{content:'+';color:var(--gold)}.full details[open] summary::after{content:'−'}
 .full .txt{margin-top:10px;font-size:16px;line-height:1.7;white-space:pre-line}
 .full .txt i{color:var(--dim);font-size:13px}
+.forty .bar{height:6px;border-radius:3px;background:#222;margin:8px 0 12px;overflow:hidden}.forty .bar i{display:block;height:100%;background:var(--gold)}
+.forty .big{font:500 24px/1.2 "Cormorant Garamond",serif}
+.forty .sub{color:var(--dim);font-size:14px;margin-top:2px}
+.forty details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.forty summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between}.forty summary::after{content:'+';color:var(--gold)}.forty details[open] summary::after{content:'−'}
+.ps{margin-top:12px}.ps h4{font:500 18px "Cormorant Garamond",serif;color:var(--gold);margin:16px 0 6px}
+.ps p{font-size:16px;line-height:1.7;margin:0 0 4px}.ps sup{color:var(--dim);font-size:11px;margin-right:4px}
+.slava{color:var(--dim);font-style:italic;font-size:14px;margin:12px 0}
+.done{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:15px;cursor:pointer}
+.done input{width:22px;height:22px;accent-color:var(--gold)}
+.dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}.dots b{width:10px;height:10px;border-radius:50%;background:#2a2a2e}.dots b.r{background:var(--gold)}.dots b.t{outline:1px solid var(--gold)}
 </style>
 </head>
 <body>
@@ -79,6 +90,17 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
     <p class="today" id="oToday"></p>
 
     <div class="box" id="oDayBox" style="display:none"><h3 id="oDayT"></h3><p class="hint" id="oDay"></p></div>
+
+    <div class="box forty" id="o40" style="display:none">
+      <h3>Сорок дней</h3>
+      <div class="big" id="o40d"></div>
+      <div class="bar"><i id="o40b"></i></div>
+      <div class="sub" id="o40k"></div>
+      <details id="o40r"><summary>Читать кафизму</summary><div class="ps" id="o40t">Загружаю Псалтирь…</div></details>
+      <label class="done"><input type="checkbox" id="o40c"> Сегодня прочитал(а)</label>
+      <div class="dots" id="o40dots" aria-label="Прочитанные дни"></div>
+      <p class="src">Принято в первые 40 дней читать Псалтирь об усопшем: по кафизме в день, за 40 дней — дважды. После каждой «Славы» и в конце кафизмы читается молитва об усопшем (ниже).</p>
+    </div>
 
     <div class="box"><h3>Молитва</h3><p class="prayer" id="oPrayer"></p><p class="src" id="oSrc"></p></div>
 
@@ -176,6 +198,47 @@ function fullPrayers(s) {
   const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/&lt;(\/?)i>/g, '<$1i>');
   $('oFull').innerHTML = P.map(([t, x], i) => `<details${i === 2 ? ' open' : ''}><summary>${t}</summary><div class="txt">${esc(x)}</div></details>`).join('');
 }
+
+const KATH = [[1,8],[9,16],[17,23],[24,31],[32,36],[37,45],[46,54],[55,63],[64,69],[70,76],[77,84],[85,90],[91,100],[101,104],[105,108],[109,117],[118,118],[119,133],[134,142],[143,150]];
+let PSALTER = null;
+const loadPs = () => PSALTER ? Promise.resolve(PSALTER) : fetch('psalter.json').then(r => r.json()).then(j => (PSALTER = j));
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+function forty(s, n, dd) {
+  const box = $('o40');
+  if (n < 1 || n > 40) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const k = (n - 1) % 20, [a, b] = KATH[k], round = n > 20 ? 'второе' : 'первое';
+  $('o40d').textContent = `День ${n} из 40`;
+  $('o40b').style.width = (n / 40 * 100) + '%';
+  $('o40k').textContent = `Кафизма ${k + 1} · ${a === b ? 'псалом ' + a : 'псалмы ' + a + '–' + b} · ${round} прочтение Псалтири`;
+  const key = 'jkp_' + s.nm + '_' + iso(dd), st = lsGet(key) || {};
+  const dots = () => { $('o40dots').innerHTML = Array.from({ length: 40 }, (_, i) => `<b class="${st[i + 1] ? 'r' : ''}${i + 1 === n ? ' t' : ''}"></b>`).join(''); };
+  $('o40c').checked = !!st[n];
+  $('o40c').onchange = e => { st[n] = e.target.checked; lsSet(key, st); dots(); };
+  dots();
+  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  $('o40r').ontoggle = () => {
+    if (!$('o40r').open || $('o40r').dataset.k == k) return;
+    loadPs().then(P => {
+      const ids = []; for (let i = a; i <= b; i++) ids.push(i);
+      let h = '';
+      if (a === b) { // Ps 118 alone: three Slavas by verse
+        const v = P[a - 1], cut = [72, 131];
+        h = `<h4>Псалом ${a}</h4>` + v.map((t, i) => `<p><sup>${i + 1}</sup>${esc(t)}</p>` + (cut.includes(i + 1) ? '<p class="slava">Слава… — молитва об усопшем</p>' : '')).join('');
+      } else {
+        const third = Math.ceil(ids.length / 3);
+        ids.forEach((id, j) => {
+          h += `<h4>Псалом ${id}</h4>` + P[id - 1].map((t, i) => `<p><sup>${i + 1}</sup>${esc(t)}</p>`).join('');
+          if ((j + 1) % third === 0 && j < ids.length - 1) h += '<p class="slava">Слава… — молитва об усопшем</p>';
+        });
+      }
+      h += '<p class="slava">Слава… — молитва об усопшем. Кафизма окончена.</p>';
+      $('o40t').innerHTML = h; $('o40r').dataset.k = k;
+    }).catch(() => { $('o40t').textContent = 'Не удалось загрузить Псалтирь. Проверь интернет.'; });
+  };
+  $('o40r').open = false; $('o40r').dataset.k = '';
+}
 function show(e) {
   if (e) e.preventDefault();
   const nm = $('nm').value.trim() || 'Имя', f = $('sx').value === 'f';
@@ -213,6 +276,7 @@ function show(e) {
   $('oSrc').textContent = PRAYERS[pi][1];
 
   fullPrayers(s);
+  forty(s, n, dd);
   $('f').style.display = 'none'; $('mem').style.display = 'block'; window.scrollTo(0, 0);
 }
 $('f').onsubmit = show;
