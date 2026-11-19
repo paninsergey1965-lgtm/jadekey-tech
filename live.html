@@ -2116,7 +2116,7 @@ $('shutter').onclick = async () => {
 // ---------- collection view ----------
 function renderColl() {
   const q = $('search').value.trim().toLowerCase();
-  const all = stones.filter(s => !s.of);
+  const all = stones.filter(s => !s.of && !s.consumed);
   const list = all.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
   $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)}` : 'Пока пусто. Добавь первый камень.';
   $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${s.mode ? '<i class="tag t-' + s.mode + '">' + LIVE_MODES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
