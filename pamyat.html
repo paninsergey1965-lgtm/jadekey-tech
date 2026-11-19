@@ -61,6 +61,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .done input{width:22px;height:22px;accent-color:var(--gold)}
 .dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}.dots b{width:10px;height:10px;border-radius:50%;background:#2a2a2e}.dots b.r{background:var(--gold)}.dots b.t{outline:1px solid var(--gold)}
 .nav{display:flex;gap:10px;margin-top:14px}.nav button{margin:0;flex:1;background:var(--card);color:var(--ink);border:1px solid var(--line);padding:11px}
+.embed .brand,.embed .tag,.embed #back{display:none}.embed .wrap{padding-top:10px}
 </style>
 </head>
 <body>
@@ -255,9 +256,10 @@ function show(e) {
   $('oYears').textContent = (bd ? `${fmtY(bd)} — ` : '') + fmtY(dd);
 
   const n = diff(td, dd) + 1; // day of death = day 1
+  const isToday = (() => { const t = new Date(); return +td === +D(t.getFullYear(), t.getMonth() + 1, t.getDate()); })();
   const yrs = td.getUTCFullYear() - dd.getUTCFullYear() - ((td.getUTCMonth() * 40 + td.getUTCDate()) < (dd.getUTCMonth() * 40 + dd.getUTCDate()) ? 1 : 0);
   $('oToday').innerHTML = n < 1 ? 'Дата ещё не наступила.' : n <= 365
-    ? `Сегодня <b>${n}-й день</b> памяти, ${WD[td.getUTCDay()]}, ${fmt(td)}.`
+    ? `${isToday ? 'Сегодня ' : ''}<b>${n}-й день</b> памяти${isToday ? ',' : ' —'} ${WD[td.getUTCDay()]}, ${fmt(td)}.`
     : `<b>${yrs} ${plural(yrs, 'год', 'года', 'лет')}</b> памяти · ${n} ${plural(n, 'день', 'дня', 'дней')}`;
 
   // events
@@ -269,7 +271,7 @@ function show(e) {
   ev.sort((a, b) => a[0] - b[0]);
 
   const todayEv = ev.find(x => +x[0] === +td);
-  if (todayEv) { const c = CUSTOM[todayEv[2]]; $('oDayT').textContent = `Сегодня · ${todayEv[1]}`; $('oDay').textContent = c[1]; $('oDayBox').style.display = ''; }
+  if (todayEv) { const c = CUSTOM[todayEv[2]]; $('oDayT').textContent = (isToday ? 'Сегодня · ' : '') + todayEv[1]; $('oDay').textContent = c[1]; $('oDayBox').style.display = ''; }
   else $('oDayBox').style.display = 'none';
 
   const up = ev.filter(x => x[0] >= td).slice(0, 5);
@@ -285,6 +287,12 @@ function show(e) {
   $('f').style.display = 'none'; $('mem').style.display = 'block'; if (e) window.scrollTo(0, 0);
 }
 $('f').onsubmit = e => { VIEW = null; show(e); };
+(() => { const q = new URLSearchParams(location.search); if (q.get('embed') !== '1') return;
+  document.body.classList.add('embed');
+  const set = (id, k) => { if (q.get(k)) $(id).value = q.get(k); };
+  set('nm', 'nm'); set('sx', 'sx'); set('bd', 'bd'); set('dd', 'dd'); set('an', 'an');
+  if (!q.get('bd')) $('bd').value = '';
+  if (q.get('dd')) show(); })();
 const go = d => { VIEW = d; const y = window.scrollY; show(); window.scrollTo(0, y); };
 $('prev').onclick = () => go(add(VIEW, -1));
 $('next').onclick = () => go(add(VIEW, 1));
@@ -292,7 +300,7 @@ $('j40').onclick = () => go(add(DD, 39));
 $('jnow').onclick = () => { const n = new Date(); go(D(n.getFullYear(), n.getMonth() + 1, n.getDate())); };
 $('back').onclick = () => { $('mem').style.display = 'none'; $('f').style.display = ''; };
 // demo default: death 38 days ago so the 40th day is close
-(() => { const t = new Date(); const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - 37 * DAY); $('dd').value = iso(d); })();
+(() => { if (document.body.classList.contains('embed')) return; const t = new Date(); const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - 37 * DAY); $('dd').value = iso(d); })();
 </script>
 </body>
 </html>

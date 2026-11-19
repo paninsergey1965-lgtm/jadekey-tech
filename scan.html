@@ -293,6 +293,8 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 .mtog button.on{background:#ffffffe6;color:#141414;opacity:1}
 .mup{display:block;text-align:center;margin:14px 0 4px;font-size:13px;color:inherit;opacity:.75;text-decoration:underline;text-underline-offset:3px}
 
+.sheet.mem{background:#0a0a0b}.mem-frame{display:block;width:100%;height:72vh;border:0;border-radius:14px;background:#0a0a0b}
+
 </style>
 </head>
 <body>
@@ -1680,7 +1682,7 @@ async function identify(cv, status = () => {}) {
 
 // ---------- sheet ----------
 function openLink(url) { if (/^(tel:|mailto:)/.test(url)) location.href = url; else window.open(url, '_blank'); }
-function sheet(html) { const s = $('sheet'); s.classList.remove('love', 'ny', 'tal', 'path', 'luna', 'fc'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
+function sheet(html) { const s = $('sheet'); s.classList.remove('love', 'ny', 'tal', 'path', 'luna', 'fc', 'mem'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
 function hideSheet() { $('sheet').classList.remove('on'); }
 function contactRows(c) {
   const defs = [['phone', '📞', 'Телефон', v => 'tel:' + v], ['tg', '✈️', 'Telegram', v => 'https://t.me/' + v.replace('@', '')], ['email', '✉️', 'Email', v => 'mailto:' + v], ['site', '🔗', 'Сайт', v => /^https?:/.test(v) ? v : 'https://' + v]];
@@ -2121,7 +2123,7 @@ function renderColl() {
   const all = stones.filter(s => !s.of && !s.consumed);
   const list = all.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
   $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)}` : 'Пока пусто. Добавь первый камень.';
-  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${s.mode ? '<i class="tag t-' + s.mode + '">' + LIVE_MODES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
+  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${s.mode ? '<i class="tag t-' + s.mode + '">' + MODE_NAMES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
   $('grid').querySelectorAll('.card').forEach(b => b.onclick = () => showInfo(stones.find(s => s.id === b.dataset.id)));
 }
 $('search').oninput = renderColl;
@@ -2129,7 +2131,7 @@ $('search').oninput = renderColl;
 function showInfo(s) {
   if (s.mode) {
     const sides = stones.filter(x => x.of === s.id).length + 1;
-    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button><button class="row" id="amOpen"><span><b>Сменить режим</b><small>Печенье, Love, Луна, Талисман, Путь</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button><button class="row" id="amOpen"><span><b>Сменить режим</b><small>Печенье, Love, Луна, Талисман, Путь</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
     $('again').onclick = hideSheet;
     $('lvOpen').onclick = () => showLive(s);
     $('amOpen').onclick = () => adminMode(s);
@@ -2300,6 +2302,8 @@ $('btnSave').onclick = async () => {
 // =====================================================================
 const COLV = 'jk2_private';
 const LIVE_MODES = { fc: 'Печенье', love: 'Love', luna: 'Луна', tal: 'Талисман', path: 'Путь' };
+// «Память» is admin-only for now: never offered to buyers, no tiers, no upgrade link
+const MODE_NAMES = Object.assign({}, LIVE_MODES, { mem: 'Память' });
 const LIVE_DESC = {
   path: 'Каждый день — небо дня по Джйотишу: накшатра, лунный день и планета дня, строка из Дао дэ цзин с номером главы и короткая практика. С датой рождения — лично для тебя.',
   fc: 'Печенье с советом дня по «Книге перемен» (И цзин): каждый день — одна из 64 гексаграмм, счастливые числа по китайской традиции и китайское слово дня. Личный расчёт по звезде рождения — в режиме «Путь».',
@@ -3189,6 +3193,7 @@ async function showLive(s) {
   const P = p.profile || {};
   talShift = habShift = fcShift = pathShift = lunaShift = 0;
   // a stone's mode is its tier: every cheaper mode is unlocked too (Love always includes Печенье)
+  if (s.mode === 'mem') { showMem(s, P); return; }
   const tier = s.mode === 'ny' ? 'luna' : s.mode, open = unlockedModes(tier), pick = ls.get('jk2_view_' + s.id);
   const view = open.includes(pick) ? pick : tier;
   const Q = Object.assign({}, P, { name: P.name || P.to || '', to: P.to || P.name || '' });
@@ -3420,7 +3425,7 @@ async function mineSheet(s, kind) {
   if (kind === 'got' || !p || p.owner !== myUid()) { showFound({ stone: s }); return; }
   const sides = stones.filter(x => x.of === s.id).length + 1, link = giftLink(s.id, p.claim);
   const sb = shareButtons(link, giftText(s.mode, s.name || ''));
-  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${LIVE_MODES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
+  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
     <div class="h2">Ссылка для получателя</div>${sb.html}
     <div class="rows"><button class="row" id="mOpen"><span><b>Открыть камень</b><small>Посмотреть, что видит получатель</small></span></button>${inApp ? '' : '<button class="row" id="mUp"><span><b>Открыть другой режим</b><small>Путь, Талисман, Love, Новый год, Печенье — доплата разницы</small></span></button>'}<button class="row" id="mShare"><span><b>${p.share ? 'Послания видят все, кто отсканирует' : 'Послания видит только получатель'}</b><small>Нажми, чтобы переключить</small></span></button><button class="row" id="mNew"><span><b>Новая ссылка</b><small>Старая перестанет работать, камень привяжется к новому телефону</small></span></button></div>
     <div class="btns"><button class="btn danger" id="mDel">Удалить камень</button><button class="btn main" id="again">Закрыть</button></div>`);
@@ -4139,26 +4144,28 @@ async function adminMode(s, pre) {
   veil('Открываю…'); const p = await readPriv(s.id).catch(() => null); veil();
   if (!p) { toast('Не нашёл данные камня'); return; }
   const o = p.profile || {}, nm = o.name || o.to || s.name || '';
-  const P = { name: nm, to: o.to || nm, from: o.from || '', bday: o.bday || '', btime: o.btime || '', btz: o.btz || '', since: o.since || '', tone: o.tone || 'tender', kid: !!o.kid, midnight: o.midnight || '' };
+  const P = { name: nm, to: o.to || nm, from: o.from || '', sex: o.sex || 'm', dday: o.dday || '', angel: o.angel || '', bday: o.bday || '', btime: o.btime || '', btz: o.btz || '', since: o.since || '', tone: o.tone || 'tender', kid: !!o.kid, midnight: o.midnight || '' };
   let m = s.mode || 'tal';
   if (pre) { if (LIVE_MODES[pre.m]) m = pre.m; if (pre.nm) { P.name = pre.nm; P.to = P.to || pre.nm; } if (pre.bd) P.bday = pre.bd; if (pre.bt) P.btime = pre.bt; if (pre.bz) P.btz = pre.bz; }
-  const collect = () => { for (const [id, k] of [['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amBtz', 'btz'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
+  const collect = () => { for (const [id, k] of [['amSex', 'sex'], ['amDday', 'dday'], ['amAngel', 'angel'], ['amName', 'name'], ['amBday', 'bday'], ['amBtime', 'btime'], ['amBtz', 'btz'], ['amTo', 'to'], ['amFrom', 'from'], ['amSince', 'since']]) { const e = $(id); if (e) P[k] = e.value.trim(); } };
   const draw = () => {
     let f = '';
-    if (m === 'tal' || m === 'luna') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'День рождения', P.bday, 'date');
+    if (m === 'mem') f = fld('amName', 'Имя усопшего (как в записке)', P.name) + `<label class="lbl">Пол</label><select class="fld" id="amSex"><option value="m"${P.sex !== 'f' ? ' selected' : ''}>мужской</option><option value="f"${P.sex === 'f' ? ' selected' : ''}>женский</option></select>` + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amDday', 'Дата кончины', P.dday, 'date') + fld('amAngel', 'День ангела, по желанию', P.angel, 'date');
+    else if (m === 'tal' || m === 'luna') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'День рождения', P.bday, 'date');
     else if (m === 'path') f = fld('amName', 'Как обращаться', P.name) + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + tzSelect('amBtz', P.btz) + fld('amFrom', 'От кого', P.from);
     else { f = fld('amTo', 'Кому (имя)', P.to) + fld('amFrom', 'От кого (имя)', P.from); if (m === 'love') f += fld('amSince', 'Вместе с', P.since, 'date'); }
-    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Сейчас: ${LIVE_MODES[s.mode] || '—'}</div><div class="sh-name">${esc(s.name || '')}</div></div></div>
-      <div class="h2">Новый режим</div><div class="seg" id="amMode">${Object.entries(LIVE_MODES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div>${f}
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Сейчас: ${MODE_NAMES[s.mode] || '—'}</div><div class="sh-name">${esc(s.name || '')}</div></div></div>
+      <div class="h2">Новый режим</div><div class="seg" id="amMode">${Object.entries(MODE_NAMES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div>${f}
       <p class="sh-note">Ссылка-подарок и привязка к телефону получателя не меняются.</p>
       <div class="btns"><button class="btn" id="amCancel">Отмена</button><button class="btn main" id="amSave">Сохранить</button></div>`);
-    $('amMode').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { collect(); if (m === 'tal' || m === 'path' || m === 'luna') P.to = P.to || P.name; else P.name = P.name || P.to; m = b.dataset.m; draw(); });
+    $('amMode').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { collect(); if (m === 'tal' || m === 'path' || m === 'luna' || m === 'mem') P.to = P.to || P.name; else P.name = P.name || P.to; m = b.dataset.m; draw(); });
     $('amCancel').onclick = hideSheet;
     $('amSave').onclick = async () => {
       collect();
-      const solo = m === 'tal' || m === 'path' || m === 'luna';
+      const solo = m === 'tal' || m === 'path' || m === 'luna' || m === 'mem';
+      if (m === 'mem' && !P.dday) { toast('Впиши дату кончины'); return; }
       if (solo ? !P.name : !P.to) { toast('Впиши имя'); return; }
-      const prof = m === 'fc' ? { to: P.to, from: P.from } : m === 'love' ? { to: P.to, from: P.from, since: P.since, tone: P.tone }
+      const prof = m === 'mem' ? { name: P.name, sex: P.sex, bday: P.bday, dday: P.dday, angel: P.angel } : m === 'fc' ? { to: P.to, from: P.from } : m === 'love' ? { to: P.to, from: P.from, since: P.since, tone: P.tone }
         : m === 'luna' ? { name: P.name, bday: P.bday } : m === 'path' ? { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz, from: P.from } : { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz };
       const pub = solo ? P.name : P.to;
       Object.keys(prof).forEach(k => { if (prof[k] === '' && o[k]) delete prof[k]; });
@@ -4169,7 +4176,7 @@ async function adminMode(s, pre) {
         if (!tok) throw new Error('нужен вход администратора');
         for (const x of [s, ...stones.filter(x => x.of === s.id)]) await fsReq('PATCH', `${COL}/${x.id}`, tok, { mode: m, name: pub }, ['mode', 'name']);
         await fsReq('PATCH', `${COLV}/${s.id}`, tok, { profile: JSON.stringify(merged) }, ['profile']);
-        await loadStones(); hideSheet(); toast(`Режим: ${LIVE_MODES[m]}`);
+        await loadStones(); hideSheet(); toast(`Режим: ${MODE_NAMES[m]}`);
       } catch (e) { toast('Не получилось: ' + e.message, 6000); }
       veil();
     };
@@ -4212,6 +4219,14 @@ function expertPanel() {
   if (document.hidden) { hid = Date.now(); return; }
   if (hid && Date.now() - hid > 20 * 60 * 1000 && !LV.busy && !LV.a && LV.step === 0 && !(typeof addShot !== 'undefined' && addShot)) location.reload();
 }); })();
+
+// ---------- «Память» (admin-only prototype): the memorial page inside the sheet ----------
+function showMem(s, P) {
+  const q = new URLSearchParams({ embed: '1', nm: P.name || s.name || '', sx: P.sex || 'm', bd: P.bday || '', dd: P.dday || '', an: P.angel || '' });
+  sheet(`<iframe class="mem-frame" src="/pamyat.html?${q}" title="Память"></iframe><div class="btns"><button class="btn main" id="again">Закрыть</button></div>`);
+  $('sheet').classList.add('mem');
+  $('again').onclick = hideSheet;
+}
 
 // ---------- tabs ----------
 function tab(name) {
@@ -4392,7 +4407,7 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 
 loadStones().then(() => adminDeepLink());
 window.__coi.then(() => { loadModel(); liveInit(); });
-if (new URLSearchParams(location.search).has('test')) window.JKL = { showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
+if (new URLSearchParams(location.search).has('test')) window.JKL = { showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
   if (inApp) $('lvPaste').style.display = '';
   // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly
