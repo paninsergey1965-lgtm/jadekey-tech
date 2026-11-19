@@ -293,6 +293,9 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 
 .sheet.mem{background:#0a0a0b}.mem-frame{display:block;width:100%;height:72vh;border:0;border-radius:14px;background:#0a0a0b}
 
+.day-pill{border:1px solid #ffffff2e;background:#0009;color:#e8efe9;border-radius:20px;padding:7px 14px;font:13px/1.2 inherit;letter-spacing:.02em}
+.day-pill[hidden]{display:none}
+
 </style>
 </head>
 <body>
@@ -312,6 +315,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <div class="msg" id="msgS">Готов</div>
       <div class="sharp"><i id="barS"></i></div>
       <button class="shutter" id="shutter" aria-label="Сканировать"><b></b></button>
+      <button class="day-pill" id="dayPill" type="button" hidden></button>
     </div>
   </div>
 </section>
@@ -2067,7 +2071,7 @@ function showLove(s) {
 async function showFound(r) {
   let s = r.stone;
   if (s.of) s = stones.find(x => x.id === s.of) || s;
-  if (s.mode) { await showLive(s); return; }
+  if (s.mode) { await showLive(s, !!(r.res || r.best)); return; }
   const pct = Math.round(r.res.ratio * 100);
   if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
   sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
@@ -3182,11 +3186,22 @@ function liveExtras(s, view) {
     sh.insertAdjacentHTML('beforeend', `<a class="mup" href="${u}">Открыть ещё режимы — ${more}</a>`);
   }
 }
-async function showLive(s) {
+// one scan opens the stone's day: until local midnight it can be reopened without the camera
+function dayOpen() { try { const d = JSON.parse(ls.get('jk2_day') || 'null'); return d && d.until > Date.now() ? d : null; } catch (e) { return null; } }
+function dayPill() {
+  const b = $('dayPill'); if (!b) return;
+  const d = dayOpen(), s = d && stones.find(x => x.id === d.id && x.mode);
+  b.hidden = !s; if (!s) return;
+  b.textContent = `${s.mode === 'mem' ? '🕯' : '✦'} ${s.name || 'Мой камень'} · сегодня`;
+  b.onclick = () => showLive(s);
+}
+setInterval(dayPill, 60000);
+async function showLive(s, scanned) {
   veil('Открываю…');
   let p = null; try { p = await readPriv(s.id); } catch (e) {}
   veil();
   if (!p) { showTeaser(s); return; }
+  if (scanned) { const m = new Date(); m.setHours(24, 0, 0, 0); ls.set('jk2_day', JSON.stringify({ id: s.id, until: m.getTime() })); dayPill(); }
   if (myUid() && p.recipient === myUid()) remember(s.id, 'got');
   const P = p.profile || {};
   talShift = habShift = fcShift = pathShift = lunaShift = 0;
@@ -4403,9 +4418,9 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
   };
 }
 
-loadStones().then(() => adminDeepLink());
+loadStones().then(() => { adminDeepLink(); dayPill(); });
 window.__coi.then(() => { loadModel(); liveInit(); });
-if (new URLSearchParams(location.search).has('test')) window.JKL = { showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
+if (new URLSearchParams(location.search).has('test')) window.JKL = { dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
   if (inApp) $('lvPaste').style.display = '';
   // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly
