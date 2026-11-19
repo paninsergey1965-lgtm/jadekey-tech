@@ -3409,19 +3409,24 @@ async function liveSave() {
   } finally { veil(); LV.busy = false; lvNav(); }
 }
 function shareButtons(link, text) {
+  // one clear action: the phone's own share sheet (Telegram, WhatsApp, Messages…); fallback list only if there is none
   const u = encodeURIComponent(link), tx = encodeURIComponent(text);
-  return { html: `<div class="lvlink">${esc(link)}</div><div class="btns"><button class="btn main" id="shTg">Telegram</button><button class="btn main" id="shWa">WhatsApp</button></div><div class="btns">${navigator.share ? '<button class="btn" id="shAny">Поделиться…</button>' : ''}<button class="btn" id="shCopy">Скопировать</button></div>`,
+  return { html: `<div class="btns"><button class="btn main" id="shGo">Отправить ссылку</button></div><div id="shAlt" style="display:none"><div class="lvlink">${esc(link)}</div><div class="btns"><button class="btn" id="shTg">Telegram</button><button class="btn" id="shWa">WhatsApp</button><button class="btn" id="shCopy">Скопировать</button></div></div>`,
     bind: () => {
+      const alt = () => { $('shAlt').style.display = ''; };
+      $('shGo').onclick = async () => {
+        if (navigator.share) { try { await navigator.share({ title: 'JadeKey', text, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+        alt();
+      };
       $('shTg').onclick = () => openLink(`https://t.me/share/url?url=${u}&text=${tx}`);
       $('shWa').onclick = () => openLink(`https://wa.me/?text=${tx}%20${u}`);
-      if ($('shAny')) $('shAny').onclick = async () => { try { await navigator.share({ title: 'JadeKey', text, url: link }); } catch (e) {} };
       $('shCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); } catch (e) { toast('Не удалось скопировать'); } };
     } };
 }
 function giftText(mode, name) { return mode === 'fc' ? `${name}, тебе подарили камень с печеньем предсказаний. Открой ссылку и наведи телефон на камень.` : mode === 'path' ? `${name}, это твой камень пути. Открой ссылку и наведи телефон на камень.` : mode === 'tal' ? `${name}, это твой талисман. Открой ссылку и наведи телефон на камень.` : `${name}, тебе подарили живой камень. Открой ссылку и наведи телефон на камень.`; }
 function liveDone() {
   const sb = shareButtons(LV.link, giftText(LV.mode, LV.toName));
-  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Отправь ссылку тому, кому даришь камень. Послания откроются только на телефоне, где ссылку откроют первой, и только с самим камнем.</p>${sb.html}<div class="btns"><button class="btn" id="lvHome">Готово</button></div>`;
+  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён. Если даришь — отправь ссылку тому, кто получит камень.</p>${sb.html}<div class="btns"><button class="btn" id="lvHome">Готово</button></div>`;
   sb.bind(); $('lvHome').onclick = liveHome;
 }
 async function liveHome() {
