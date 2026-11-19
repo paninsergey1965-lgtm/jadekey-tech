@@ -2071,7 +2071,7 @@ function showLove(s) {
 async function showFound(r) {
   let s = r.stone;
   if (s.of) s = stones.find(x => x.id === s.of) || s;
-  if (s.mode) { await showLive(s, !!(r.res || r.best)); return; }
+  if (s.mode) { await showLive(s, !!r.cv); return; }
   const pct = Math.round(r.res.ratio * 100);
   if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
   sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
