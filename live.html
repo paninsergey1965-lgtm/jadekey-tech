@@ -296,6 +296,17 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 .day-pill{display:block;margin:0 auto 18px;border:1px solid #ffffff2e;background:#0009;color:#e8efe9;border-radius:20px;padding:7px 14px;font:13px/1.2 inherit;letter-spacing:.02em}
 .day-pill[hidden]{display:none}
 
+.rel .rel-me{display:block;width:100%;text-align:left;margin:10px 0 4px;padding:12px 14px;border-radius:14px;background:#ffffff10;color:#f3d6df;font-size:13px;line-height:1.5}
+.rel .rel-me small{display:block;margin-top:4px;color:#c9909f;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.rel-area{margin-top:16px;padding:14px;border-radius:16px;background:#ffffff0d;border:1px solid #6b2f4580}
+.rel-h{display:flex;justify-content:space-between;align-items:center}.rel-h b{font-size:18px;font-weight:600}
+.rel-dots{color:#ff8fb1;letter-spacing:2px;font-size:14px}
+.rel-lvl{color:#ffb3c9;font-size:14px;margin:2px 0 6px}
+.rel-sub{margin-top:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#c9909f}
+.rel-area p{margin:4px 0;font-size:14px;line-height:1.5;color:#f3e3e8}
+.rel-tip{margin-top:10px;padding-left:10px;border-left:2px solid #ff8fb1;font-size:13px;color:#f3d6df}
+.sheet.love .rel .row{background:#ffffff12}.sheet.love .rel .row small{color:#c9909f}
+
 </style>
 </head>
 <body>
@@ -2374,7 +2385,7 @@ const MODE_NAMES = Object.assign({}, LIVE_MODES, { mem: 'Память' });
 const LIVE_DESC = {
   path: 'Каждый день — небо дня по Джйотишу: накшатра, лунный день и планета дня, строка из Дао дэ цзин с номером главы и короткая практика. С датой рождения — лично для тебя.',
   fc: 'Печенье с советом дня по «Книге перемен» (И цзин): каждый день — одна из 64 гексаграмм, счастливые числа по китайской традиции и китайское слово дня. Личный расчёт по звезде рождения — в режиме «Путь».',
-  love: 'Каждый день новое послание от дарителя, с именами и счётчиком дней вместе.',
+  love: 'Совместимость: впиши имя и дату рождения другого человека — камень покажет, как вы сочетаетесь в любви, дружбе и деле. По западной астрологии, китайскому календарю, Ба-цзы и нумерологии.',
   luna: 'Лунный календарь: каждый день — лунные сутки с символом, фаза Луны и её знак, что сегодня хорошо делать и что лучше отложить. По дате рождения — твой лунный день рождения.',
   tal: 'Западная астрология: каждый день — планета дня, её камень и цвет, пожелание и совет. По дате рождения — твой знак и твой камень.'
 };
@@ -3275,7 +3286,7 @@ async function showLive(s, scanned) {
   const tier = s.mode === 'ny' ? 'luna' : s.mode, open = unlockedModes(tier), pick = ls.get('jk2_view_' + s.id);
   const view = open.includes(pick) ? pick : tier;
   const Q = Object.assign({}, P, { name: P.name || P.to || '', to: P.to || P.name || '' });
-  if (view === 'love') { loveShift = 0; showLove({ id: s.id, love: { to: Q.to, from: P.from || '', since: P.since || '', tone: P.tone || 'tender' } }); }
+  if (view === 'love') { showRel(s, Q); return; }
   else if (view === 'luna') showLuna(s, Q);
   else if (view === 'fc') showFortune(s, Q);
   else if (view === 'path') showPath(s, Q);
@@ -3417,8 +3428,8 @@ function liveForm() {
   if (m === 'tal' || m === 'luna') f = fld('lvName', m === 'luna' ? 'Как к тебе обращаться' : 'Имя владельца', P.name) + fld('lvBday', 'День рождения, по желанию', P.bday, 'date');
   else if (m === 'path') f = fld('lvName', 'Как к тебе обращаться', P.name) + fld('lvBday', 'Дата рождения, по желанию', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect('lvBtz', P.btz) + '<p class="sub" style="margin:6px 0 0">С датой рождения послания считаются по твоей Луне рождения.</p>' + fld('lvFrom', 'От кого, если это подарок', P.from);
   else {
-    f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
-    if (m === 'love') f += fld('lvSince', 'Вместе с, по желанию', P.since, 'date') + `<label class="lbl">Тон посланий</label><div class="seg" id="lvTone">${[['tender', 'Нежно'], ['fun', 'С юмором'], ['romantic', 'Романтично']].map(([k, n]) => `<button class="${(P.tone || 'tender') === k ? 'on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>`;
+    if (m === 'love') f = fld('lvName', 'Как к тебе обращаться', P.name) + fld('lvBday', 'Твоя дата рождения', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect('lvBtz', P.btz) + '<p class="sub" style="margin:6px 0 0">По твоей дате камень сравнивает тебя с другими людьми. Время и город делают расчёт точнее.</p>';
+    else f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
   }
   const modes = LV.lock ? [[m, LIVE_MODES[m]]] : Object.entries(LIVE_MODES);
   $('lvForm').innerHTML = `<div class="seg" id="lvMode">${modes.map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${LV.lock ? '<p class="sub" style="margin:6px 0 0">Этот режим куплен вместе с камнем. Другой режим можно открыть потом на сайте jadekey.tech.</p>' : ''}${f}`;
@@ -3429,10 +3440,11 @@ function liveForm() {
 async function liveSave() {
   liveCollect();
   const P = LV.p, m = LV.mode;
-  if (m === 'tal' || m === 'path' || m === 'luna' ? !P.name : !P.to) { toast('Впиши имя'); return; }
-  const prof = m === 'fc' ? { to: P.to, from: P.from || '' } : m === 'love' ? { to: P.to, from: P.from || '', since: P.since || '', tone: P.tone || 'tender' }
+  if (m === 'tal' || m === 'path' || m === 'luna' || m === 'love' ? !P.name : !P.to) { toast('Впиши имя'); return; }
+  if (m === 'love' && !P.bday) { toast('Впиши дату рождения'); return; }
+  const prof = m === 'fc' ? { to: P.to, from: P.from || '' } : m === 'love' ? { name: P.name, bday: P.bday || '', btime: P.btime || '', btz: P.btz || '' }
     : m === 'luna' ? { name: P.name, bday: P.bday || '' } : m === 'path' ? { name: P.name, bday: P.bday || '', btime: P.btime || '', btz: P.btz || '', from: P.from || '' } : { name: P.name, bday: P.bday || '', btime: P.btime || '', btz: P.btz || '' };
-  const pubName = m === 'tal' || m === 'path' || m === 'luna' ? P.name : P.to;
+  const pubName = m === 'tal' || m === 'path' || m === 'luna' || m === 'love' ? P.name : P.to;
   LV.busy = true; lvNav(); veil('Оживляю камень…');
   const made = [];
   try {
@@ -4236,19 +4248,20 @@ async function adminMode(s, pre) {
     if (m === 'mem') f = fld('amName', 'Имя усопшего (как в записке)', P.name) + `<label class="lbl">Пол</label><select class="fld" id="amSex"><option value="m"${P.sex !== 'f' ? ' selected' : ''}>мужской</option><option value="f"${P.sex === 'f' ? ' selected' : ''}>женский</option></select>` + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amDday', 'Дата кончины', P.dday, 'date') + fld('amAngel', 'День ангела, по желанию', P.angel, 'date');
     else if (m === 'tal' || m === 'luna') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'День рождения', P.bday, 'date');
     else if (m === 'path') f = fld('amName', 'Как обращаться', P.name) + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + tzSelect('amBtz', P.btz) + fld('amFrom', 'От кого', P.from);
-    else { f = fld('amTo', 'Кому (имя)', P.to) + fld('amFrom', 'От кого (имя)', P.from); if (m === 'love') f += fld('amSince', 'Вместе с', P.since, 'date'); }
+    else if (m === 'love') f = fld('amName', 'Имя владельца', P.name) + fld('amBday', 'Дата рождения', P.bday, 'date') + fld('amBtime', 'Время рождения', P.btime, 'time') + tzSelect('amBtz', P.btz);
+    else f = fld('amTo', 'Кому (имя)', P.to) + fld('amFrom', 'От кого (имя)', P.from);
     sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Сейчас: ${MODE_NAMES[s.mode] || '—'}</div><div class="sh-name">${esc(s.name || '')}</div></div></div>
       <div class="h2">Новый режим</div><div class="seg" id="amMode">${Object.entries(MODE_NAMES).map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div>${f}
       <p class="sh-note">Ссылка-подарок и привязка к телефону получателя не меняются.</p>
       <div class="btns"><button class="btn" id="amCancel">Отмена</button><button class="btn main" id="amSave">Сохранить</button></div>`);
-    $('amMode').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { collect(); if (m === 'tal' || m === 'path' || m === 'luna' || m === 'mem') P.to = P.to || P.name; else P.name = P.name || P.to; m = b.dataset.m; draw(); });
+    $('amMode').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { collect(); if (m === 'tal' || m === 'path' || m === 'luna' || m === 'mem' || m === 'love') P.to = P.to || P.name; else P.name = P.name || P.to; m = b.dataset.m; draw(); });
     $('amCancel').onclick = hideSheet;
     $('amSave').onclick = async () => {
       collect();
-      const solo = m === 'tal' || m === 'path' || m === 'luna' || m === 'mem';
+      const solo = m === 'tal' || m === 'path' || m === 'luna' || m === 'mem' || m === 'love';
       if (m === 'mem' && !P.dday) { toast('Впиши дату кончины'); return; }
       if (solo ? !P.name : !P.to) { toast('Впиши имя'); return; }
-      const prof = m === 'mem' ? { name: P.name, sex: P.sex, bday: P.bday, dday: P.dday, angel: P.angel } : m === 'fc' ? { to: P.to, from: P.from } : m === 'love' ? { to: P.to, from: P.from, since: P.since, tone: P.tone }
+      const prof = m === 'mem' ? { name: P.name, sex: P.sex, bday: P.bday, dday: P.dday, angel: P.angel } : m === 'fc' ? { to: P.to, from: P.from } : m === 'love' ? { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz }
         : m === 'luna' ? { name: P.name, bday: P.bday } : m === 'path' ? { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz, from: P.from } : { name: P.name, bday: P.bday, btime: P.btime, btz: P.btz };
       const pub = solo ? P.name : P.to;
       Object.keys(prof).forEach(k => { if (prof[k] === '' && o[k]) delete prof[k]; });
@@ -4289,7 +4302,7 @@ function expertPanel() {
     talShift = habShift = fcShift = pathShift = loveShift = lunaShift = days;
     const P = { name: E.name, to: E.name, from: E.from, bday: E.bday, btime: E.btime, btz: E.btz, kid: E.kid, tone: 'tender' };
     const st = { id: 'expert-' + (E.name || 'demo'), name: E.name, mode: E.m };
-    if (E.m === 'love') showLove({ id: st.id, love: { to: E.name || 'Любимая', from: E.from, since: '', tone: 'tender' } });
+    if (E.m === 'love') showRel({ id: st.id }, P);
     else if (E.m === 'luna' || E.m === 'ny') showLuna(st, P);
     else if (E.m === 'fc') showFortune(st, P);
     else if (E.m === 'path') showPath(st, P);
@@ -4348,6 +4361,181 @@ function showMem(s, P) {
   sheet(`<iframe class="mem-frame" src="/pamyat.html?${q}" title="Память"></iframe><div class="btns"><button class="btn main" id="again">Закрыть</button></div>`);
   $('sheet').classList.add('mem');
   $('again').onclick = hideSheet;
+}
+
+// ---------- Love: совместимость владельца с другим человеком ----------
+// Считаем по дате (и, если есть, времени и городу) рождения двух людей: западные знаки Солнца, Луны, Меркурия,
+// Венеры и Марса (astronomy-engine), китайский год и стихию (граница года — Личунь, долгота Солнца 315°),
+// небесный ствол дня по Ба-цзы и число пути. Трактовки — символические; процентов нет.
+const REL_ANI = ['Крыса', 'Бык', 'Тигр', 'Кролик', 'Дракон', 'Змея', 'Лошадь', 'Коза', 'Обезьяна', 'Петух', 'Собака', 'Свинья'];
+const REL_EL = ['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'];
+const REL_STEM = '甲乙丙丁戊己庚辛壬癸';
+const REL_SIGN_P = LUNA_SIGN, REL_SIGN = LUNA_SIGNN;
+function relWhen(P, t) {
+  const tz = (P.btz || '').split('|')[0]; let d;
+  try { d = tz ? zonedDate(P.bday, t, tz) : new Date(P.bday + 'T' + t + ':00'); } catch (e) { d = new Date(P.bday + 'T' + t + ':00'); }
+  return isNaN(d) ? null : d;
+}
+function relLon(body, d) { const A = window.Astronomy; return body === 'Sun' ? A.SunPosition(d).elon : A.Ecliptic(A.GeoVector(A.Body[body], d, true)).elon; }
+const relSg = (b, d) => Math.floor(((relLon(b, d) % 360) + 360) % 360 / 30) % 12;
+function relChart(P) {
+  if (!P || !/^\d{4}-\d\d-\d\d$/.test(P.bday || '')) return null;
+  const d = relWhen(P, P.btime || '12:00'); if (!d) return null;
+  const sign = {}, alt = {};
+  for (const b of ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars']) {
+    sign[b] = relSg(b, d);
+    if (!P.btime) { const a = relWhen(P, '00:01'), z = relWhen(P, '23:59'); if (a && z) { const sa = relSg(b, a), sz = relSg(b, z); if (sa !== sz) alt[b] = [sa, sz]; } }
+  }
+  const [y, m, dd] = P.bday.split('-').map(Number), sun = relLon('Sun', d);
+  const cy = m <= 2 && sun < 315 && sun > 250 ? y - 1 : y;                 // до Личуня — ещё прошлый китайский год
+  const ani = ((cy - 4) % 12 + 12) % 12, stem = ((cy - 4) % 10 + 10) % 10;
+  const jdn = Math.floor(Date.UTC(y, m - 1, dd) / 864e5) + 2440588;
+  const ds = ((jdn - 2451545 + 54) % 60 + 60) % 60 % 10;                   // 1 янв 2000 = 戊午
+  let lp = P.bday.replace(/\D/g, '').split('').reduce((a, c) => a + +c, 0); while (lp > 9) lp = String(lp).split('').reduce((a, c) => a + +c, 0);
+  return { sign, alt, ani, yel: stem >> 1, ds, del: ds >> 1, lp, exact: !!P.btime };
+}
+const relAsp = (a, b) => { const k = ((b - a) % 12 + 12) % 12; return Math.min(k, 12 - k); };   // 0..6 знаков
+const REL_T = {
+  Sun: { sc: [2, 0, 1, -1, 2, -1, 1], tip: 'Не переделывайте друг друга — договоритесь, где чьё слово главное.', t: [
+    'Солнце у обоих в {a}: вы похожи характером и понимаете мотивы друг друга. Минус — одни и те же слабости.',
+    '{A} и {B} — соседние знаки: разный темперамент, но вам друг с другом любопытно.',
+    '{A} и {B} — дружественные знаки: легко договариваетесь и поддерживаете друг друга.',
+    '{A} и {B} в напряжённом аспекте: разный темп и привычки, споры о том, «как правильно».',
+    '{A} и {B} — одна стихия: общий ритм жизни, понимание без лишних слов.',
+    '{A} и {B} плохо «видят» друг друга: приходится подстраиваться и объяснять очевидное.',
+    '{A} и {B} — противоположные знаки: сильно тянет друг к другу, но и споров много.'] },
+  Moon: { sc: [2, 0, 1, -1, 2, -1, 0], tip: 'Говорите вслух, что вам нужно для уюта и близости — угадывать не получится.', t: [
+    'Луна у обоих в {a}: одинаково чувствуете и одинаково нуждаетесь в заботе — вместе уютно.',
+    'Луны в соседних знаках: эмоционально вы разные, но друг другу не мешаете.',
+    'Луны в дружественных знаках: легко утешить друг друга и поднять настроение.',
+    'Луны в напряжении: разные потребности в близости и быте, обиды на ровном месте.',
+    'Луны в одной стихии: чувствуете настроение друг друга без слов.',
+    'Луны плохо сочетаются: что одному уют, другому тесно.',
+    'Луны напротив друг друга: тянет, но эмоции качает — нужен общий ритм.'] },
+  Mercury: { sc: [2, 0, 1, -1, 2, -1, 0], tip: 'Важное проговаривайте и переспрашивайте — лучше лишний раз уточнить.', t: [
+    'Меркурий у обоих в {a}: думаете одинаково, разговор течёт сам собой.',
+    'Разный стиль мышления, но поговорить всегда есть о чём.',
+    'Меркурии дружат: легко договориться и шутить на одной волне.',
+    'Меркурии в напряжении: спорите о мелочах и слышите разное в одних словах.',
+    'Меркурии в одной стихии: понимаете друг друга с полуслова.',
+    'Говорите на разных языках — нужны терпение и уточнения.',
+    'Противоположные взгляды: спорить интересно, договориться трудно.'] },
+  VM: { sc: [2, 0, 1, 0, 2, -1, 2], tip: 'Берегите романтику: свидания, сюрпризы, время только вдвоём.', t: [
+    'Венера и Марс в одном знаке — сильное притяжение, «химия» с первого взгляда.',
+    'Притяжение спокойное, без искр — больше нежности, чем страсти.',
+    'Венера и Марс дружат: лёгкий флирт и взаимный интерес.',
+    'Венера и Марс в напряжении: страсть с ссорами, ревность и примирения.',
+    'Венера и Марс в одной стихии — притяжение глубокое и надолго.',
+    'Желания не совпадают: одному хочется одного, другому — другого.',
+    'Венера напротив Марса — классическое притяжение противоположностей.'] }
+};
+function relFactors(a, b, nm) {
+  const F = [], A0 = a.sign, B0 = b.sign;
+  const pl = (k, x, y) => { const r = relAsp(x, y), T = REL_T[k]; return { k, s: T.sc[r], tip: T.tip, txt: T.t[r].replace('{a}', REL_SIGN_P[x]).replace('{A}', REL_SIGN[x]).replace('{B}', REL_SIGN[y]), approx: !!(a.alt[k] || b.alt[k]) }; };
+  F.push(pl('Sun', A0.Sun, B0.Sun), pl('Moon', A0.Moon, B0.Moon), pl('Mercury', A0.Mercury, B0.Mercury));
+  const v1 = relAsp(A0.Venus, B0.Mars), v2 = relAsp(A0.Mars, B0.Venus), vr = REL_T.VM.sc[v1] >= REL_T.VM.sc[v2] ? v1 : v2;
+  F.push({ k: 'VM', s: REL_T.VM.sc[vr], tip: REL_T.VM.tip, txt: REL_T.VM.t[vr], approx: !!(a.alt.Venus || a.alt.Mars || b.alt.Venus || b.alt.Mars) });
+  // китайский круг животных
+  const x = a.ani, y = b.ani, X = REL_ANI[x], Y = REL_ANI[y];
+  let an;
+  if (x === y) an = [1, `${X} и ${Y}: по китайскому календарю вы одного знака — похожи, но можете соперничать.`];
+  else if (relAsp(x, y) === 6) an = [-2, `${X} и ${Y} — противостояние по китайскому кругу: яркие ссоры, тянет и отталкивает.`];
+  else if (x % 4 === y % 4) an = [2, `${X} и ${Y} — союз «трёх гармоний»: по китайской традиции одно из лучших сочетаний.`];
+  else if ((x + y) % 12 === 1) an = [2, `${X} и ${Y} — «тайные друзья»: тихая и надёжная поддержка друг друга.`];
+  else if ((x + y) % 12 === 7) an = [-1, `${X} и ${Y} — пара «вреда»: мелкие обиды копятся, их надо проговаривать.`];
+  else an = [0, `${X} и ${Y} — нейтральная пара по китайскому кругу: всё зависит от вас.`];
+  F.push({ k: 'ani', s: an[0], txt: an[1], tip: 'Ссоры гасите в тот же день — не копите обиды.' });
+  // стихии года и господина дня: порождение, контроль, одна стихия
+  const cyc = (p, q) => p === q ? 'same' : (p + 1) % 5 === q ? 'give' : (q + 1) % 5 === p ? 'get' : 'ctrl';
+  const ye = cyc(a.yel, b.yel), E1 = REL_EL[a.yel], E2 = REL_EL[b.yel];
+  F.push({ k: 'yel', s: ye === 'ctrl' ? -1 : 1, tip: 'Разделите роли: кто ведёт, кто считает, кто решает.',
+    txt: ye === 'same' ? `Стихия года у обоих — ${E1}: общие ценности и взгляд на жизнь.` : ye === 'give' ? `Твоя стихия года ${E1} питает ${E2} у ${nm}: ты даёшь силы, ${nm} их раскрывает.` : ye === 'get' ? `Стихия ${E2} у ${nm} питает твою (${E1}): рядом с ${nm} у тебя прибавляется сил.` : `${E1} и ${E2} в отношениях контроля: один невольно давит на другого.` });
+  const de = (a.ds + 5) % 10 === b.ds ? 'union' : cyc(a.del, b.del), D1 = REL_EL[a.del], D2 = REL_EL[b.del];
+  F.push({ k: 'dm', s: de === 'union' ? 2 : de === 'ctrl' ? -1 : 1, tip: 'Уважайте личное пространство друг друга.',
+    txt: de === 'union' ? `Ваши небесные стволы дня (${REL_STEM[a.ds]} и ${REL_STEM[b.ds]}) образуют союз — по Ба-цзы это знак сильной личной связи.` : de === 'same' ? `Господин дня по Ба-цзы у вас одной стихии (${D1}): понимаете друг друга изнутри.` : de === 'ctrl' ? `Господин дня по Ба-цзы: ${D1} и ${D2} в контроле — кто-то будет стараться руководить.` : `Господин дня по Ба-цзы: ${D1} и ${D2} поддерживают друг друга — рядом легко.` });
+  const grp = n => [1, 5, 7].includes(n) ? 0 : [2, 4, 8].includes(n) ? 1 : 2;
+  F.push({ k: 'num', s: a.lp === b.lp || grp(a.lp) === grp(b.lp) ? 1 : -1, tip: 'Запишите общие цели — так вы смотрите в одну сторону.',
+    txt: a.lp === b.lp ? `Число пути у обоих — ${a.lp}: одинаковые цели и понятная друг другу жизнь.` : grp(a.lp) === grp(b.lp) ? `Числа пути ${a.lp} и ${b.lp} из одной группы: похожий подход к делам.` : `Числа пути ${a.lp} и ${b.lp} разные по природе: смотрите на дела с разных сторон — и польза, и споры.` });
+  return F;
+}
+const REL_AREAS = [
+  ['love', 'Любовь', { VM: 2, Moon: 1.5, Sun: 1, ani: 1.5, dm: 1.5 }, 'Хорошая основа. Берегите то, что есть, и не забывайте говорить тёплые слова.'],
+  ['friend', 'Дружба', { Sun: 1.5, Mercury: 1.5, ani: 1, num: 1, Moon: 0.5 }, 'Дружите открыто: общие дела и честные разговоры только укрепят связь.'],
+  ['biz', 'Дело', { Sun: 1, Mercury: 1.5, yel: 1.5, num: 1.5, ani: 0.5 }, 'Хорошие партнёры. Зафиксируйте договорённости на бумаге — и вперёд.']
+];
+const REL_LVL = [[0.4, 'Сильное совпадение', 4], [0.15, 'Хорошо подходите', 3], [-0.12, 'Нужна работа', 2], [-9, 'Непросто', 1]];
+function relArea(F, W) {
+  let s = 0, w = 0; const fs = F.filter(f => W[f.k]).map(f => Object.assign({ w: W[f.k] }, f));
+  fs.forEach(f => { s += f.w * f.s / 2; w += f.w; });
+  const v = w ? s / w : 0, L = REL_LVL.find(l => v >= l[0]);
+  const good = fs.filter(f => f.s > 0).sort((p, q) => q.w * q.s - p.w * p.s).slice(0, 2);
+  const bad = fs.filter(f => f.s < 0).sort((p, q) => p.w * p.s - q.w * q.s).slice(0, 2);
+  return { lvl: L[1], dots: L[2], good, bad, approx: fs.some(f => f.approx && (f.s !== 0)) };
+}
+function relCard(c) {
+  const sg = k => c.alt[k] ? `${REL_SIGN[c.alt[k][0]]} или ${REL_SIGN[c.alt[k][1]]}` : REL_SIGN[c.sign[k]];
+  return `Солнце: ${sg('Sun')} · Луна: ${sg('Moon')} · ${REL_ANI[c.ani]} (${REL_EL[c.yel]}) · день ${REL_STEM[c.ds]} ${REL_EL[c.del]} · число ${c.lp}`;
+}
+const relMeKey = s => 'jk2_relme_' + s.id, relPpKey = s => 'jk2_relp_' + s.id;
+function relMe(s, P) {
+  let o = null; try { o = JSON.parse(ls.get(relMeKey(s)) || 'null'); } catch (e) {}
+  if (o && o.bday) return o;
+  return P.bday ? { name: P.name || P.to || '', bday: P.bday, btime: P.btime || '', btz: P.btz || '' } : null;
+}
+function relPeople(s) { return ls.list(relPpKey(s)); }
+function relDone(s, html) {
+  sheet(`<div class="rel">${html}</div>`); $('sheet').classList.add('love');
+  if ($('again')) $('again').onclick = () => { loveStop(); hideSheet(); };
+  if (s.mode) liveExtras(s, 'love');
+}
+function relPersonForm(id, P) {
+  return fld(id + 'N', 'Имя', P.name) + fld(id + 'D', 'Дата рождения', P.bday, 'date') + fld(id + 'T', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect(id + 'Z', P.btz);
+}
+const relRead = id => ({ name: ($(id + 'N').value || '').trim(), bday: $(id + 'D').value, btime: $(id + 'T').value, btz: $(id + 'Z').value });
+function showRel(s, P, scr) {
+  const me = relMe(s, P), my = me && relChart(me), nm = (me && me.name) || P.name || P.to || '';
+  if (!my || scr === 'me') {
+    relDone(s, `<div class="sh-state">♥ Love · совместимость</div><div class="sh-name">${my ? 'Твои данные' : 'Сначала о тебе'}</div><p class="sh-note">Камень сравнивает тебя с другими людьми по дате рождения. Время и город делают расчёт точнее. Данные остаются только на этом телефоне.</p>
+      ${relPersonForm('rm', me || { name: nm })}<div class="btns"><button class="btn" id="again">Закрыть</button><button class="btn main" id="rmSave">Сохранить</button></div>`);
+    $('rmSave').onclick = () => { const o = relRead('rm'); if (!o.bday) { toast('Впиши дату рождения'); return; } if (!o.name) o.name = nm; ls.set(relMeKey(s), JSON.stringify(o)); showRel(s, P); };
+    return;
+  }
+  if (scr === 'add') {
+    relDone(s, `<div class="sh-state">♥ Love · совместимость</div><div class="sh-name">С кем сравнить?</div>${relPersonForm('rp', {})}<p class="sh-note">Без времени рождения Луна и Венера иногда стоят на границе знаков — тогда результат приблизительный.</p><div class="btns"><button class="btn" id="rpBack">Назад</button><button class="btn main" id="rpGo">Сравнить</button></div>`);
+    $('rpBack').onclick = () => showRel(s, P);
+    $('rpGo').onclick = () => {
+      const o = relRead('rp'); if (!o.name) { toast('Впиши имя'); return; } if (!o.bday) { toast('Впиши дату рождения'); return; }
+      if (!relChart(o)) { toast('Не получилось посчитать дату'); return; }
+      o.id = rnd(8); const L = relPeople(s); L.unshift(o); ls.set(relPpKey(s), JSON.stringify(L.slice(0, 50))); showRel(s, P, o.id);
+    };
+    return;
+  }
+  const L = relPeople(s), who = scr && L.find(x => x.id === scr);
+  if (who) {
+    const oc = relChart(who); if (!oc) { showRel(s, P); return; }
+    const F = relFactors(my, oc, who.name);
+    const blk = ([k, t, W, ok]) => { const r = relArea(F, W);
+      return `<div class="rel-area"><div class="rel-h"><b>${t}</b><span class="rel-dots">${'●'.repeat(r.dots)}${'○'.repeat(4 - r.dots)}</span></div><div class="rel-lvl">${r.lvl}${r.approx ? ' · приблизительно' : ''}</div>
+        ${r.good.length ? `<div class="rel-sub">Что сближает</div>${r.good.map(f => `<p>${esc(f.txt)}</p>`).join('')}` : ''}
+        ${r.bad.length ? `<div class="rel-sub">Где будут споры</div>${r.bad.map(f => `<p>${esc(f.txt)}</p>`).join('')}` : ''}
+        <div class="rel-tip">${esc(r.bad.length ? r.bad[0].tip : ok)}</div></div>`; };
+    relDone(s, `<div class="sh-state">♥ Love · совместимость</div><div class="sh-name">${esc(nm)} и ${esc(who.name)}</div><div class="rel-me">${esc(who.name)}: ${relCard(oc)}</div>
+      ${REL_AREAS.map(blk).join('')}
+      <p class="sh-note">Это символическая трактовка по западной астрологии, китайскому календарю, Ба-цзы и нумерологии — повод присмотреться и поговорить, а не приговор.</p>
+      <div class="btns"><button class="btn danger" id="rpDel">Удалить</button><button class="btn main" id="rpBack">К списку</button></div>`);
+    $('rpBack').onclick = () => showRel(s, P);
+    $('rpDel').onclick = () => { if (!confirm(`Удалить «${who.name}» из списка?`)) return; ls.set(relPpKey(s), JSON.stringify(relPeople(s).filter(x => x.id !== who.id))); showRel(s, P); };
+    return;
+  }
+  const rows = L.map(x => { const c = relChart(x); if (!c) return ''; const r = relArea(relFactors(my, c, x.name), REL_AREAS[0][2]);
+    return `<button class="row" data-p="${x.id}"><span><b>${esc(x.name)}</b><small>${REL_SIGN[c.sign.Sun]} · ${REL_ANI[c.ani]} · любовь: ${r.lvl.toLowerCase()}</small></span><span class="rel-dots" style="flex:0 0 auto">${'●'.repeat(r.dots)}${'○'.repeat(4 - r.dots)}</span></button>`; }).join('');
+  relDone(s, `<div class="sh-state">♥ Love · совместимость</div><div class="sh-name">${esc(nm)}</div><button class="rel-me rel-edit" id="rmEdit">${relCard(my)}<small>изменить</small></button>
+    <div class="h2">С кем сравнить</div>${rows ? `<div class="rows">${rows}</div>` : '<p class="sh-note">Добавь человека — девушку, друга, партнёра, маму — и камень покажет, как вы сочетаетесь в любви, дружбе и деле.</p>'}
+    <div class="btns"><button class="btn main" id="rpAdd">+ Сравнить с человеком</button></div>
+    <p class="sh-note">Список хранится только на этом телефоне.</p><div class="btns"><button class="btn" id="again">Закрыть</button></div>`);
+  $('rmEdit').onclick = () => showRel(s, P, 'me');
+  $('rpAdd').onclick = () => showRel(s, P, 'add');
+  $('sheet').querySelectorAll('[data-p]').forEach(b => b.onclick = () => showRel(s, P, b.dataset.p));
 }
 
 // ---------- tabs ----------
@@ -4529,7 +4717,7 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 
 loadStones().then(() => { adminDeepLink(); dayPill(); });
 window.__coi.then(() => { loadModel(); liveInit(); });
-if (new URLSearchParams(location.search).has('test')) window.JKL = { memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
+if (new URLSearchParams(location.search).has('test')) window.JKL = { showRel, memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
   if (inApp) $('lvPaste').style.display = '';
   // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly
