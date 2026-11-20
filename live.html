@@ -306,6 +306,10 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 .rel-area p{margin:4px 0;font-size:14px;line-height:1.5;color:#f3e3e8}
 .rel-tip{margin-top:10px;padding-left:10px;border-left:2px solid #ff8fb1;font-size:13px;color:#f3d6df}
 .sheet.love .rel .row{background:#ffffff12}.sheet.love .rel .row small{color:#c9909f}
+.rel-grp{margin-top:10px;padding:12px 14px;border-radius:14px;background:#ffffff0a}
+.rel-f{display:flex;gap:10px;margin:8px 0;font-size:13px;line-height:1.45;color:#f3e3e8}.rel-f b{display:block;font-weight:600;font-size:13px;color:#fff}.rel-f em{color:#c9909f;font-style:normal}
+.rel-f i{flex:0 0 22px;height:22px;border-radius:11px;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:14px}.rel-f i.tp{background:#2f6b4f;color:#c8f5dd}.rel-f i.tm{background:#7a2e3b;color:#ffd0d8}.rel-f i.tx{background:#6b5a2e;color:#ffe9b0}
+.rel .row .rel-dots{flex:0 0 auto}
 
 </style>
 </head>
@@ -4363,14 +4367,15 @@ function showMem(s, P) {
   $('again').onclick = hideSheet;
 }
 
-// ---------- Love: совместимость владельца с другим человеком ----------
-// Считаем по дате (и, если есть, времени и городу) рождения двух людей: западные знаки Солнца, Луны, Меркурия,
-// Венеры и Марса (astronomy-engine), китайский год и стихию (граница года — Личунь, долгота Солнца 315°),
-// небесный ствол дня по Ба-цзы и число пути. Трактовки — символические; процентов нет.
+// ---------- Love: совместимость владельца с другим человеком (методика v2) ----------
+// Запад: геоцентрические долготы на истинной эклиптике даты (astronomy-engine), аспекты по знакам.
+// Китай: животное — по китайскому Новому году, стволы Ба-цзы — от Личуня; ствол и ветвь дня (дворец супруга).
+// Нумерология: число пути. Каждый фактор приводится к −1…+1 по своей шкале; пороги — по распределению 6000 случайных пар.
 const REL_ANI = ['Крыса', 'Бык', 'Тигр', 'Кролик', 'Дракон', 'Змея', 'Лошадь', 'Коза', 'Обезьяна', 'Петух', 'Собака', 'Свинья'];
 const REL_EL = ['Дерево', 'Огонь', 'Земля', 'Металл', 'Вода'];
-const REL_STEM = '甲乙丙丁戊己庚辛壬癸';
-const REL_SIGN_P = LUNA_SIGN, REL_SIGN = LUNA_SIGNN;
+const REL_STEM = '甲乙丙丁戊己庚辛壬癸', REL_BR = '子丑寅卯辰巳午未申酉戌亥';
+const REL_SIGN = LUNA_SIGNN;
+const REL_ASPN = ['соединение', 'соседние знаки', 'секстиль', 'квадрат', 'трин', 'квинконс', 'оппозиция'];
 function relWhen(P, t) {
   const tz = (P.btz || '').split('|')[0]; let d;
   try { d = tz ? zonedDate(P.bday, t, tz) : new Date(P.bday + 'T' + t + ':00'); } catch (e) { d = new Date(P.bday + 'T' + t + ':00'); }
@@ -4378,6 +4383,15 @@ function relWhen(P, t) {
 }
 function relLon(body, d) { const A = window.Astronomy; return body === 'Sun' ? A.SunPosition(d).elon : A.Ecliptic(A.GeoVector(A.Body[body], d, true)).elon; }
 const relSg = (b, d) => Math.floor(((relLon(b, d) % 360) + 360) % 360 / 30) % 12;
+const relCnyCache = {};
+function relCny(y) {   // китайский Новый год: последнее новолуние (по пекинской дате) не позже Юйшуй (Солнце 330°)
+  if (relCnyCache[y]) return relCnyCache[y];
+  const A = window.Astronomy, ys = A.SearchSunLongitude(330, new Date(Date.UTC(y, 1, 1)), 40).date;
+  let nm = A.SearchMoonPhase(0, new Date(ys.getTime() - 31 * 864e5), 31).date;
+  for (;;) { const n2 = A.SearchMoonPhase(0, new Date(nm.getTime() + 864e5), 31).date; if (n2 > ys) break; nm = n2; }
+  const bj = new Date(nm.getTime() + 8 * 36e5);
+  return (relCnyCache[y] = Date.UTC(bj.getUTCFullYear(), bj.getUTCMonth(), bj.getUTCDate()));
+}
 function relChart(P) {
   if (!P || !/^\d{4}-\d\d-\d\d$/.test(P.bday || '')) return null;
   const d = relWhen(P, P.btime || '12:00'); if (!d) return null;
@@ -4387,94 +4401,89 @@ function relChart(P) {
     if (!P.btime) { const a = relWhen(P, '00:01'), z = relWhen(P, '23:59'); if (a && z) { const sa = relSg(b, a), sz = relSg(b, z); if (sa !== sz) alt[b] = [sa, sz]; } }
   }
   const [y, m, dd] = P.bday.split('-').map(Number), sun = relLon('Sun', d);
-  const cy = m <= 2 && sun < 315 && sun > 250 ? y - 1 : y;                 // до Личуня — ещё прошлый китайский год
-  const ani = ((cy - 4) % 12 + 12) % 12, stem = ((cy - 4) % 10 + 10) % 10;
-  const jdn = Math.floor(Date.UTC(y, m - 1, dd) / 864e5) + 2440588;
-  const ds = ((jdn - 2451545 + 54) % 60 + 60) % 60 % 10;                   // 1 янв 2000 = 戊午
-  let lp = P.bday.replace(/\D/g, '').split('').reduce((a, c) => a + +c, 0); while (lp > 9) lp = String(lp).split('').reduce((a, c) => a + +c, 0);
-  return { sign, alt, ani, yel: stem >> 1, ds, del: ds >> 1, lp, exact: !!P.btime };
+  const by = m <= 2 && sun < 315 && sun > 250 ? y - 1 : y;                  // год Ба-цзы от Личуня
+  let fy = y; try { if (m <= 2 && Date.UTC(y, m - 1, dd) < relCny(y)) fy = y - 1; } catch (e) { fy = by; }
+  const di = ((Math.floor(Date.UTC(y, m - 1, dd) / 864e5) + 2440588 - 2451545 + 54) % 60 + 60) % 60;   // 01.01.2000 = 戊午
+  const red = n => { while (n > 9) n = String(n).split('').reduce((a, c) => a + +c, 0); return n; };
+  let lp = P.bday.replace(/\D/g, '').split('').reduce((a, c) => a + +c, 0); while (lp > 9 && ![11, 22, 33].includes(lp)) lp = String(lp).split('').reduce((a, c) => a + +c, 0);
+  return { sign, alt, by, fy, bani: ((by - 4) % 12 + 12) % 12, fani: ((fy - 4) % 12 + 12) % 12, yst: ((by - 4) % 10 + 10) % 10, ds: di % 10, db: di % 12, late: !!(P.btime && P.btime >= '23:00'), lp, lpr: red(lp), exact: !!P.btime };
 }
-const relAsp = (a, b) => { const k = ((b - a) % 12 + 12) % 12; return Math.min(k, 12 - k); };   // 0..6 знаков
-const REL_T = {
-  Sun: { sc: [2, 0, 1, -1, 2, -1, 1], tip: 'Не переделывайте друг друга — договоритесь, где чьё слово главное.', t: [
-    'Солнце у обоих в {a}: вы похожи характером и понимаете мотивы друг друга. Минус — одни и те же слабости.',
-    '{A} и {B} — соседние знаки: разный темперамент, но вам друг с другом любопытно.',
-    '{A} и {B} — дружественные знаки: легко договариваетесь и поддерживаете друг друга.',
-    '{A} и {B} в напряжённом аспекте: разный темп и привычки, споры о том, «как правильно».',
-    '{A} и {B} — одна стихия: общий ритм жизни, понимание без лишних слов.',
-    '{A} и {B} плохо «видят» друг друга: приходится подстраиваться и объяснять очевидное.',
-    '{A} и {B} — противоположные знаки: сильно тянет друг к другу, но и споров много.'] },
-  Moon: { sc: [2, 0, 1, -1, 2, -1, 0], tip: 'Говорите вслух, что вам нужно для уюта и близости — угадывать не получится.', t: [
-    'Луна у обоих в {a}: одинаково чувствуете и одинаково нуждаетесь в заботе — вместе уютно.',
-    'Луны в соседних знаках: эмоционально вы разные, но друг другу не мешаете.',
-    'Луны в дружественных знаках: легко утешить друг друга и поднять настроение.',
-    'Луны в напряжении: разные потребности в близости и быте, обиды на ровном месте.',
-    'Луны в одной стихии: чувствуете настроение друг друга без слов.',
-    'Луны плохо сочетаются: что одному уют, другому тесно.',
-    'Луны напротив друг друга: тянет, но эмоции качает — нужен общий ритм.'] },
-  Mercury: { sc: [2, 0, 1, -1, 2, -1, 0], tip: 'Важное проговаривайте и переспрашивайте — лучше лишний раз уточнить.', t: [
-    'Меркурий у обоих в {a}: думаете одинаково, разговор течёт сам собой.',
-    'Разный стиль мышления, но поговорить всегда есть о чём.',
-    'Меркурии дружат: легко договориться и шутить на одной волне.',
-    'Меркурии в напряжении: спорите о мелочах и слышите разное в одних словах.',
-    'Меркурии в одной стихии: понимаете друг друга с полуслова.',
-    'Говорите на разных языках — нужны терпение и уточнения.',
-    'Противоположные взгляды: спорить интересно, договориться трудно.'] },
-  VM: { sc: [2, 0, 1, 0, 2, -1, 2], tip: 'Берегите романтику: свидания, сюрпризы, время только вдвоём.', t: [
-    'Венера и Марс в одном знаке — сильное притяжение, «химия» с первого взгляда.',
-    'Притяжение спокойное, без искр — больше нежности, чем страсти.',
-    'Венера и Марс дружат: лёгкий флирт и взаимный интерес.',
-    'Венера и Марс в напряжении: страсть с ссорами, ревность и примирения.',
-    'Венера и Марс в одной стихии — притяжение глубокое и надолго.',
-    'Желания не совпадают: одному хочется одного, другому — другого.',
-    'Венера напротив Марса — классическое притяжение противоположностей.'] }
+const relAsp = (a, b) => { const k = ((b - a) % 12 + 12) % 12; return Math.min(k, 12 - k); };
+// [балл, тип]: + сходство/поддержка, ~ смешанное, − напряжение, 0 нейтрально
+const REL_HARM = [[2, '+'], [0, '0'], [1, '+'], [-1, '-'], [2, '+'], [-1, '-'], [0, '~']];
+const REL_SM = [[2, '+'], [0, '0'], [1, '+'], [-1, '-'], [2, '+'], [-1, '-'], [1, '~']];
+const REL_ATT = [[2, '+'], [0, '0'], [1, '+'], [0.5, '~'], [1.5, '+'], [-0.5, '-'], [1, '~']];
+const relNorm = (v, tab) => { const mx = Math.max(...tab.map(x => x[0])), mn = Math.min(...tab.map(x => x[0])); return v > 0 ? v / mx : v < 0 ? -v / mn : 0; };
+const REL_MEAN = {
+  harm: { '+': 'эмоционально понимаете друг друга', '~': 'тянет друг к другу, но настроение качает', '-': 'разные потребности в близости и уюте' },
+  sun: { '+': 'похожий ритм и характер', '~': 'противоположности: дополняете друг друга и спорите', '-': 'разный темп и привычки' },
+  merc: { '+': 'легко договориться', '~': 'спорить интересно, договориться трудно', '-': 'слышите разное в одних словах' },
+  att: { '+': 'взаимное притяжение', '~': 'страсть с искрами и ссорами', '-': 'желания не совпадают' }
 };
-function relFactors(a, b, nm) {
-  const F = [], A0 = a.sign, B0 = b.sign;
-  const pl = (k, x, y) => { const r = relAsp(x, y), T = REL_T[k]; return { k, s: T.sc[r], tip: T.tip, txt: T.t[r].replace('{a}', REL_SIGN_P[x]).replace('{A}', REL_SIGN[x]).replace('{B}', REL_SIGN[y]), approx: !!(a.alt[k] || b.alt[k]) }; };
-  F.push(pl('Sun', A0.Sun, B0.Sun), pl('Moon', A0.Moon, B0.Moon), pl('Mercury', A0.Mercury, B0.Mercury));
-  const v1 = relAsp(A0.Venus, B0.Mars), v2 = relAsp(A0.Mars, B0.Venus), vr = REL_T.VM.sc[v1] >= REL_T.VM.sc[v2] ? v1 : v2;
-  F.push({ k: 'VM', s: REL_T.VM.sc[vr], tip: REL_T.VM.tip, txt: REL_T.VM.t[vr], approx: !!(a.alt.Venus || a.alt.Mars || b.alt.Venus || b.alt.Mars) });
-  // китайский круг животных
-  const x = a.ani, y = b.ani, X = REL_ANI[x], Y = REL_ANI[y];
-  let an;
-  if (x === y) an = [1, `${X} и ${Y}: по китайскому календарю вы одного знака — похожи, но можете соперничать.`];
-  else if (relAsp(x, y) === 6) an = [-2, `${X} и ${Y} — противостояние по китайскому кругу: яркие ссоры, тянет и отталкивает.`];
-  else if (x % 4 === y % 4) an = [2, `${X} и ${Y} — союз «трёх гармоний»: по китайской традиции одно из лучших сочетаний.`];
-  else if ((x + y) % 12 === 1) an = [2, `${X} и ${Y} — «тайные друзья»: тихая и надёжная поддержка друг друга.`];
-  else if ((x + y) % 12 === 7) an = [-1, `${X} и ${Y} — пара «вреда»: мелкие обиды копятся, их надо проговаривать.`];
-  else an = [0, `${X} и ${Y} — нейтральная пара по китайскому кругу: всё зависит от вас.`];
-  F.push({ k: 'ani', s: an[0], txt: an[1], tip: 'Ссоры гасите в тот же день — не копите обиды.' });
-  // стихии года и господина дня: порождение, контроль, одна стихия
-  const cyc = (p, q) => p === q ? 'same' : (p + 1) % 5 === q ? 'give' : (q + 1) % 5 === p ? 'get' : 'ctrl';
-  const ye = cyc(a.yel, b.yel), E1 = REL_EL[a.yel], E2 = REL_EL[b.yel];
-  F.push({ k: 'yel', s: ye === 'ctrl' ? -1 : 1, tip: 'Разделите роли: кто ведёт, кто считает, кто решает.',
-    txt: ye === 'same' ? `Стихия года у обоих — ${E1}: общие ценности и взгляд на жизнь.` : ye === 'give' ? `Твоя стихия года ${E1} питает ${E2} у ${nm}: ты даёшь силы, ${nm} их раскрывает.` : ye === 'get' ? `Стихия ${E2} у ${nm} питает твою (${E1}): рядом с ${nm} у тебя прибавляется сил.` : `${E1} и ${E2} в отношениях контроля: один невольно давит на другого.` });
-  const de = (a.ds + 5) % 10 === b.ds ? 'union' : cyc(a.del, b.del), D1 = REL_EL[a.del], D2 = REL_EL[b.del];
-  F.push({ k: 'dm', s: de === 'union' ? 2 : de === 'ctrl' ? -1 : 1, tip: 'Уважайте личное пространство друг друга.',
-    txt: de === 'union' ? `Ваши небесные стволы дня (${REL_STEM[a.ds]} и ${REL_STEM[b.ds]}) образуют союз — по Ба-цзы это знак сильной личной связи.` : de === 'same' ? `Господин дня по Ба-цзы у вас одной стихии (${D1}): понимаете друг друга изнутри.` : de === 'ctrl' ? `Господин дня по Ба-цзы: ${D1} и ${D2} в контроле — кто-то будет стараться руководить.` : `Господин дня по Ба-цзы: ${D1} и ${D2} поддерживают друг друга — рядом легко.` });
-  const grp = n => [1, 5, 7].includes(n) ? 0 : [2, 4, 8].includes(n) ? 1 : 2;
-  F.push({ k: 'num', s: a.lp === b.lp || grp(a.lp) === grp(b.lp) ? 1 : -1, tip: 'Запишите общие цели — так вы смотрите в одну сторону.',
-    txt: a.lp === b.lp ? `Число пути у обоих — ${a.lp}: одинаковые цели и понятная друг другу жизнь.` : grp(a.lp) === grp(b.lp) ? `Числа пути ${a.lp} и ${b.lp} из одной группы: похожий подход к делам.` : `Числа пути ${a.lp} и ${b.lp} разные по природе: смотрите на дела с разных сторон — и польза, и споры.` });
+const REL_TIP = {
+  MoonMoon: 'Говорите вслух, что вам нужно для уюта и близости — угадывать не получится.', SunMoon: 'Говорите вслух, что вам нужно для уюта и близости — угадывать не получится.', MoonSun: 'Говорите вслух, что вам нужно для уюта и близости — угадывать не получится.',
+  SunSun: 'Не переделывайте друг друга — договоритесь, где чьё слово главное.', MercMerc: 'Важное проговаривайте и переспрашивайте — лучше лишний раз уточнить.',
+  VM: 'Берегите романтику: свидания, сюрпризы, время только вдвоём.', MV: 'Берегите романтику: свидания, сюрпризы, время только вдвоём.',
+  ani: 'Ссоры гасите в тот же день — не копите обиды.', yel: 'Разделите роли: кто ведёт, кто считает, кто решает.',
+  dst: 'Уважайте личное пространство друг друга и не командуйте.', dbr: 'Договоритесь о быте заранее — мелочи в доме будут главным поводом для споров.', num: 'Запишите общие цели — так вы смотрите в одну сторону.'
+};
+function relCyc(p, q) { return p === q ? 'same' : (p + 1) % 5 === q || (q + 1) % 5 === p ? 'gen' : 'ctrl'; }
+function relStem(a, b) {
+  if ((a + 5) % 10 === b) return [2, '+', `союз стволов ${REL_STEM[a]}${REL_STEM[b]} — по Ба-цзы знак сильной связи`];
+  const ea = a >> 1, eb = b >> 1, c = relCyc(ea, eb);
+  if (c === 'same') return [1, '+', `сходство: обе стихии — ${REL_EL[ea]}`];
+  if (c === 'gen') return [1, '+', `поддержка: ${REL_EL[ea]} и ${REL_EL[eb]} питают друг друга`];
+  return a % 2 !== b % 2 ? [0, '0', `различие: ${REL_EL[ea]} и ${REL_EL[eb]} в контроле разной полярности — дисциплина, а не давление`] : [-1, '-', `напряжение: ${REL_EL[ea]} и ${REL_EL[eb]} в контроле одной полярности — кто-то будет давить`];
+}
+function relBranch(a, b) {
+  const p = REL_BR[a] + REL_BR[b];
+  if (a === b) return [0.5, '+', `одна ветвь ${p} — похожий взгляд на дом и близость`];
+  if (relAsp(a, b) === 6) return [-2, '-', `столкновение ветвей ${p} (六冲) — трения в быту и близости`];
+  if ((a + b) % 12 === 1) return [2, '+', `союз ветвей ${p} (六合) — гармония в близких отношениях`];
+  if (a % 4 === b % 4) return [1.5, '+', `тройная гармония ${p} (三合) — легко жить рядом`];
+  if ((a + b) % 12 === 7) return [-1, '-', `«вред» ${p} (六害) — мелкие обиды копятся`];
+  if ([[2, 5], [5, 8], [2, 8], [1, 10], [10, 7], [1, 7], [0, 3]].some(([x, y]) => (x === a && y === b) || (x === b && y === a))) return [-1, '-', `«наказание» ${p} (刑) — привычка задевать друг друга`];
+  return [0, '0', ''];
+}
+function relFactors(a, b) {
+  const F = [];
+  const W = (k, lbl, x, y, tab, mean, pa, pb) => {
+    const r = relAsp(x, y), [v, t] = tab[r];
+    F.push({ k, grp: 'west', lbl, det: `${REL_SIGN[x]} — ${REL_SIGN[y]}, ${REL_ASPN[r]}${t !== '0' ? ': ' + REL_MEAN[mean][t] : ''}`, v: relNorm(v, tab), t, approx: !!(a.alt[pa] || b.alt[pb]) });
+  };
+  W('MoonMoon', 'Луна — Луна', a.sign.Moon, b.sign.Moon, REL_HARM, 'harm', 'Moon', 'Moon');
+  W('SunMoon', 'Твоё Солнце — его/её Луна', a.sign.Sun, b.sign.Moon, REL_SM, 'harm', 'Sun', 'Moon');
+  W('MoonSun', 'Твоя Луна — его/её Солнце', a.sign.Moon, b.sign.Sun, REL_SM, 'harm', 'Moon', 'Sun');
+  W('SunSun', 'Солнце — Солнце', a.sign.Sun, b.sign.Sun, REL_HARM, 'sun', 'Sun', 'Sun');
+  W('MercMerc', 'Меркурий — Меркурий', a.sign.Mercury, b.sign.Mercury, REL_HARM, 'merc', 'Mercury', 'Mercury');
+  W('VM', 'Твоя Венера — его/её Марс', a.sign.Venus, b.sign.Mars, REL_ATT, 'att', 'Venus', 'Mars');
+  W('MV', 'Твой Марс — его/её Венера', a.sign.Mars, b.sign.Venus, REL_ATT, 'att', 'Mars', 'Venus');
+  const x = a.fani, y = b.fani, X = REL_ANI[x], Y = REL_ANI[y];
+  const an = x === y ? [1, '+', 'одно животное — похожи, но можете соперничать'] : relAsp(x, y) === 6 ? [-2, '-', 'противостояние по китайскому кругу — яркие ссоры, тянет и отталкивает'] : x % 4 === y % 4 ? [2, '+', 'союз «трёх гармоний» — одно из лучших сочетаний'] : (x + y) % 12 === 1 ? [2, '+', '«тайные друзья» — тихая надёжная поддержка'] : (x + y) % 12 === 7 ? [-1, '-', '«вред» — мелкие обиды копятся, их надо проговаривать'] : [0, '0', ''];
+  F.push({ k: 'ani', grp: 'china', lbl: 'Животные года', det: `${X} — ${Y}${an[2] ? ': ' + an[2] : ''}`, v: an[0] / 2, t: an[1] });
+  const ys = relStem(a.yst, b.yst); F.push({ k: 'yel', grp: 'china', lbl: 'Стихии года', det: `${REL_STEM[a.yst]} ${REL_EL[a.yst >> 1]} — ${REL_STEM[b.yst]} ${REL_EL[b.yst >> 1]}: ${ys[2]}`, v: ys[0] > 0 ? ys[0] / 2 : ys[0], t: ys[1] });
+  const ds = relStem(a.ds, b.ds); F.push({ k: 'dst', grp: 'china', lbl: 'Господин дня (Ба-цзы)', det: `${REL_STEM[a.ds]} — ${REL_STEM[b.ds]}: ${ds[2]}`, v: ds[0] > 0 ? ds[0] / 2 : ds[0], t: ds[1], late: a.late || b.late });
+  const db = relBranch(a.db, b.db); F.push({ k: 'dbr', grp: 'china', lbl: 'Дворец супруга (ветвь дня)', det: `${REL_BR[a.db]} — ${REL_BR[b.db]}: ${db[2]}`, v: db[0] / 2, t: db[1], late: a.late || b.late });
+  const G = n => [1, 5, 7].includes(n) ? 0 : [2, 4, 8].includes(n) ? 1 : 2;
+  const nv = a.lpr === b.lpr ? [1, '+', 'одно число — одинаковые цели'] : G(a.lpr) === G(b.lpr) ? [0.5, '+', 'одна группа — похожий подход к делам'] : [0, '0', 'разные группы — разный подход, это не минус'];
+  F.push({ k: 'num', grp: 'num', lbl: 'Числа пути', det: `${a.lp} — ${b.lp}: ${nv[2]}`, v: nv[0], t: nv[1], show: true });
   return F;
 }
 const REL_AREAS = [
-  ['love', 'Любовь', { VM: 2, Moon: 1.5, Sun: 1, ani: 1.5, dm: 1.5 }, 'Хорошая основа. Берегите то, что есть, и не забывайте говорить тёплые слова.'],
-  ['friend', 'Дружба', { Sun: 1.5, Mercury: 1.5, ani: 1, num: 1, Moon: 0.5 }, 'Дружите открыто: общие дела и честные разговоры только укрепят связь.'],
-  ['biz', 'Дело', { Sun: 1, Mercury: 1.5, yel: 1.5, num: 1.5, ani: 0.5 }, 'Хорошие партнёры. Зафиксируйте договорённости на бумаге — и вперёд.']
+  ['love', 'Любовь', { MoonMoon: 1, SunMoon: 1, MoonSun: 1, VM: 1, MV: 1, dst: 1.5, dbr: 1.5, ani: 1 }, 'Хорошая основа. Берегите то, что есть, и не забывайте говорить тёплые слова.'],
+  ['friend', 'Дружба', { SunSun: 1.5, MercMerc: 1.5, MoonMoon: 0.5, ani: 1.5, num: 1 }, 'Дружите открыто: общие дела и честные разговоры только укрепят связь.'],
+  ['biz', 'Дело', { SunSun: 1, MercMerc: 1.5, yel: 1.5, num: 1.5, ani: 0.5, dst: 0.5 }, 'Хорошие партнёры. Зафиксируйте договорённости на бумаге — и вперёд.']
 ];
-const REL_LVL = [[0.4, 'Сильное совпадение', 4], [0.15, 'Хорошо подходите', 3], [-0.12, 'Нужна работа', 2], [-9, 'Непросто', 1]];
-function relArea(F, W) {
-  let s = 0, w = 0; const fs = F.filter(f => W[f.k]).map(f => Object.assign({ w: W[f.k] }, f));
-  fs.forEach(f => { s += f.w * f.s / 2; w += f.w; });
-  const v = w ? s / w : 0, L = REL_LVL.find(l => v >= l[0]);
-  const good = fs.filter(f => f.s > 0).sort((p, q) => q.w * q.s - p.w * p.s).slice(0, 2);
-  const bad = fs.filter(f => f.s < 0).sort((p, q) => p.w * p.s - q.w * q.s).slice(0, 2);
-  return { lvl: L[1], dots: L[2], good, bad, approx: fs.some(f => f.approx && (f.s !== 0)) };
-}
+const REL_GRP = [['west', 'Западная астрология', ['MoonMoon', 'SunMoon', 'MoonSun', 'SunSun', 'MercMerc', 'VM', 'MV']], ['china', 'Китайская традиция', ['ani', 'yel', 'dst', 'dbr']], ['num', 'Нумерология', ['num']]];
+// пороги: 15 / 45 / 80 % распределения 6000 случайных пар
+const REL_Q = { love: [-0.125, 0.097, 0.319], friend: [-0.333, 0.042, 0.375], biz: [-0.192, 0.115, 0.385], west: [-0.214, 0.036, 0.321], china: [-0.125, 0.125, 0.375], num: [0, 0.4, 0.9] };
+const REL_LV = ['Контрастное сочетание', 'Разные характеры', 'Интересное сочетание', 'Много общего'];
+function relScore(F, W) { let s = 0, w = 0; for (const f of F) if (W[f.k]) { s += W[f.k] * f.v; w += W[f.k]; } return w ? s / w : 0; }
+function relLevel(key, v) { const q = REL_Q[key]; return v >= q[2] ? 3 : v >= q[1] ? 2 : v >= q[0] ? 1 : 0; }
+const relDots = n => `<span class="rel-dots">${'●'.repeat(n + 1)}${'○'.repeat(3 - n)}</span>`;
 function relCard(c) {
   const sg = k => c.alt[k] ? `${REL_SIGN[c.alt[k][0]]} или ${REL_SIGN[c.alt[k][1]]}` : REL_SIGN[c.sign[k]];
-  return `Солнце: ${sg('Sun')} · Луна: ${sg('Moon')} · ${REL_ANI[c.ani]} (${REL_EL[c.yel]}) · день ${REL_STEM[c.ds]} ${REL_EL[c.del]} · число ${c.lp}`;
+  return `Солнце: ${sg('Sun')} · Луна: ${sg('Moon')} · ${REL_ANI[c.fani]}${c.fy !== c.by ? ` (по Ба-цзы ${REL_ANI[c.bani]})` : ''} · день ${REL_STEM[c.ds]}${REL_BR[c.db]} ${REL_EL[c.ds >> 1]} · число ${c.lp}`;
 }
 const relMeKey = s => 'jk2_relme_' + s.id, relPpKey = s => 'jk2_relp_' + s.id;
 function relMe(s, P) {
@@ -4513,22 +4522,24 @@ function showRel(s, P, scr) {
   const L = relPeople(s), who = scr && L.find(x => x.id === scr);
   if (who) {
     const oc = relChart(who); if (!oc) { showRel(s, P); return; }
-    const F = relFactors(my, oc, who.name);
-    const blk = ([k, t, W, ok]) => { const r = relArea(F, W);
-      return `<div class="rel-area"><div class="rel-h"><b>${t}</b><span class="rel-dots">${'●'.repeat(r.dots)}${'○'.repeat(4 - r.dots)}</span></div><div class="rel-lvl">${r.lvl}${r.approx ? ' · приблизительно' : ''}</div>
-        ${r.good.length ? `<div class="rel-sub">Что сближает</div>${r.good.map(f => `<p>${esc(f.txt)}</p>`).join('')}` : ''}
-        ${r.bad.length ? `<div class="rel-sub">Где будут споры</div>${r.bad.map(f => `<p>${esc(f.txt)}</p>`).join('')}` : ''}
-        <div class="rel-tip">${esc(r.bad.length ? r.bad[0].tip : ok)}</div></div>`; };
+    const F = relFactors(my, oc);
+    const area = ([k, t, W, ok]) => { const n = relLevel(k, relScore(F, W)), neg = F.filter(f => W[f.k] && f.t === '-').sort((p, q) => W[q.k] * -q.v - W[p.k] * -p.v)[0];
+      return `<div class="rel-area"><div class="rel-h"><b>${t}</b>${relDots(n)}</div><div class="rel-lvl">${REL_LV[n]}</div><div class="rel-tip">${esc(neg && n < 3 ? REL_TIP[neg.k] : ok)}</div></div>`; };
+    const grp = ([g, t, ks]) => { const W = {}; ks.forEach(k => W[k] = 1); const n = g === 'num' ? (F.find(f => f.k === 'num').v >= 1 ? 3 : F.find(f => f.k === 'num').v > 0 ? 2 : 1) : relLevel(g, relScore(F, W));
+      const fs = F.filter(f => f.grp === g && (f.t !== '0' || f.show));
+      return `<div class="rel-grp"><div class="rel-h"><b>${t}</b>${relDots(n)}</div><div class="rel-lvl">${REL_LV[n]}</div>${fs.map(f => `<p class="rel-f"><i class="t${f.t === '+' ? 'p' : f.t === '-' ? 'm' : 'x'}">${f.t === '+' ? '+' : f.t === '-' ? '−' : '~'}</i><span><b>${f.lbl}</b>${esc(f.det)}${f.approx ? ' <em>(приблизительно: нет времени рождения)</em>' : ''}${f.late ? ' <em>(родился после 23:00 — по школе смены дня в 23:00 будет другой день)</em>' : ''}</span></p>`).join('') || '<p class="rel-f"><span>Явных совпадений и напряжений нет — нейтрально.</span></p>'}</div>`; };
+    const cal = [my, oc].some(c => c.fy !== c.by) ? '<p class="sh-note">Животное года — по китайскому Новому году, стихии и Ба-цзы — от Личуня (~4 февраля). У рождённых в январе–феврале они могут различаться.</p>' : '';
     relDone(s, `<div class="sh-state">♥ Love · совместимость</div><div class="sh-name">${esc(nm)} и ${esc(who.name)}</div><div class="rel-me">${esc(who.name)}: ${relCard(oc)}</div>
-      ${REL_AREAS.map(blk).join('')}
-      <p class="sh-note">Это символическая трактовка по западной астрологии, китайскому календарю, Ба-цзы и нумерологии — повод присмотреться и поговорить, а не приговор.</p>
+      ${REL_AREAS.map(area).join('')}
+      <div class="h2">Откуда выводы</div>${REL_GRP.map(grp).join('')}${cal}
+      <p class="sh-note">Это символическая трактовка по западной астрологии, китайскому календарю, Ба-цзы и нумерологии — повод присмотреться и поговорить, а не приговор. Расчёт положений планет и календарей — точный, оценки и пороги — авторская система JadeKey.</p>
       <div class="btns"><button class="btn danger" id="rpDel">Удалить</button><button class="btn main" id="rpBack">К списку</button></div>`);
     $('rpBack').onclick = () => showRel(s, P);
     $('rpDel').onclick = () => { if (!confirm(`Удалить «${who.name}» из списка?`)) return; ls.set(relPpKey(s), JSON.stringify(relPeople(s).filter(x => x.id !== who.id))); showRel(s, P); };
     return;
   }
-  const rows = L.map(x => { const c = relChart(x); if (!c) return ''; const r = relArea(relFactors(my, c, x.name), REL_AREAS[0][2]);
-    return `<button class="row" data-p="${x.id}"><span><b>${esc(x.name)}</b><small>${REL_SIGN[c.sign.Sun]} · ${REL_ANI[c.ani]} · любовь: ${r.lvl.toLowerCase()}</small></span><span class="rel-dots" style="flex:0 0 auto">${'●'.repeat(r.dots)}${'○'.repeat(4 - r.dots)}</span></button>`; }).join('');
+  const rows = L.map(x => { const c = relChart(x); if (!c) return ''; const n = relLevel('love', relScore(relFactors(my, c), REL_AREAS[0][2]));
+    return `<button class="row" data-p="${x.id}"><span><b>${esc(x.name)}</b><small>${REL_SIGN[c.sign.Sun]} · ${REL_ANI[c.fani]} · любовь: ${REL_LV[n].toLowerCase()}</small></span>${relDots(n)}</button>`; }).join('');
   relDone(s, `<div class="sh-state">♥ Love · совместимость</div><div class="sh-name">${esc(nm)}</div><button class="rel-me rel-edit" id="rmEdit">${relCard(my)}<small>изменить</small></button>
     <div class="h2">С кем сравнить</div>${rows ? `<div class="rows">${rows}</div>` : '<p class="sh-note">Добавь человека — девушку, друга, партнёра, маму — и камень покажет, как вы сочетаетесь в любви, дружбе и деле.</p>'}
     <div class="btns"><button class="btn main" id="rpAdd">+ Сравнить с человеком</button></div>
