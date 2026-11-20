@@ -3361,7 +3361,7 @@ async function liveCapture(side) {
     } else if (stones.length) {
       veil('Проверяю, нет ли такого камня…');
       const r = await lvTO(identify(frames[0], t => veil(t)), 60000);
-      if (r.state === 'found' && !(LV.src && r.stone.id === LV.src.id && side === 'B')) { const m = r.stone.of || r.stone.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже кто-то оживил. Возьми другой камень.'); }
+      if (r.state === 'found' && !(LV.src && r.stone.id === LV.src.id && side === 'B')) { const m = r.stone.of || r.stone.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : (isAdmin ? `Совпал с «${esc((stones.find(x => x.id === m) || r.stone).name || '?')}»${stones.some(x => x.id === m) ? '' : ' (запись без основного камня)'}. Удали его в «Коллекции» и сними снова.` : 'Этот камень уже кто-то оживил. Возьми другой камень.')); }
       if (r.state === 'found') return fail('Похоже, это та же сторона. Переверни камень и сними снова.');
     }
     const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(A.f.cv, 0, 0, 240, 240);
