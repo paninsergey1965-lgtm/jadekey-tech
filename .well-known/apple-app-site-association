@@ -3,10 +3,7 @@
     "details": [
       {
         "appIDs": ["W45ZDV39A9.art.jadekey.mobile"],
-        "components": [
-          { "/": "/scan.html", "?": { "g": "*" }, "comment": "gift links" },
-          { "/": "/live.html", "?": { "g": "*" }, "comment": "gift links" }
-        ]
+        "components": []
       }
     ]
   }
