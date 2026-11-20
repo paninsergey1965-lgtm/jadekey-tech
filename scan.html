@@ -2092,6 +2092,18 @@ async function showFound(r) {
   if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
   sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
   bindRows(); $('again').onclick = hideSheet;
+  if (isAdmin) {
+    const root = r.stone.of || r.stone.id, fam = stones.filter(x => x.id === root || x.of === root);
+    if (!fam.includes(r.stone)) fam.push(r.stone);
+    $('sheet').insertAdjacentHTML('beforeend', `<div class="btns"><button class="btn danger" id="admDel">Удалить эту запись (${fam.length})</button></div>`);
+    $('admDel').onclick = async () => {
+      if (!confirm(`Удалить «${s.name || 'камень'}» и все его стороны (${fam.length})?`)) return;
+      veil('Удаляю…');
+      try { for (const x of fam) { await fsDelete(COLP, x.id).catch(() => {}); await fsDelete(COL, x.id); patchCache.delete(x.id); } await loadStones(); hideSheet(); toast('Удалено'); }
+      catch (e) { toast('Не удалось удалить: ' + e.message, 5000); }
+      veil();
+    };
+  }
   ownerLine(s).then(n => { if (n && $('ownerLn')) $('ownerLn').innerHTML = `<div class="sh-note" style="color:var(--fg)">Владелец: <b>${esc(n)}</b></div>`; });
 }
 function showUnknown(r, cv) {
