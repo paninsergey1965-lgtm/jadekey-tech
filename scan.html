@@ -3249,7 +3249,7 @@ async function showLive(s, scanned) {
   const P = p.profile || {};
   talShift = habShift = fcShift = pathShift = lunaShift = 0;
   // a stone's mode is its tier: every cheaper mode is unlocked too (Love always includes Печенье)
-  if (s.mode === 'mem') { showMem(s, P); return; }
+  if (s.mode === 'mem') { memView(s, P); return; }
   const tier = s.mode === 'ny' ? 'luna' : s.mode, open = unlockedModes(tier), pick = ls.get('jk2_view_' + s.id);
   const view = open.includes(pick) ? pick : tier;
   const Q = Object.assign({}, P, { name: P.name || P.to || '', to: P.to || P.name || '' });
@@ -4281,6 +4281,44 @@ function expertPanel() {
   if (hid && Date.now() - hid > 20 * 60 * 1000 && !LV.busy && !LV.a && LV.step === 0 && !(typeof addShot !== 'undefined' && addShot)) location.reload();
 }); })();
 
+
+// ---------- «Память»: two people on one stone ----------
+// The memorial profile (the departed) lives on the stone; the owner's own birth data for Путь/Талисман/Луна
+// is asked once and kept on this phone, so every relative gets their own personal modes.
+const MEM_OPEN = ['mem', 'fc', 'luna', 'tal', 'path'];
+const ownGet = id => { try { return JSON.parse(ls.get('jk2_own_' + id) || 'null'); } catch (e) { return null; } };
+function memView(s, P) {
+  const pick = ls.get('jk2_view_' + s.id), view = MEM_OPEN.includes(pick) ? pick : 'mem', own = ownGet(s.id);
+  if (view === 'mem') showMem(s, P);
+  else if (view !== 'fc' && !(own && own.name && own.bday)) { ownForm(s, P, view); return; }
+  else {
+    const Q = Object.assign({ name: '', bday: '', btime: '', btz: '' }, own || {}); Q.to = Q.name;
+    if (view === 'luna') showLuna(s, Q); else if (view === 'fc') showFortune(s, Q); else if (view === 'path') showPath(s, Q); else showTal(s, Q);
+  }
+  memExtras(s, P, view);
+}
+function memExtras(s, P, view) {
+  const sh = $('sheet'); if (!sh) return;
+  const bt = [...sh.querySelectorAll('.btns')].pop();
+  const html = `<div class="mtog" role="group" aria-label="Режим">${MEM_OPEN.map(k => `<button data-v="${k}" class="${k === view ? 'on' : ''}">${MODE_NAMES[k]}</button>`).join('')}</div>` + (view !== 'mem' && view !== 'fc' ? '<button class="mup" id="ownEdit" type="button" style="background:none;border:0">Мои данные</button>' : '');
+  if (bt) bt.insertAdjacentHTML('beforebegin', html); else sh.insertAdjacentHTML('beforeend', html);
+  sh.querySelectorAll('.mtog [data-v]').forEach(b => b.onclick = () => { if (b.classList.contains('on')) return; ls.set('jk2_view_' + s.id, b.dataset.v); loveStop(); memView(s, P); });
+  if ($('ownEdit')) $('ownEdit').onclick = () => ownForm(s, P, view);
+  const fu = sh.querySelector('.fc-up'); if (fu) fu.remove();
+}
+function ownForm(s, P, view) {
+  const o = ownGet(s.id) || {};
+  sheet(`<div class="sh-head"><div><div class="sh-state">${MODE_NAMES[view]}</div><div class="sh-name">Для кого считать?</div></div></div>
+    <p class="sh-note">«Память» остаётся о ${esc(P.name || s.name || 'близком')}. А ${MODE_NAMES[view]} считается по твоим данным — спросим один раз, они хранятся только на этом телефоне.</p>
+    ${fld('owName', 'Твоё имя', o.name)}${fld('owBday', 'Дата рождения', o.bday, 'date')}${view === 'path' ? fld('owBtime', 'Время рождения, если знаешь', o.btime, 'time') + tzSelect('owBtz', o.btz) : ''}
+    <div class="btns"><button class="btn" id="owBack">Назад</button><button class="btn main" id="owOk">Готово</button></div>`);
+  $('owBack').onclick = () => { ls.set('jk2_view_' + s.id, 'mem'); memView(s, P); };
+  $('owOk').onclick = () => {
+    const n = { name: $('owName').value.trim(), bday: $('owBday').value, btime: $('owBtime') ? $('owBtime').value : (o.btime || ''), btz: $('owBtz') ? $('owBtz').value : (o.btz || '') };
+    if (!n.name || !n.bday) { toast('Впиши имя и дату рождения'); return; }
+    ls.set('jk2_own_' + s.id, JSON.stringify(n)); ls.set('jk2_view_' + s.id, view); memView(s, P);
+  };
+}
 // ---------- «Память» (admin-only prototype): the memorial page inside the sheet ----------
 function showMem(s, P) {
   const q = new URLSearchParams({ embed: '1', nm: P.name || s.name || '', sx: P.sex || 'm', bd: P.bday || '', dd: P.dday || '', an: P.angel || '' });
@@ -4468,7 +4506,7 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 
 loadStones().then(() => { adminDeepLink(); dayPill(); });
 window.__coi.then(() => { loadModel(); liveInit(); });
-if (new URLSearchParams(location.search).has('test')) window.JKL = { dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
+if (new URLSearchParams(location.search).has('test')) window.JKL = { memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
   if (inApp) $('lvPaste').style.display = '';
   // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly
