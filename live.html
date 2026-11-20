@@ -1473,11 +1473,22 @@ const D = 384;
 
 function prepStone(s) { s.gv = s.g ? b64F32(s.g) : null; try { s.love = s.love ? JSON.parse(s.love) : null; } catch (e) { s.love = null; } s.contacts = (() => { try { return JSON.parse(s.contacts || '{}'); } catch (e) { return {}; } })(); return s; }
 let lastLoad = 0;
+// admin: remove side records whose main stone no longer exists (they would block re-activation)
+let orphanBusy = false;
+async function cleanOrphans() {
+  if (!isAdmin || orphanBusy) return;
+  const ids = new Set(stones.map(x => x.id)), bad = stones.filter(x => x.of && !ids.has(x.of));
+  if (!bad.length) return;
+  orphanBusy = true;
+  try { for (const x of bad) { await fsDelete(COLP, x.id).catch(() => {}); await fsDelete(COL, x.id).catch(() => {}); patchCache.delete(x.id); } stones = stones.filter(x => !bad.includes(x)); }
+  finally { orphanBusy = false; }
+}
 async function loadStones() {
   lastLoad = Date.now();
   try {
     const list = await fsList(COL);
     stones = list.map(prepStone).sort((a, b) => (b.created || 0) - (a.created || 0));
+    await cleanOrphans();
     // a catalog stone whose features were taken over by a living stone is hidden from search
     const liveG = new Set(stones.filter(s => s.mode && s.g).map(s => s.g));
     stones.forEach(s => { s.consumed = !s.mode && !s.of && !!s.g && liveG.has(s.g); });
@@ -2156,7 +2167,7 @@ function showInfo(s) {
     if (!(await ownerOk())) return;
     if (!confirm(`Удалить «${s.name}»?`)) return;
     veil('Удаляю…');
-    try { for (const x of [...stones.filter(x => x.of === s.id && !x.mode), s]) { await fsDelete(COLP, x.id).catch(() => {}); await fsDelete(COL, x.id); patchCache.delete(x.id); } await loadStones(); hideSheet(); }
+    try { for (const x of [...stones.filter(x => x.of === s.id), s]) { await fsDelete(COLP, x.id).catch(() => {}); await fsDelete(COL, x.id); patchCache.delete(x.id); } await loadStones(); hideSheet(); }
     catch (e) { toast('Не удалось удалить: ' + e.message); }
     veil();
   };
