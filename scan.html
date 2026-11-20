@@ -4301,7 +4301,8 @@ function memExtras(s, P, view) {
   const sh = $('sheet'); if (!sh) return;
   const bt = [...sh.querySelectorAll('.btns')].pop();
   const html = `<div class="mtog" role="group" aria-label="Режим">${MEM_OPEN.map(k => `<button data-v="${k}" class="${k === view ? 'on' : ''}">${MODE_NAMES[k]}</button>`).join('')}</div>` + (view !== 'mem' && view !== 'fc' ? '<button class="mup" id="ownEdit" type="button" style="background:none;border:0">Мои данные</button>' : '');
-  if (bt) bt.insertAdjacentHTML('beforebegin', html); else sh.insertAdjacentHTML('beforeend', html);
+  const fr = sh.querySelector('.mem-frame');
+  if (fr) fr.insertAdjacentHTML('beforebegin', html); else if (bt) bt.insertAdjacentHTML('beforebegin', html); else sh.insertAdjacentHTML('beforeend', html);
   sh.querySelectorAll('.mtog [data-v]').forEach(b => b.onclick = () => { if (b.classList.contains('on')) return; ls.set('jk2_view_' + s.id, b.dataset.v); loveStop(); memView(s, P); });
   if ($('ownEdit')) $('ownEdit').onclick = () => ownForm(s, P, view);
   const fu = sh.querySelector('.fc-up'); if (fu) fu.remove();
