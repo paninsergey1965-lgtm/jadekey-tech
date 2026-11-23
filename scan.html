@@ -342,7 +342,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
   <div class="page">
     <h1>Коллекция</h1>
     <div class="sub" id="collSub">Загружаю…</div>
-    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button>
+    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button>
     <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
     <div class="grid" id="grid"></div>
   </div>
@@ -404,6 +404,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
       <div id="lvMine"></div>
+      <div id="jkAccount" style="margin-top:18px"></div>
     </div>
     <div id="lvWiz" style="display:none">
       <div class="steps" id="lvSteps"></div>
@@ -801,6 +802,8 @@ H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Uranus].r,1.292024916781969E-8
 return new kd(this.curr.time,a,b)};$jscomp.global.Object.defineProperties(H.prototype,{OriginBody:{configurable:!0,enumerable:!0,get:function(){return this.originBody}},Time:{configurable:!0,enumerable:!0,get:function(){return this.curr.time}}});e.GravitySimulator=H;var kd=function(a,b,c){this.time=a;this.gravitators=b;this.bodies=c}},{}]},{},[1])(1)});
 </script>
 <script type="module">
+import { initJadeKeyAccounts } from './jk-accounts.js';
+import { initJadeKeyAdmin } from './jk-admin.js';
 import { pipeline, RawImage, env } from './vendor/transformers.min.js';
 
 // model, library and wasm are served from this site (no CDN / Cloudflare R2 — works in Russia without VPN)
@@ -1473,6 +1476,7 @@ function setAdmin(on) {
   isAdmin = !!on;
   $('nColl').style.display = isAdmin ? '' : 'none';
   $('nAdd').style.display = isAdmin ? '' : 'none';
+  if ($('clientsBtn')) $('clientsBtn').style.display = isAdmin ? '' : 'none';
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
   if ($('soldBtn')) $('soldBtn').onclick = () => { window.showSold = !window.showSold; $('soldBtn').textContent = window.showSold ? 'Проданные: скрыть' : 'Проданные: показать'; renderColl(); };
 }
@@ -3427,6 +3431,7 @@ function fld(id, label, v, type = 'text') { return `<label class="lbl" for="${id
 function liveCollect() {
   const P = LV.p;
   for (const [id, k] of [['lvName', 'name'], ['lvBday', 'bday'], ['lvBtime', 'btime'], ['lvBtz', 'btz'], ['lvTo', 'to'], ['lvFrom', 'from'], ['lvSince', 'since'], ['lvMid', 'midnight']]) { const e = $(id); if (e) P[k] = e.value.trim(); }
+  if ($('lvConsent')) P.consented = $('lvConsent').checked;
 }
 function liveForm() {
   const m = LV.mode, P = LV.p;
@@ -3438,7 +3443,8 @@ function liveForm() {
     else f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
   }
   const modes = LV.lock ? [[m, LIVE_MODES[m]]] : Object.entries(LIVE_MODES);
-  $('lvForm').innerHTML = `<div class="seg" id="lvMode">${modes.map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${LV.lock ? '<p class="sub" style="margin:6px 0 0">Этот режим куплен вместе с камнем. Другой режим можно открыть потом на сайте jadekey.tech.</p>' : ''}${f}`;
+  $('lvForm').innerHTML = `<div class="seg" id="lvMode">${modes.map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${LV.lock ? '<p class="sub" style="margin:6px 0 0">Этот режим куплен вместе с камнем. Другой режим можно открыть потом на сайте jadekey.tech.</p>' : ''}${f}
+    <label class="sub" style="display:flex;align-items:flex-start;gap:10px;margin-top:16px"><input type="checkbox" id="lvConsent" ${P.consented ? 'checked' : ''} style="width:22px;height:22px;flex-shrink:0"><span>Согласен на обработку имени и даты рождения для персональных посланий JadeKey. <a href="/privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>.</span></label>`;
   $('lvForm').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { liveCollect(); LV.mode = b.dataset.m; liveForm(); });
   $('lvForm').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { liveCollect(); P.tone = b.dataset.t; liveForm(); });
   $('lvForm').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { liveCollect(); P.kid = b.dataset.k === '1'; liveForm(); });
@@ -3446,10 +3452,12 @@ function liveForm() {
 async function liveSave() {
   liveCollect();
   const P = LV.p, m = LV.mode;
+  if (!P.consented) { toast('Чтобы оживить камень, нужно согласие на обработку данных.'); return; }
   if (m === 'tal' || m === 'path' || m === 'luna' || m === 'love' ? !P.name : !P.to) { toast('Впиши имя'); return; }
   if (m === 'love' && !P.bday) { toast('Впиши дату рождения'); return; }
   const prof = m === 'fc' ? { to: P.to, from: P.from || '' } : m === 'love' ? { name: P.name, bday: P.bday || '', btime: P.btime || '', btz: P.btz || '' }
     : m === 'luna' ? { name: P.name, bday: P.bday || '' } : m === 'path' ? { name: P.name, bday: P.bday || '', btime: P.btime || '', btz: P.btz || '', from: P.from || '' } : { name: P.name, bday: P.bday || '', btime: P.btime || '', btz: P.btz || '' };
+  prof.consentAt = Date.now(); prof.consentVersion = 'privacy-2026-11';
   const pubName = m === 'tal' || m === 'path' || m === 'luna' || m === 'love' ? P.name : P.to;
   LV.busy = true; lvNav(); veil('Оживляю камень…');
   const made = [];
@@ -3458,7 +3466,7 @@ async function liveSave() {
     if (!isAdmin && stones.filter(s => s.owner === uid && !s.of).length >= 3) throw new Error('на одном телефоне можно оживить до трёх камней');
     const side = async (S, of) => {
       const enc = encodePatches(S.f);
-      const doc = await fsReq('POST', COL, tok, { name: pubName, mode: m, owner: uid, of: of || '', created: Date.now(), thumb: S.thumb, g: f32B64(gvecOf(S.f)), G: S.f.G, hue: S.hue ?? 0, n: enc.n });
+      const doc = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: of || '', created: Date.now(), thumb: S.thumb, g: f32B64(gvecOf(S.f)), G: S.f.G, hue: S.hue ?? 0, n: enc.n });
       const id = doc.name.split('/').pop(); made.push([COL, id]);
       await fsReq('POST', `${COLP}?documentId=${id}`, tok, { idx: enc.idx, p: enc.p, sc: enc.sc }); made.push([COLP, id]);
       return id;
@@ -3467,12 +3475,12 @@ async function liveSave() {
     if (LV.src) {
       // take over the catalog stone: same features, so the catalog copy drops out of search
       const c = LV.src, j = await fsCall(`${BASE}/${COLP}/${c.id}?key=${FS.key}`), pp = fromFs(j.fields);
-      const doc = await fsReq('POST', COL, tok, { name: pubName, mode: m, owner: uid, of: '', created: Date.now(), thumb: c.thumb || LV.a.thumb, g: c.g, G: c.G, hue: c.hue ?? 0, n: c.n });
+      const doc = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: '', created: Date.now(), thumb: c.thumb || LV.a.thumb, g: c.g, G: c.G, hue: c.hue ?? 0, n: c.n });
       id = doc.name.split('/').pop(); made.push([COL, id]);
       await fsReq('POST', `${COLP}?documentId=${id}`, tok, { idx: pp.idx, p: pp.p, sc: pp.sc }); made.push([COLP, id]);
       for (const cb of LV.srcBack || []) {
         const jb = await fsCall(`${BASE}/${COLP}/${cb.id}?key=${FS.key}`), pb = fromFs(jb.fields);
-        const db = await fsReq('POST', COL, tok, { name: pubName, mode: m, owner: uid, of: id, created: Date.now(), thumb: cb.thumb || '', g: cb.g, G: cb.G, hue: cb.hue ?? 0, n: cb.n });
+        const db = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: id, created: Date.now(), thumb: cb.thumb || '', g: cb.g, G: cb.G, hue: cb.hue ?? 0, n: cb.n });
         const bid = db.name.split('/').pop(); made.push([COL, bid]);
         await fsReq('POST', `${COLP}?documentId=${bid}`, tok, { idx: pb.idx, p: pb.p, sc: pb.sc }); made.push([COLP, bid]);
       }
@@ -3515,17 +3523,24 @@ async function liveHome() {
   if (Date.now() - lastLoad > 15000) await loadStones();
   const uid = myUid(), got = new Set(ls.list('jk2_mine_got'));
   const own = stones.filter(s => !s.of && s.mode && uid && s.owner === uid), recv = stones.filter(s => !s.of && s.mode && got.has(s.id) && s.owner !== uid);
-  const row = (s, k) => `<button class="mine" data-id="${s.id}" data-k="${k}"><img src="${s.thumb || ''}" alt=""><span><b>${esc(s.name || 'Камень')}</b><small>${k === 'own' ? 'Ты оживил' : 'Подарен тебе'}</small></span><span class="tag t-${s.mode}">${LIVE_MODES[s.mode] || ''}</span></button>`;
+  const privateNames = new Map();
+  await Promise.all(own.map(async s => {
+    const p = await readPriv(s.id).catch(() => null);
+    privateNames.set(s.id, p?.profile?.name || p?.profile?.to || '');
+  }));
+  const row = (s, k) => `<button class="mine" data-id="${s.id}" data-k="${k}"><img src="${s.thumb || ''}" alt=""><span><b>${esc(privateNames.get(s.id) || s.name || 'Камень')}</b><small>${k === 'own' ? 'Ты оживил' : 'Подарен тебе'}</small></span><span class="tag t-${s.mode}">${LIVE_MODES[s.mode] || ''}</span></button>`;
   $('lvMine').innerHTML = own.length + recv.length ? own.map(s => row(s, 'own')).join('') + recv.map(s => row(s, 'got')).join('') : '<p class="sub">Здесь появятся камни, которые ты оживишь или получишь в подарок.</p>';
   $('lvMine').querySelectorAll('.mine').forEach(b => b.onclick = () => mineSheet(stones.find(s => s.id === b.dataset.id), b.dataset.k));
+  accountRecovery.display().catch(() => {});
 }
 async function mineSheet(s, kind) {
   if (!s) return;
   veil('Открываю…'); const p = await readPriv(s.id).catch(() => null); veil();
   if (kind === 'got' || !p || p.owner !== myUid()) { showFound({ stone: s }); return; }
   const sides = stones.filter(x => x.of === s.id).length + 1, link = giftLink(s.id, p.claim);
-  const sb = shareButtons(link, giftText(s.mode, s.name || ''));
-  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
+  const privateName = p.profile?.name || p.profile?.to || s.name || '';
+  const sb = shareButtons(link, giftText(s.mode, privateName));
+  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(privateName)}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
     <div id="giftBox" style="display:none"><div class="h2">Ссылка для получателя</div>${sb.html}</div>
     <div class="rows"><button class="row" id="mOpen"><span><b>Открыть камень</b><small>Посмотреть, что видит получатель</small></span></button>${inApp ? '' : '<button class="row" id="mUp"><span><b>Открыть другой режим</b><small>Луна, Талисман, Путь — доплата разницы</small></span></button>'}<button class="row" id="mShare"><span><b>${p.share ? 'Послания видят все, кто отсканирует' : 'Послания видит только получатель'}</b><small>Нажми, чтобы переключить</small></span></button><button class="row" id="mGift"><span><b>Подарить по ссылке</b><small>Только если камень уже у человека, а оживил его ты</small></span></button><button class="row" id="mNew"><span><b>Новая ссылка</b><small>Старая перестанет работать, камень привяжется к новому телефону</small></span></button></div>
     <div class="btns"><button class="btn danger" id="mDel">Удалить камень</button><button class="btn main" id="again">Закрыть</button></div>`);
@@ -3534,7 +3549,11 @@ async function mineSheet(s, kind) {
   $('mGift').onclick = () => { $('giftBox').style.display = ''; $('mGift').style.display = 'none'; };
   $('mOpen').onclick = () => showLive(s);
   if ($('mUp')) $('mUp').onclick = () => { location.href = `/shop/upgrade.html?s=${encodeURIComponent(s.id)}&m=${encodeURIComponent(s.mode || '')}`; };
-  $('mShare').onclick = async () => { try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { share: !p.share }, ['share']); mineSheet(s, kind); } catch (e) { toast('Не получилось: ' + e.message); } };
+  $('mShare').onclick = async () => {
+    if (!p.share && !confirm('Важно: открытие посланий для всех также позволит прочитать данные профиля, включая имя и дату рождения. Ты согласен сделать их общедоступными?')) return;
+    try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { share: !p.share }, ['share']); mineSheet(s, kind); }
+    catch (e) { toast('Не получилось: ' + e.message); }
+  };
   $('mNew').onclick = async () => {
     if (!confirm('Сделать новую ссылку? Старая перестанет работать, а камень отвяжется от телефона получателя.')) return;
     try { await fsReq('PATCH', `${COLV}/${s.id}`, await anonToken(), { recipient: '', claim: rnd(14), claimTry: '' }, ['recipient', 'claim', 'claimTry']); toast('Новая ссылка готова'); mineSheet(s, kind); } catch (e) { toast('Не получилось: ' + e.message); }
@@ -4728,7 +4747,24 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
   };
 }
 
-loadStones().then(() => { adminDeepLink(); dayPill(); });
+const accountRecovery = initJadeKeyAccounts({
+  firebaseKey: FS.key, anonToken, myUid, fsReq, esc, toast, loadStones, liveHome,
+  getStones: () => stones, isNative: inApp, showLiveTab: () => tab('live'),
+  setSession(result) {
+    ANON.id = result.idToken;
+    ANON.exp = Date.now() + (Number(result.expiresIn || 3600) - 120) * 1000;
+    ANON.uid = result.localId;
+    ls.set('jk2_anon_rt', result.refreshToken);
+    ls.set('jk2_anon_uid', result.localId);
+  }
+});
+const customerAdmin = initJadeKeyAdmin({
+  firebaseKey: FS.key, project: FS.project, adminEmail: ADMIN_EMAIL,
+  getStones: () => stones, getAdminToken: authToken, isAdmin: () => isAdmin,
+  fromFs, esc, toast, sheet, hideSheet, loadStones, modeNames: LIVE_MODES
+});
+$('clientsBtn').onclick = () => customerAdmin.open();
+loadStones().then(async () => { adminDeepLink(); dayPill(); await accountRecovery.handleEmailReturn(); });
 window.__coi.then(() => { loadModel(); liveInit(); });
 if (new URLSearchParams(location.search).has('test')) window.JKL = { showRel, memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
 function liveInit() {
