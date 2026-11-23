@@ -1389,7 +1389,10 @@ async function loadModel() {
 }
 
 // ---------- cloud storage (Firestore REST) ----------
-const FS = { project: 'jadekey-46f37', key: 'AIzaSyCmc4qJFC0rkFvcz7ZBG42ApnZfCcrrT20' };
+// The separate test site must never read or modify the production stone catalog.
+const FS = ['jadekey-test.web.app', 'jadekey-test.firebaseapp.com'].includes(location.hostname)
+  ? { project: 'jadekey-test', key: 'AIzaSyC8Ks3L5ClsRVUTdGS2aBKf4h7296T3QN8' }
+  : { project: 'jadekey-46f37', key: 'AIzaSyCmc4qJFC0rkFvcz7ZBG42ApnZfCcrrT20' };
 const BASE = `https://firestore.googleapis.com/v1/projects/${FS.project}/databases/(default)/documents`;
 const COL = 'jk2_stones', COLP = 'jk2_patches', COL_OLD = 'stones';
 function fsVal(v) {
@@ -2258,6 +2261,7 @@ async function openAdd(ctx = {}) {
 const DS_REPO = 'paninsergey1965-lgtm/jadekey-dataset';
 const dsTok = () => (isAdmin && ls.get('jk2_ds_tok')) || '';
 async function dsPut(path, b64, msg) {
+  if (FS.project === 'jadekey-test') throw new Error('Архив изображений отключён в тестовом проекте');
   const r = await fetch(`https://api.github.com/repos/${DS_REPO}/contents/${path}`, { method: 'PUT', headers: { Authorization: 'Bearer ' + dsTok(), Accept: 'application/vnd.github+json' }, body: JSON.stringify({ message: msg, content: b64 }) });
   if (!r.ok) throw new Error('GitHub ' + r.status);
 }
@@ -4619,7 +4623,7 @@ const inApp = !!(Cap && (typeof Cap.isNativePlatform === 'function' ? Cap.isNati
   : (typeof Cap.getPlatform === 'function' && Cap.getPlatform() !== 'web')));
 let JadeNfc = !inApp ? null : (typeof Cap.registerPlugin === 'function' ? Cap.registerPlugin('JadeNfc')
   : Object.fromEntries(['isAvailable', 'scan', 'writeUrl', 'enableCounter'].map(m => [m, (o = {}) => Cap.nativePromise('JadeNfc', m, o)])));
-const NFC_URL = 'https://jadekey.tech/scan.html';
+const NFC_URL = FS.project === 'jadekey-test' ? 'https://jadekey-test.web.app/scan.html' : 'https://jadekey.tech/scan.html';
 // Web NFC (Chrome on Android): same interface as the native plugin, fewer details (no counter / signature)
 function nfcWait(text) {
   return new Promise(res => {

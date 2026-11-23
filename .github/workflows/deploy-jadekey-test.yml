@@ -1,0 +1,52 @@
+name: Deploy JadeKey-Test (Firebase staging only)
+
+# Only an explicit test-release tag starts this workflow. Ordinary commits,
+# main pushes and PR merges do not deploy anything.
+on:
+  push:
+    tags:
+      - deploy-jadekey-test-*
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jadekey-test-firebase-hosting
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    if: github.repository == 'paninsergey1965-lgtm/jadekey-tech' && startsWith(github.ref, 'refs/tags/deploy-jadekey-test-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out test branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build public test scanner and verify source assets
+        run: node firebase/staging-hosting/build.mjs
+
+      - name: Run staging safety tests
+        run: node --test tests/*.test.mjs
+
+      - name: Require the separate test-project credential
+        env:
+          TEST_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JADEKEY_TEST }}
+        run: |
+          if [ -z "$TEST_FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo 'Missing FIREBASE_SERVICE_ACCOUNT_JADEKEY_TEST: staging was NOT published.'
+            exit 1
+          fi
+
+      - name: Publish ONLY Firebase Hosting site jadekey-test
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JADEKEY_TEST }}
+          projectId: jadekey-test
+          channelId: live
+          entryPoint: ./firebase/staging-hosting
