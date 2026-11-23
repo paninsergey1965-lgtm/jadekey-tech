@@ -1,0 +1,69 @@
+// REVIEW CANDIDATE ONLY — not deployed. Keep scanner sales working while
+// restricting the two new collections before any customer email is stored.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'jadekey1965@gmail.com';
+    }
+    function signed() { return request.auth != null; }
+    function stoneOwner(id) {
+      return get(/databases/$(database)/documents/jk2_stones/$(id)).data.owner;
+    }
+
+    match /jk2_stones/{id} {
+      allow read: if true;
+      allow create: if isAdmin() || (signed() && request.resource.data.owner == request.auth.uid);
+      allow update: if isAdmin() || (signed() && resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid);
+      allow delete: if isAdmin() || (signed() && resource.data.owner == request.auth.uid);
+    }
+    match /jk2_patches/{id} {
+      allow read: if true;
+      allow write: if isAdmin() || (signed() && stoneOwner(id) == request.auth.uid);
+    }
+    match /jk2_private/{id} {
+      allow read: if isAdmin() || resource.data.share == true || (signed() && (resource.data.owner == request.auth.uid || resource.data.recipient == request.auth.uid));
+      allow create: if signed() && request.resource.data.owner == request.auth.uid && stoneOwner(id) == request.auth.uid;
+      allow update: if isAdmin()
+        || (signed() && resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid)
+        || (signed() && resource.data.recipient == '' && request.resource.data.recipient == request.auth.uid
+            && request.resource.data.claimTry == resource.data.claim
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recipient','claimTry']));
+      allow delete: if isAdmin() || (signed() && resource.data.owner == request.auth.uid);
+    }
+
+    // Verified customer addresses must never be downloadable by scanner visitors.
+    match /jk2_clients/{uid} {
+      allow read: if isAdmin() || (signed() && request.auth.uid == uid);
+      allow create: if isAdmin() || (signed()
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.resource.data.owner == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.verified == true
+        && request.resource.data.keys().hasOnly(['owner', 'email', 'verified', 'updated']));
+      allow update: if isAdmin() || (signed()
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && resource.data.owner == uid
+        && request.resource.data.owner == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.verified == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','verified','updated']));
+      allow delete: if isAdmin();
+    }
+
+    // Only the verified administrator can see or append audit records.
+    match /jk2_adminlog/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Existing default policy preserved for compatibility — to be audited
+    // separately! Explicit exclusions are CRITICAL: Firestore allow rules
+    // combine with OR; a restrictive match does not override a broad match.
+    match /{col}/{rest=**} {
+      allow read: if !(col in ['jk2_private', 'jk2_clients', 'jk2_adminlog']);
+      allow write: if !(col in ['jk2_stones', 'jk2_patches', 'jk2_private', 'jk2_clients', 'jk2_adminlog']);
+    }
+  }
+}
