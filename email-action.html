@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Подтверждение почты JadeKey</title>
+  <style>body{font:17px system-ui,sans-serif;line-height:1.5;background:#0a1310;color:#e9f3ee;max-width:36rem;margin:4rem auto;padding:0 1.4rem}a{color:#3fd8a2}</style>
+</head>
+<body>
+  <h1>Подтверждение почты JadeKey</h1>
+  <p id="status">Проверяем ссылку…</p>
+  <script>
+  (() => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('oobCode');
+    const mode = params.get('mode');
+    const destination = params.get('continueUrl');
+    const status = document.getElementById('status');
+    try {
+      if (mode !== 'signIn' || !code || !destination) throw new Error('Ссылка неполная или не предназначена для входа.');
+      const url = new URL(destination);
+      if (url.origin !== location.origin || !/^\/(scan|live)\.html$/.test(url.pathname)) {
+        throw new Error('Некорректный адрес продолжения.');
+      }
+      url.searchParams.set('mode', 'signIn');
+      url.searchParams.set('oobCode', code);
+      location.replace(url.href);
+    } catch (e) {
+      status.textContent = `${e.message} Открой JadeKey и запроси новое письмо.`;
+      const link = document.createElement('a'); link.href = '/scan.html'; link.textContent = 'Вернуться в JadeKey';
+      status.append(document.createElement('br'), link);
+    }
+  })();
+  </script>
+</body>
+</html>
