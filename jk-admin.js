@@ -17,10 +17,14 @@ export function initJadeKeyAdmin(ctx) {
   const api = `https://firestore.googleapis.com/v1/${root}`;
   const groups = () => {
     const all = ctx.getStones();
-    const catalog = new Map(all.filter(s => !s.mode && !s.of && s.g).map(s => [s.g, s]));
+    const catalog = new Map();
+    for (const s of all.filter(s => !s.mode && !s.of && s.g)) {
+      if (!catalog.has(s.g)) catalog.set(s.g, []);
+      catalog.get(s.g).push(s);
+    }
     return all.filter(s => s.mode && !s.of && s.owner).map(s => ({
       main: s, sides: all.filter(b => b.of === s.id && b.mode),
-      catalog: catalog.get(s.g) || null
+      catalog: catalog.get(s.g)?.length === 1 ? catalog.get(s.g)[0] : null
     }));
   };
   let clients = [], details = new Map(), listing = false;
