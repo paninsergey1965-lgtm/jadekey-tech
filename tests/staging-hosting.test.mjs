@@ -45,3 +45,17 @@ test('staging administrator must hold a verified email token', () => {
   assert.match(isAdmin, /request\.auth\.token\.email_verified\s*==\s*true/);
   assert.match(isAdmin, /jadekey1965@gmail\.com/);
 });
+
+test('live activation of a registered catalog stone works in administrator session too', () => {
+  const page = readFileSync(path.join(root, 'scan.html'), 'utf8');
+  const start = page.indexOf('async function liveCapture(side)');
+  const end = page.indexOf('function lvNav()', start);
+  assert.ok(start > -1 && end > start);
+  const wizard = page.slice(start, end);
+  assert.match(wizard, /if \(side === 'A'\) \{/);
+  assert.doesNotMatch(wizard, /if \(!isAdmin && side === 'A'\)/);
+  assert.match(wizard, /LV\.src = cs/);
+  assert.match(wizard, /LV\.srcBack = stones\.filter/);
+  assert.match(wizard, /if \(cs\.mode \|\| cs\.of\)/);
+  assert.match(page, /if \(LV\.src\) \{/);
+});
