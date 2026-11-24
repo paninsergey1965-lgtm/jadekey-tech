@@ -63,7 +63,7 @@ test('live activation of a registered catalog stone works in administrator sessi
 test('test-site entry points always load a fresh administrator module', () => {
   for (const page of ['scan.html', 'live.html']) {
     const source = readFileSync(path.join(root, page), 'utf8');
-    assert.match(source, /from '\\.\\/jk-admin\\.js\\?v=\\d{8}-\\d+';/);
+    assert.match(source, /jk-admin[.]js[?]v=[0-9]{8}-[0-9]+'/);
   }
   for (const pattern of ['**/*.html', '/jk-*.js']) {
     assert.ok(cfg.hosting.headers.some(entry => entry.source === pattern &&
