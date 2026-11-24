@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 const source = readFileSync(new URL('../jk-admin.js', import.meta.url), 'utf8');
 const { initJadeKeyAdmin } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
-function harness({ side = false, privateRecord = false, patches = false, failCommit = false } = {}) {
+function harness({ side = false, privateRecord = false, patches = false, failCommit = false, stalledReload = false, failVerify = false } = {}) {
   const project = 'jadekey-test';
   const root = `projects/${project}/databases/(default)/documents`;
   const db = new Map();
@@ -30,7 +30,9 @@ function harness({ side = false, privateRecord = false, patches = false, failCom
     isAdmin: () => true, getAdminToken: async () => 'staging-admin-token',
     getStones: () => stones, fromFs, esc: value => String(value ?? ''),
     hideSheet: () => {}, toast: message => toasts.push(message),
+    resetRefreshTimeoutMs: 5,
     loadStones: async () => {
+      if (stalledReload) return new Promise(() => {});
       stones = [...db].filter(([name]) => name.includes('/jk2_stones/')).map(([, value]) => ({ ...value }));
     },
     sheet: html => {
@@ -65,6 +67,9 @@ function harness({ side = false, privateRecord = false, patches = false, failCom
       return new Response(JSON.stringify({ documents: [{ name: `${root}/jk2_clients/buyer-1`, fields: toFields(db.get(`${root}/jk2_clients/buyer-1`)) }] }));
     }
     if (options.method === 'GET') {
+      if (failVerify && name.endsWith('/jk2_stones/live-1')) {
+        return new Response(JSON.stringify({ error: { message: 'network unavailable' } }), { status: 503 });
+      }
       const value = db.get(name);
       return new Response(JSON.stringify(value ? { fields: toFields(value) } : { error: { message: 'not found' } }), { status: value ? 200 : 404 });
     }
@@ -162,3 +167,30 @@ test('reset requires exact confirmation and does not write on cancellation', asy
     assert.ok(h.db.has(`${h.root}/jk2_stones/live-1`));
   }, 'нет');
 });
+
+test('confirmed reset does not hang when collection reload stalls', async () => {
+  const h = harness({ stalledReload: true });
+  await withBrowser(h, async () => {
+    await h.navigateToStone();
+    const reset = h.document.getElementById('cliReset');
+    await reset.onclick();
+    assert.ok(!h.db.has(`${h.root}/jk2_stones/live-1`));
+    assert.ok(h.db.has(`${h.root}/jk2_stones/catalog-1`));
+    assert.match(h.document.getElementById('cliResetStatus').textContent, /Активация сброшена в базе/);
+    assert.equal(reset.disabled, true);
+  });
+});
+
+test('unverifiable reset does not claim success or offer a blind repeat', async () => {
+  const h = harness({ failVerify: true });
+  await withBrowser(h, async () => {
+    await h.navigateToStone();
+    const reset = h.document.getElementById('cliReset');
+    await reset.onclick();
+    assert.ok(!h.db.has(`${h.root}/jk2_stones/live-1`));
+    assert.match(h.document.getElementById('cliResetStatus').textContent, /Не удалось проверить результат/);
+    assert.equal(reset.disabled, true);
+    assert.doesNotMatch(h.toasts.join(' '), /Активация сброшена, каталог сохранён/);
+  });
+});
+
