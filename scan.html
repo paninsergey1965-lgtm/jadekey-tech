@@ -3521,7 +3521,7 @@ function shareButtons(link, text) {
 }
 function giftText(mode, name) { return mode === 'fc' ? `${name}, тебе подарили камень с печеньем предсказаний. Открой ссылку и наведи телефон на камень.` : mode === 'path' ? `${name}, это твой камень пути. Открой ссылку и наведи телефон на камень.` : mode === 'tal' ? `${name}, это твой талисман. Открой ссылку и наведи телефон на камень.` : `${name}, тебе подарили живой камень. Открой ссылку и наведи телефон на камень.`; }
 function liveDone() {
-  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён и теперь твой. Каждый день открывай «Сканер» и наводи телефон на камень.</p><div class="btns"><button class="btn main" id="lvHome">Готово</button>${inApp ? '' : '<button class="btn" id="lvLinkEmail">Сохранить камень по почте</button>'}</div>`;
+  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён и теперь твой. Каждый день открывай «Сканер» и наводи телефон на камень.</p><div class="btns"><button class="btn main" id="lvHome">Готово</button><button class="btn" id="lvLinkEmail">Сохранить камень по почте</button></div>`;
   $('lvHome').onclick = liveHome;
   if ($('lvLinkEmail')) $('lvLinkEmail').onclick = () => accountRecovery.startLink();
 }
@@ -4764,6 +4764,10 @@ const accountRecovery = initJadeKeyAccounts({
     ANON.uid = result.localId;
     ls.set('jk2_anon_rt', result.refreshToken);
     ls.set('jk2_anon_uid', result.localId);
+  },
+  refreshSession() {
+    ANON.id = null; ANON.exp = 0;
+    return anonToken(false);
   }
 });
 const customerAdmin = initJadeKeyAdmin({
