@@ -3382,7 +3382,10 @@ async function liveCapture(side) {
     if (!okLight) return fail(st.mean <= 22 ? 'Слишком темно. Включи свет или подойди к окну.' : 'Слишком ярко или блик. Убери камень из-под прямого света.');
     if (!okPat) return fail('У камня слишком мало рисунка: сканер не отличит его от похожих. Возьми камень с узором — агат, яшму, малахит, лазурит.');
     if (side === 'B' && LV.a && verdictOf(scoreAgainst(LV.a.f, A.f)) === 'yes') return fail('Похоже, это та же сторона. Переверни камень и сними снова.');
-    if (!isAdmin && side === 'A') {
+    if (side === 'A') {
+      // The activation wizard always uses the registered shop catalog,
+      // even when the tester is logged in as admin. Registration belongs
+      // to the collection screen, never to the buyer activation wizard.
       // only a JadeKey stone from the collection that nobody has brought to life yet
       veil('Ищу камень в коллекции JadeKey…');
       const r = await lvTO(identify(frames[0], t => veil(t)), 60000);
