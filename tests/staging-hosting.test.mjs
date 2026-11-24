@@ -59,3 +59,16 @@ test('live activation of a registered catalog stone works in administrator sessi
   assert.match(wizard, /if \(cs\.mode \|\| cs\.of\)/);
   assert.match(page, /if \(LV\.src\) \{/);
 });
+
+test('test-site entry points always load a fresh administrator module', () => {
+  for (const page of ['scan.html', 'live.html']) {
+    const source = readFileSync(path.join(root, page), 'utf8');
+    assert.match(source, /from '\\.\\/jk-admin\\.js\\?v=\\d{8}-\\d+';/);
+  }
+  for (const pattern of ['**/*.html', '/jk-*.js']) {
+    assert.ok(cfg.hosting.headers.some(entry => entry.source === pattern &&
+      entry.headers.some(header => header.key === 'Cache-Control' && header.value.includes('no-store'))),
+      `Test hosting must disable stale caching for ${pattern}`);
+  }
+});
+
