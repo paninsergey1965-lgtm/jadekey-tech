@@ -1,0 +1,79 @@
+// Production JadeKey (jadekey-46f37), prepared from the rules actually
+// published on November 10, 2026. Review/test before deploying.
+// Keep existing scanner, legacy stones and shop collection access unchanged.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signed() { return request.auth != null; }
+    function isAdmin() {
+      return signed()
+        && request.auth.uid == 'Tr0dEgYZr0RljJP81rY8ELsTTUq2'
+        && request.auth.token.email == 'jadekey1965@gmail.com';
+    }
+    function stoneOwner(id) {
+      return get(/databases/$(database)/documents/jk2_stones/$(id)).data.owner;
+    }
+
+    match /jk2_stones/{id} {
+      allow read: if true;
+      allow create: if isAdmin() || (signed() && request.resource.data.owner == request.auth.uid);
+      allow update: if isAdmin() || (signed() && resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid);
+      allow delete: if isAdmin() || (signed() && resource.data.owner == request.auth.uid);
+    }
+    match /jk2_patches/{id} {
+      allow read: if true;
+      allow write: if isAdmin() || (signed() && stoneOwner(id) == request.auth.uid);
+    }
+    match /jk2_private/{id} {
+      // Preserve existing public-sharing behavior for already gifted stones.
+      // New activation records are private by default; public sharing is
+      // explicitly warned about in the production scanner.
+      allow read: if isAdmin() || resource.data.share == true || (signed()
+        && (resource.data.owner == request.auth.uid || resource.data.recipient == request.auth.uid));
+      allow create: if signed() && request.resource.data.owner == request.auth.uid && stoneOwner(id) == request.auth.uid;
+      allow update: if isAdmin()
+        || (signed() && resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid)
+        || (signed() && resource.data.recipient == '' && request.resource.data.recipient == request.auth.uid
+          && request.resource.data.claimTry == resource.data.claim
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recipient','claimTry']));
+      allow delete: if isAdmin() || (signed() && resource.data.owner == request.auth.uid);
+    }
+
+    // Verified customer index: Firestore names/emails are NOT public. The
+    // broad legacy wildcard below must explicitly exclude this collection.
+    match /jk2_clients/{uid} {
+      allow get: if isAdmin() || (signed() && request.auth.uid == uid);
+      allow list: if isAdmin();
+      allow create: if isAdmin() || (signed()
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.resource.data.owner == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.verified == true
+        && request.resource.data.keys().hasAll(['owner', 'email', 'verified', 'updated'])
+        && request.resource.data.keys().hasOnly(['owner', 'email', 'verified', 'updated']));
+      allow update: if isAdmin() || (signed()
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && resource.data.owner == uid
+        && request.resource.data.owner == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.verified == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','verified','updated']));
+      allow delete: if isAdmin();
+    }
+
+    // Append-only administrative audit log.
+    match /jk2_adminlog/{id} {
+      allow get, list, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Original Nov 10 wildcard preserved for other legacy collections.
+    // Explicitly exclude new private collections: Firestore rules OR together.
+    match /{col}/{rest=**} {
+      allow read: if !(col in ['jk2_private', 'jk2_clients', 'jk2_adminlog']);
+      allow write: if !(col in ['jk2_stones', 'jk2_patches', 'jk2_private', 'jk2_clients', 'jk2_adminlog']);
+    }
+  }
+}
