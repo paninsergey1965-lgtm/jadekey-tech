@@ -1,3 +1,7 @@
 # Generated, public-only Firebase staging bundle. Never commit downloaded binaries.
 firebase/staging-hosting/assets/
 firebase/staging-hosting/public/
+firebase/staging-firestore/node_modules/
+firebase/staging-firestore/firebase-debug.log
+firebase/staging-firestore/firestore-debug.log
+firebase/staging-firestore/ui-debug.log

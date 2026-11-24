@@ -1,25 +1,30 @@
 # JadeKey customer recovery — staging checklist
 
-This branch is **not deployed**. It contains client UI, account recovery,
-customer administration and an example Rules migration. The current main
-branch and production Firestore must not be modified as part of review.
+These changes are for `jadekey-test` only. Main, production Firebase
+(`jadekey-46f37`) and the real catalog must remain untouched. A staging
+release tag deploys the separate tested rules from
+`firebase/staging-firestore/firestore.rules`; it must never deploy the old
+review example `firebase/firestore.rules` to production.
 
 ## Critical staging gates
 
 1. Back up the full Firestore database, including `jk2_stones`,
    `jk2_patches`, `jk2_private` and all catalog registrations. Do not
    run production migrations or reset active stones without tested backups.
-2. Deploy the accompanying `firestore.rules` **to a staging Firebase
-   project first** and run Firestore emulator tests: anonymous visitor
+2. Deploy the accompanying `staging-firestore/firestore.rules` **only to the
+   staging project**. The tag-only GitHub workflow runs emulator tests first:
+   anonymous visitor
    may view scanner metadata but cannot read clients/audits, owner may
    create/update own `jk2_clients` only with verified email, and admin
    can list clients and perform atomic edits. Only after these tests
    and owner approval may equivalent rules be applied to production.
-3. Firestore's existing catchall policy permits broad reads and writes on
-   other collections. This release only closes the two new collections;
-   it does not claim to be a complete security audit.
-4. Confirm `jadekey.tech` is in Firebase Authentication → Authorized domains
-   (seen in the supplied screenshot). Email/Password, Email link and
+3. Staging denies access to all unlisted collections. Scanner fingerprints
+   are public, but private profiles and email indexes are not. **This is
+   not a production security audit:** until a server validates purchases,
+   an authenticated user could forge an activation over REST. Keep real
+   customers and all 70 real stones out of staging.
+4. Confirm `jadekey-test.web.app` is in the **staging Firebase project** →
+   Authentication → Authorized domains. Email/Password, Email link and
    Anonymous must all remain enabled. Never turn off Anonymous for
    existing customers.
 5. **Spark quota:** Firebase Authentication provides only five email-link

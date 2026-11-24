@@ -1,0 +1,104 @@
+// STAGING ONLY: jadekey-test. Never deploy these rules to jadekey-46f37.
+// Public scanner fingerprints are readable; customer profiles and email
+// addresses remain private. This is deliberately NOT a production migration.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signed() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      // This UID belongs to the verified owner of the *test* Firebase project.
+      return signed() && request.auth.uid == 'IMrM4KZVGddIWBEXkJR1dj6YHxh2';
+    }
+    function ownsStone(id) {
+      return signed()
+        && exists(/databases/$(database)/documents/jk2_stones/$(id))
+        && get(/databases/$(database)/documents/jk2_stones/$(id)).data.owner == request.auth.uid;
+    }
+    function isNewLiveStone() {
+      return signed()
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.name == 'Живой камень'
+        && request.resource.data.mode in ['fc', 'love', 'luna', 'tal', 'path']
+        && request.resource.data.of is string
+        && request.resource.data.g is string
+        && request.resource.data.thumb is string
+        && request.resource.data.created is number
+        && request.resource.data.G is number
+        && request.resource.data.n is number
+        && request.resource.data.hue is number
+        && request.resource.data.keys().hasAll(['name', 'mode', 'owner', 'of', 'created', 'thumb', 'g', 'G', 'hue', 'n'])
+        && request.resource.data.keys().hasOnly(['name', 'mode', 'owner', 'of', 'created', 'thumb', 'g', 'G', 'hue', 'n']);
+    }
+
+    match /jk2_stones/{id} {
+      // Scanner must identify registered *test* stones even before sign-in.
+      allow get, list: if true;
+      allow create: if isAdmin() || isNewLiveStone();
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (signed() && resource.data.owner == request.auth.uid);
+    }
+    match /jk2_patches/{id} {
+      allow get, list: if true;
+      allow create: if isAdmin() || ownsStone(id);
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || ownsStone(id);
+    }
+    match /jk2_private/{id} {
+      allow get: if isAdmin() || resource.data.share == true
+        || (signed() && (resource.data.owner == request.auth.uid || resource.data.recipient == request.auth.uid));
+      allow list: if isAdmin();
+      allow create: if ownsStone(id)
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.recipient == ''
+        && request.resource.data.claimTry == ''
+        && request.resource.data.share == false
+        && request.resource.data.claim is string
+        && request.resource.data.claim.size() >= 10
+        && request.resource.data.profile is string
+        && request.resource.data.created is number
+        && request.resource.data.keys().hasAll(['owner', 'recipient', 'claim', 'claimTry', 'share', 'profile', 'created'])
+        && request.resource.data.keys().hasOnly(['owner', 'recipient', 'claim', 'claimTry', 'share', 'profile', 'created']);
+      allow update: if isAdmin()
+        || (signed() && resource.data.owner == request.auth.uid
+          && request.resource.data.owner == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recipient', 'claim', 'claimTry', 'share', 'profile']))
+        || (signed() && resource.data.recipient == ''
+          && request.resource.data.recipient == request.auth.uid
+          && request.resource.data.claimTry == resource.data.claim
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recipient', 'claimTry']));
+      allow delete: if isAdmin() || (signed() && resource.data.owner == request.auth.uid);
+    }
+    match /jk2_clients/{uid} {
+      allow get: if isAdmin() || (signed() && request.auth.uid == uid);
+      allow list: if isAdmin();
+      allow create: if isAdmin() || (signed()
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.resource.data.owner == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.verified == true
+        && request.resource.data.keys().hasOnly(['owner', 'email', 'verified', 'updated'])
+        && request.resource.data.keys().hasAll(['owner', 'email', 'verified', 'updated']));
+      allow update: if isAdmin() || (signed()
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && resource.data.owner == uid
+        && request.resource.data.owner == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.verified == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email', 'verified', 'updated']));
+      allow delete: if isAdmin();
+    }
+    match /jk2_adminlog/{id} {
+      allow get, list, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // No broad wildcard bypass: the staging scanner uses only the collections above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

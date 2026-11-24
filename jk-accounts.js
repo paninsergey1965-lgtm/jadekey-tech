@@ -142,7 +142,7 @@ export function initJadeKeyAccounts(ctx) {
         canHandleCodeInApp: true
       });
       storageSet(PENDING_KEY, JSON.stringify({ email, mode, uid: originalUid, sentAt: Date.now() }));
-      alert(`Письмо отправлено на ${email}. Открой ссылку на этом же телефоне, лучше в том же браузере. Если письмо не пришло — проверь «Спам».`);
+      alert(`Письмо отправлено на ${email}. На iPhone открой ссылку в Safari — в том же браузере, где оживлял камень, а не внутри Gmail. Если письма нет — проверь «Спам».`);
     } catch (e) {
       const quota = /QUOTA|TOO_MANY|LIMIT|RESOURCE_EXHAUSTED/i.test(e.code);
       ctx.toast(quota ? 'Лимит отправки писем Firebase исчерпан. Попробуй позже.' : `Не удалось отправить письмо: ${e.message}`, 6500);
@@ -202,5 +202,5 @@ export function initJadeKeyAccounts(ctx) {
     return true;
   }
 
-  return { display, handleEmailReturn };
+  return { display, handleEmailReturn, startLink: () => sendEmail('link') };
 }

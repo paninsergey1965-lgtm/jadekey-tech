@@ -1,4 +1,4 @@
-name: Deploy JadeKey-Test (Firebase staging only)
+name: Deploy JadeKey-Test (Hosting and Firestore staging only)
 
 # Only an explicit test-release tag starts this workflow. Ordinary commits,
 # main pushes and PR merges do not deploy anything.
@@ -34,6 +34,12 @@ jobs:
       - name: Run staging safety tests
         run: node --test tests/*.test.mjs
 
+      - name: Install Firebase staging rule-test tools
+        run: npm ci --prefix firebase/staging-firestore --no-audit --no-fund
+
+      - name: Test staging Firestore permissions in the isolated emulator
+        run: npm test --prefix firebase/staging-firestore
+
       - name: Require the separate test-project credential
         env:
           TEST_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JADEKEY_TEST }}
@@ -42,6 +48,14 @@ jobs:
             echo 'Missing FIREBASE_SERVICE_ACCOUNT_JADEKEY_TEST: staging was NOT published.'
             exit 1
           fi
+
+      - name: Authenticate only to the separate staging Firebase project
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JADEKEY_TEST }}
+
+      - name: Publish only the reviewed staging Firestore rules
+        run: firebase/staging-firestore/node_modules/.bin/firebase deploy --only firestore:rules --project jadekey-test --config firebase/staging-firestore/firebase.json --non-interactive
 
       - name: Publish ONLY Firebase Hosting site jadekey-test
         uses: FirebaseExtended/action-hosting-deploy@v0

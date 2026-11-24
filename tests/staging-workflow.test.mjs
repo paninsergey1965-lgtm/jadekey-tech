@@ -10,10 +10,12 @@ test('GitHub action can run only on an explicit test-only release tag', () => {
   assert.doesNotMatch(workflow, /pull_request:|branches:|workflow_dispatch:/);
 });
 
-test('GitHub action deploys only separate Firebase Hosting test site', () => {
+test('GitHub action deploys only test Hosting and independently tested staging Firestore rules', () => {
   assert.match(workflow, /projectId: jadekey-test/);
   assert.match(workflow, /entryPoint: \.\/firebase\/staging-hosting/);
   assert.match(workflow, /channelId: live/);
   assert.match(workflow, /secrets\.FIREBASE_SERVICE_ACCOUNT_JADEKEY_TEST/);
-  assert.doesNotMatch(workflow, /jadekey-46f37|cloudflare|wrangler|firestore:|functions:/i);
+  assert.match(workflow, /npm test --prefix firebase\/staging-firestore/);
+  assert.match(workflow, /firebase deploy --only firestore:rules --project jadekey-test --config firebase\/staging-firestore\/firebase\.json/);
+  assert.doesNotMatch(workflow, /jadekey-46f37|cloudflare|wrangler|functions:/i);
 });

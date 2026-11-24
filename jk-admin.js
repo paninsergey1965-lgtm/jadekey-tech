@@ -101,7 +101,8 @@ export function initJadeKeyAdmin(ctx) {
     ])].some(x => safe(x).includes(safe(q).trim())));
     const listHtml = q => found(q).map(c => `<button class="row" data-uid="${ctx.esc(c.uid)}"><span>
         <b>${ctx.esc(c.email || c.stones.map(g => details.get(g.main.id)).find(Boolean) || 'Без привязанной почты')}</b>
-        <small>${c.stones.length} камн. · ${ctx.esc(c.uid)}</small></span></button>`).join('') || '<p class="sub">Ничего не найдено</p>';
+        <small>${c.stones.length} камн. · ${ctx.esc(c.uid)}</small></span></button>`).join('') ||
+      (all.length ? '<p class="sub">Ничего не найдено</p>' : '<p class="sub">Клиентов пока нет. Сначала оживи тестовый камень как покупатель. После привязки почты здесь появится адрес клиента.</p>');
     ctx.sheet(`<div class="sh-head"><div><div class="sh-state">Администратор</div><div class="sh-name">Клиенты · ${all.length}</div></div></div>
       <input class="fld" id="cliSearch" placeholder="Почта, имя, JK-номер" value="${ctx.esc(query)}">
       <p class="sub">Почта доступна только после подтверждения. Пустая почта означает, что клиент ещё не привязал аккаунт.</p>
