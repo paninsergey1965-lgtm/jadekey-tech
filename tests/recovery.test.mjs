@@ -55,7 +55,7 @@ test('registration links an anonymous stone owner to email/password without chan
   globalThis.fetch = async (url, options) => {
     const payload = JSON.parse(options.body);
     if (url.includes('accounts:lookup')) return response({ users: [{ localId: 'owner-1' }] });
-    if (url.includes('accounts:update')) {
+    if (url.includes('accounts:signUp')) {
       linked = payload;
       return response({ idToken: 'linked-token', refreshToken: 'linked-refresh', localId: 'owner-1', expiresIn: '3600' });
     }
@@ -87,7 +87,7 @@ test('a new buyer may register before activating the first stone', async () => {
   globalThis.fetch = async (url, options) => {
     const body = JSON.parse(options.body);
     if (url.includes('accounts:lookup')) return response({ users: [{ localId: 'new-buyer' }] });
-    if (url.includes('accounts:update')) {
+    if (url.includes('accounts:signUp')) {
       linkToken = body.idToken;
       return response({ idToken: 'buyer-id-token', refreshToken: 'buyer-refresh', localId: 'new-buyer' });
     }
