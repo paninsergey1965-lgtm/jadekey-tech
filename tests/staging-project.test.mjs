@@ -5,6 +5,11 @@ import vm from 'node:vm';
 
 for (const file of ['scan.html', 'live.html']) {
   const html = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+  test(`${file} sends admin credentials when listing Firestore`, () => {
+    const listing = html.match(/async function fsList\([\s\S]+?\n}\n/);
+    assert.ok(listing, `Firestore listing exists in ${file}`);
+    assert.match(listing[0], /headers:\s*await authHeaders\(\)/);
+  });
   const declaration = html.match(/const FS = [\s\S]+?;\nconst BASE =/);
   assert.ok(declaration, `Firebase project selection is present in ${file}`);
 
