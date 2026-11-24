@@ -126,6 +126,9 @@ body.love .gem{stroke:#ff8fb1}
 .legacy img,.legacy .ph{width:46px;height:46px;border-radius:10px;object-fit:cover;background:#0006;flex:none}
 .legacy span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .legacy button{color:var(--jade);font-size:14px;padding:6px 4px}
+.legacy small{display:block;color:var(--mute);font-size:12px;margin-top:3px}
+.catalog-link{width:100%;text-align:left;margin-top:14px}
+.catalog-note{font-size:12px;color:var(--mute);margin-top:7px;line-height:1.45}
 .empty{padding:50px 20px;text-align:center;color:var(--mute)}
 
 /* add */
@@ -345,6 +348,9 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
     <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button>
     <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
     <div class="grid" id="grid"></div>
+    <div class="h2" id="legacyTitle">Старый каталог</div>
+    <div class="sub" id="legacySub">Открой каталог, чтобы загрузить архив</div>
+    <div id="legacyGrid"></div>
   </div>
 </section>
 
@@ -404,6 +410,8 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
       <div id="lvMine"></div>
+      <button class="btn catalog-link" id="catalogEntry" type="button">Все камни JadeKey · каталог продавца</button>
+      <div class="catalog-note">Здесь можно посмотреть зарегистрированные и старые камни. Вход для владельца каталога.</div>
       <div id="jkAccount" style="margin-top:18px"></div>
     </div>
     <div id="lvWiz" style="display:none">
@@ -1481,7 +1489,10 @@ function setAdmin(on) {
   $('nAdd').style.display = isAdmin ? '' : 'none';
   if ($('clientsBtn')) $('clientsBtn').style.display = isAdmin ? '' : 'none';
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
-  if ($('soldBtn')) $('soldBtn').onclick = () => { window.showSold = !window.showSold; $('soldBtn').textContent = window.showSold ? 'Проданные: скрыть' : 'Проданные: показать'; renderColl(); };
+  if ($('soldBtn')) $('soldBtn').onclick = () => { window.showSold = !window.showSold; updateSoldBtn(); renderColl(); };
+}
+function updateSoldBtn() {
+  $('soldBtn').textContent = window.showSold ? 'Проданные: скрыть' : 'Проданные: показать';
 }
 async function authHeaders() {
   const t = await authToken();
@@ -1492,7 +1503,7 @@ const fsPatch = async (col, id, data) => fsCall(`${BASE}/${col}/${id}?key=${FS.k
 const fsDelete = async (col, id) => { const r = await fetch(`${BASE}/${col}/${id}?key=${FS.key}`, { method: 'DELETE', headers: await authHeaders() }); if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status); return r; };
 
 // ---------- collection in memory ----------
-let stones = [], legacy = [];
+let stones = [], legacy = [], legacyLoading = false, legacyLoaded = false, legacyError = '';
 const patchCache = new Map();
 const D = 384;
 
@@ -1521,6 +1532,20 @@ async function loadStones() {
     stones.forEach(s => { if (!s.mode && s.of && (gone.has(s.of) || liveG.has(s.g))) s.consumed = true; });
   } catch (e) { stones = []; toast('Коллекция не загрузилась: ' + e.message, 4500); }
   renderColl();
+}
+async function loadLegacyStones() {
+  if (legacyLoading || legacyLoaded) return;
+  legacyLoading = true;
+  legacyError = '';
+  renderLegacy();
+  try {
+    // The older stones have large feature arrays. Read only the fields needed
+    // for a safe, read-only archive; never rewrite or mix them into scan matching.
+    legacy = (await fsList(COL_OLD, ['name', 'coverImage', 'createdAt', 'shotsCount']))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    legacyLoaded = true;
+  } catch (e) { legacyError = e.message || 'Неизвестная ошибка'; }
+  finally { legacyLoading = false; renderLegacy(); }
 }
 
 // patches: store only stone patches, int8 per patch with its own scale
@@ -2171,15 +2196,59 @@ $('shutter').onclick = async () => {
 };
 
 // ---------- collection view ----------
+window.showSold = true;
 function renderColl() {
   const q = $('search').value.trim().toLowerCase();
-  const sold = stones.filter(s => !s.of && s.consumed).length, all = stones.filter(s => !s.of && (window.showSold || !s.consumed));
+  const all = stones.filter(s => !s.of && (window.showSold || !s.consumed));
   const list = all.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
-  $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)}` : 'Пока пусто. Добавь первый камень.';
-  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${s.id}"><img src="${s.thumb || ''}" alt=""><div><b>${esc(s.name)}</b><span>${s.consumed ? 'продан · ' : ''}${s.mode ? '<i class="tag t-' + s.mode + '">' + MODE_NAMES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
+  $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)} в основном каталоге` : 'В основном каталоге пока нет камней.';
+  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${esc(s.id)}"><img loading="lazy" src="${esc(s.thumb || '')}" alt=""><div><b>${esc(s.name)}</b><span>${s.consumed ? 'продан · ' : ''}${s.mode ? '<i class="tag t-' + s.mode + '">' + MODE_NAMES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
   $('grid').querySelectorAll('.card').forEach(b => b.onclick = () => showInfo(stones.find(s => s.id === b.dataset.id)));
+  renderLegacy();
 }
 $('search').oninput = renderColl;
+
+function legacyCover(s, large = false) {
+  const src = s.coverImage || '';
+  const cls = large ? ' class="sh-thumb"' : '';
+  return typeof src === 'string' && /^(data:image\/(?:jpeg|png|webp);base64,|https:\/\/)/i.test(src)
+    ? `<img${cls} src="${esc(src)}" loading="lazy" alt="">`
+    : `<div class="ph${large ? ' sh-thumb' : ''}" aria-hidden="true"></div>`;
+}
+function renderLegacy() {
+  if (legacyLoading) { $('legacySub').textContent = 'Загружаю старые камни…'; return; }
+  if (legacyError) {
+    $('legacySub').textContent = 'Не удалось загрузить архив: ' + legacyError;
+    $('legacyGrid').innerHTML = '<button class="btn" id="legacyRetry">Повторить загрузку</button>';
+    $('legacyRetry').onclick = loadLegacyStones;
+    return;
+  }
+  if (!legacyLoaded) { $('legacySub').textContent = 'Архив будет загружен при открытии каталога'; return; }
+  const q = $('search').value.trim().toLowerCase();
+  const list = legacy.filter(s => !q || (s.name || '').toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+  $('legacySub').textContent = `${legacy.length} записей · только просмотр · отдельно от нового каталога`;
+  $('legacyGrid').innerHTML = list.map(s => `<div class="legacy">${legacyCover(s)}<span><b>${esc(s.name || 'Камень без названия')}</b><small>${esc(s.id)}</small></span><button type="button" data-id="${esc(s.id)}">Открыть</button></div>`).join('') || '<p class="sub">Нет записей по этому запросу.</p>';
+  $('legacyGrid').querySelectorAll('button[data-id]').forEach(b => b.onclick = () => showLegacyStone(legacy.find(s => s.id === b.dataset.id)));
+}
+function showLegacyStone(s) {
+  if (!s) return;
+  const date = s.createdAt ? new Date(s.createdAt).toLocaleDateString('ru-RU') : 'Дата неизвестна';
+  sheet(`<div class="sh-head">${legacyCover(s, true)}<div><div class="sh-state">Старый каталог · только просмотр</div><div class="sh-name">${esc(s.name || 'Камень без названия')}</div><div class="sh-note">${esc(s.id)}</div></div></div><p class="sh-note">Добавлен: ${esc(date)} · снимков: ${Number(s.shotsCount) || 0}. Оригинальная запись сохранена без изменений.</p><div class="btns"><button class="btn main" id="again">Закрыть</button></div>`);
+  $('again').onclick = hideSheet;
+}
+
+async function openCatalog() {
+  if (!isAdmin || !(await authToken())) {
+    await adminLogin();
+    if (!isAdmin) return;
+  }
+  window.showSold = true;
+  updateSoldBtn();
+  tab('coll');
+  renderColl();
+  if (Date.now() - lastLoad > 15000) loadStones();
+  loadLegacyStones();
+}
 
 function showInfo(s) {
   if (s.mode) {
@@ -4622,7 +4691,8 @@ if (new URLSearchParams(location.search).has('love')) {
   if (i) { const g = i.querySelector('.gem'); if (g) { g.setAttribute('viewBox', '0 0 64 64'); g.innerHTML = '<path d="M32 54S8 40 8 23a12 12 0 0 1 24-4 12 12 0 0 1 24 4c0 17-24 31-24 31z"/><path d="M32 19v35" opacity=".35"/>'; g.style.animation = 'lvbeat 1.6s ease-in-out infinite'; } const h = i.querySelector('h2'), t = i.querySelector('p'); if (h) h.textContent = 'Наведи на свой камень'; if (t) t.textContent = 'Положи кулон при хорошем свете и нажми кнопку. Камень откроет послание дня — оно только для тебя.'; }
   document.title = 'JadeKey Love';
 }
-$('nColl').onclick = () => { tab('coll'); renderColl(); if (Date.now() - lastLoad > 15000) loadStones(); };
+$('nColl').onclick = openCatalog;
+$('catalogEntry').onclick = openCatalog;
 $('nAdd').onclick = () => { if (addCtx && addCtx.edit) addCtx = {}; openAdd({}); };
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') hideSheet(); });
 
