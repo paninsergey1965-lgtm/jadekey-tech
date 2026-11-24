@@ -69,11 +69,52 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Private support inbox. A visitor first speaks to the local FAQ bot;
+    // only escalated conversations and replies are written to Firestore.
+    match /jk2_support/{uid} {
+      function isClient() { return signed() && request.auth.uid == uid; }
+      function validMeta() {
+        return request.resource.data.keys().hasOnly(['ownerUid','status','lastMessage','updated'])
+          && request.resource.data.keys().hasAll(['ownerUid','status','lastMessage','updated'])
+          && request.resource.data.ownerUid == uid
+          && request.resource.data.status in ['waiting','answered']
+          && request.resource.data.lastMessage is string
+          && request.resource.data.lastMessage.size() <= 150
+          && request.resource.data.updated is int;
+      }
+      allow get: if isAdmin() || isClient();
+      allow list: if isAdmin();
+      allow create: if (isAdmin() || isClient()) && validMeta()
+        && request.resource.data.status == 'waiting';
+      allow update: if isAdmin() || (isClient()
+        && resource.data.ownerUid == uid && validMeta()
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastMessage','updated','status']));
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        function allowedParticipant() {
+          return isAdmin() || (signed() && request.auth.uid == uid);
+        }
+        allow get, list: if allowedParticipant();
+        allow create: if allowedParticipant()
+          && request.resource.data.keys().hasAll(['author','body','created'])
+          && request.resource.data.keys().hasOnly(['author','body','created'])
+          && request.resource.data.author == (isAdmin() ? 'admin' : 'client')
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 1000
+          && request.resource.data.created is int;
+        allow update, delete: if false;
+      }
+    }
+
     // Original Nov 10 wildcard preserved for other legacy collections.
     // Explicitly exclude new private collections: Firestore rules OR together.
     match /{col}/{rest=**} {
-      allow read: if !(col in ['jk2_private', 'jk2_clients', 'jk2_adminlog']);
-      allow write: if !(col in ['jk2_stones', 'jk2_patches', 'jk2_private', 'jk2_clients', 'jk2_adminlog']);
+      allow read: if !(col in ['jk2_private', 'jk2_clients', 'jk2_adminlog', 'jk2_support']);
+      allow write: if !(col in ['jk2_stones', 'jk2_patches', 'jk2_private', 'jk2_clients', 'jk2_adminlog', 'jk2_support']);
     }
   }
 }

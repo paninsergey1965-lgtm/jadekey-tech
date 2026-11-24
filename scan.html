@@ -345,7 +345,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
   <div class="page">
     <h1>Коллекция</h1>
     <div class="sub" id="collSub">Загружаю…</div>
-    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button>
+    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button> <button class="day-pill" id="supportInboxBtn" type="button" style="margin:6px 0 12px;display:none">Чаты</button>
     <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
     <div class="grid" id="grid"></div>
     <div class="h2" id="legacyTitle">Старый каталог</div>
@@ -812,6 +812,7 @@ return new kd(this.curr.time,a,b)};$jscomp.global.Object.defineProperties(H.prot
 <script type="module">
 import { initJadeKeyAccounts } from './jk-accounts.js';
 import { initJadeKeyAdmin } from './jk-admin.js?v=20261124-08';
+import { initJadeKeySupport } from './jk-support.js?v=20261124-01';
 import { pipeline, RawImage, env } from './vendor/transformers.min.js';
 
 // model, library and wasm are served from this site (no CDN / Cloudflare R2 — works in Russia without VPN)
@@ -1488,6 +1489,7 @@ function setAdmin(on) {
   $('nColl').style.display = isAdmin ? '' : 'none';
   $('nAdd').style.display = isAdmin ? '' : 'none';
   if ($('clientsBtn')) $('clientsBtn').style.display = isAdmin ? '' : 'none';
+  if ($('supportInboxBtn')) $('supportInboxBtn').style.display = isAdmin ? '' : 'none';
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
   if ($('soldBtn')) $('soldBtn').onclick = () => { window.showSold = !window.showSold; updateSoldBtn(); renderColl(); };
 }
@@ -4848,7 +4850,13 @@ const customerAdmin = initJadeKeyAdmin({
   getStones: () => stones, getAdminToken: authToken, isAdmin: () => isAdmin,
   fromFs, esc, toast, sheet, hideSheet, loadStones, modeNames: LIVE_MODES
 });
+const customerSupport = initJadeKeySupport({
+  firebaseKey: FS.key, project: FS.project, lang: () => window.JK_LANG,
+  clientToken: anonToken, adminToken: authToken, myUid,
+  isAdmin: () => isAdmin, fromFs, esc, toast, sheet, hideSheet
+});
 $('clientsBtn').onclick = () => customerAdmin.open();
+$('supportInboxBtn').onclick = () => customerSupport.openInbox();
 loadStones().then(async () => { adminDeepLink(); dayPill(); await accountRecovery.handleEmailReturn(); });
 window.__coi.then(() => { loadModel(); liveInit(); });
 if (new URLSearchParams(location.search).has('test')) window.JKL = { showRel, memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };

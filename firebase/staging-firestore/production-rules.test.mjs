@@ -85,3 +85,46 @@ test('historically public shared private records retain their former read behavi
   });
   await assertSucceeds(getDoc(doc(guest(), 'jk2_private', 'live')));
 });
+
+test('support conversations are readable only by their customer and the exact admin', async () => {
+  const buyer = ctx('buyer');
+  const stranger = ctx('stranger');
+  const admin = ctx(ADMIN, { email: 'jadekey1965@gmail.com', email_verified: true });
+  const impostor = ctx('other-admin', { email: 'jadekey1965@gmail.com', email_verified: true });
+  const conversation = doc(buyer, 'jk2_support', 'buyer');
+  await assertSucceeds(setDoc(conversation, {
+    ownerUid: 'buyer', status: 'waiting', lastMessage: 'Help', updated: 123
+  }));
+  await assertSucceeds(setDoc(doc(buyer, 'jk2_support', 'buyer', 'messages', 'm1'), {
+    author: 'client', body: 'Help me activate L8', created: 123
+  }));
+  await assertSucceeds(getDoc(conversation));
+  await assertSucceeds(getDocs(collection(buyer, 'jk2_support', 'buyer', 'messages')));
+  await assertSucceeds(getDocs(collection(admin, 'jk2_support')));
+  await assertSucceeds(getDocs(collection(admin, 'jk2_support', 'buyer', 'messages')));
+  await assertFails(getDoc(doc(guest(), 'jk2_support', 'buyer')));
+  await assertFails(getDoc(doc(stranger, 'jk2_support', 'buyer')));
+  await assertFails(getDocs(collection(stranger, 'jk2_support')));
+  await assertFails(getDocs(collection(impostor, 'jk2_support')));
+  await assertFails(getDocs(collection(guest(), 'jk2_support', 'buyer', 'messages')));
+  await assertFails(getDocs(collection(stranger, 'jk2_support', 'buyer', 'messages')));
+});
+
+test('support author and conversation owner cannot be spoofed', async () => {
+  const buyer = ctx('buyer');
+  const stranger = ctx('stranger');
+  const admin = ctx(ADMIN, { email: 'jadekey1965@gmail.com', email_verified: true });
+  await assertFails(setDoc(doc(stranger, 'jk2_support', 'buyer'), {
+    ownerUid: 'buyer', status: 'waiting', lastMessage: 'fake', updated: 100
+  }));
+  await assertFails(setDoc(doc(buyer, 'jk2_support', 'buyer', 'messages', 'faked-admin'), {
+    author: 'admin', body: 'Pretending to be support', created: 123
+  }));
+  await assertFails(setDoc(doc(buyer, 'jk2_support', 'buyer', 'messages', 'too-long'), {
+    author: 'client', body: 'x'.repeat(1001), created: 123
+  }));
+  await assertSucceeds(setDoc(doc(admin, 'jk2_support', 'buyer', 'messages', 'real-admin'), {
+    author: 'admin', body: 'How can I help?', created: 124
+  }));
+  await assertFails(deleteDoc(doc(buyer, 'jk2_support', 'buyer', 'messages', 'real-admin')));
+});
