@@ -1424,7 +1424,7 @@ async function fsList(col, mask = []) {
   const out = []; let tok = '';
   do {
     const q = mask.map(m => '&mask.fieldPaths=' + m).join('');
-    const j = await fsCall(`${BASE}/${col}?key=${FS.key}&pageSize=100${q}${tok ? '&pageToken=' + tok : ''}`);
+    const j = await fsCall(`${BASE}/${col}?key=${FS.key}&pageSize=100${q}${tok ? '&pageToken=' + tok : ''}`, { headers: await authHeaders() });
     (j.documents || []).forEach(d => out.push({ id: d.name.split('/').pop(), ...fromFs(d.fields) }));
     tok = j.nextPageToken || '';
   } while (tok);
