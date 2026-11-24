@@ -1,44 +1,31 @@
-// JadeKey account recovery. This module deliberately shares the existing
-// Firebase REST session instead of creating a second Firebase SDK session.
-// It must be deployed together with the reviewed jk2_clients Firestore rules.
+// Email/password recovery for the isolated JadeKey test project.
+// Upgrade existing anonymous users in place to preserve stone ownership UIDs.
+// Deploy together with private jk2_clients Firestore rules, never by itself.
 
-const PENDING_KEY = 'jk2_email_pending';
-const LINKED_KEY = 'jk2_email_linked';
+const API = 'https://identitytoolkit.googleapis.com/v1/';
 
-function storageGet(key) {
-  try { return localStorage.getItem(key); } catch (_) { return null; }
-}
-function storageSet(key, value) {
-  try { localStorage.setItem(key, value); } catch (_) { /* Private mode. */ }
-}
-function storageDel(key) {
-  try { localStorage.removeItem(key); } catch (_) { /* Private mode. */ }
+function validEmail(raw) {
+  const email = String(raw || '').trim().toLowerCase();
+  return email.length <= 255 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }
 
-function parseEmailCode(rawUrl) {
-  let url;
-  try { url = new URL(rawUrl, location.href); } catch (_) { return null; }
-  for (let i = 0; i < 3; i++) {
-    if (url.searchParams.get('mode') === 'signIn' && url.searchParams.get('oobCode')) {
-      return url.searchParams.get('oobCode');
-    }
-    const nested = url.searchParams.get('link') || url.searchParams.get('deep_link_id');
-    if (!nested) break;
-    try { url = new URL(nested); } catch (_) { break; }
-  }
-  return null;
-}
-
-function readPending() {
-  try { return JSON.parse(storageGet(PENDING_KEY) || 'null'); } catch (_) { return null; }
+function friendlyError(error) {
+  const code = String(error.code || error.message || '');
+  if (/EMAIL_EXISTS/i.test(code)) return 'Эта почта уже зарегистрирована. Выбери «Войти».';
+  if (/EMAIL_NOT_FOUND|INVALID_PASSWORD|INVALID_LOGIN_CREDENTIALS/i.test(code)) return 'Неверная почта или пароль.';
+  if (/WEAK_PASSWORD/i.test(code)) return 'Пароль слишком простой.';
+  if (/OPERATION_NOT_ALLOWED/i.test(code)) return 'Регистрация по почте ещё не включена в Firebase.';
+  if (/TOO_MANY|QUOTA|LIMIT|RESOURCE_EXHAUSTED/i.test(code)) return 'Лимит попыток или писем исчерпан. Попробуй позже.';
+  if (/NETWORK|Failed to fetch/i.test(code)) return 'Не удалось связаться с сервером. Проверь интернет.';
+  return `Не удалось завершить действие: ${code.slice(0, 110)}`;
 }
 
 export function initJadeKeyAccounts(ctx) {
-  const apiUrl = `https://identitytoolkit.googleapis.com/v1/`;
   let busy = false;
+  let formMode = null;
 
   async function authCall(endpoint, payload) {
-    const response = await fetch(`${apiUrl}${endpoint}?key=${encodeURIComponent(ctx.firebaseKey)}`, {
+    const response = await fetch(`${API}${endpoint}?key=${encodeURIComponent(ctx.firebaseKey)}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     });
     const result = await response.json().catch(() => ({}));
@@ -50,6 +37,10 @@ export function initJadeKeyAccounts(ctx) {
     return result;
   }
 
+  function hasOwnedStones() {
+    return ctx.getStones().some(s => s.mode && !s.of && s.owner === ctx.myUid());
+  }
+
   async function currentAccount() {
     const idToken = await ctx.anonToken(false);
     if (!idToken) return null;
@@ -58,9 +49,8 @@ export function initJadeKeyAccounts(ctx) {
   }
 
   async function ensureClientRecord(user) {
-    // NOTE: this collection MUST be restricted before this code is deployed.
-    // The old wildcard rules make any new collection readable by everyone.
-    if (!user?.email || !user?.emailVerified) return;
+    // Never index an unverified email, and never trust typed user input.
+    if (!user?.email || !user?.emailVerified) return false;
     const token = await ctx.anonToken(false);
     const uid = ctx.myUid();
     if (!token || !uid || user.localId !== uid) throw new Error('Аккаунт не совпадает');
@@ -70,9 +60,9 @@ export function initJadeKeyAccounts(ctx) {
       const current = await ctx.fsReq('GET', `jk2_clients/${encodeURIComponent(uid)}`, token);
       const record = Object.fromEntries(Object.entries(current.fields || {}).map(([key, value]) => [key,
         value.stringValue ?? value.booleanValue ?? value.doubleValue ?? null]));
-      if (record.email === fields.email && record.owner === uid && record.verified === true) return;
+      if (record.email === fields.email && record.owner === uid && record.verified === true) return true;
       exists = true;
-    } catch (e) { if (e.status !== 404) throw e; }
+    } catch (error) { if (error.status !== 404) throw error; }
     try {
       if (exists) await ctx.fsReq('PATCH', `jk2_clients/${encodeURIComponent(uid)}`, token, fields, Object.keys(fields));
       else await ctx.fsReq('POST', `jk2_clients?documentId=${encodeURIComponent(uid)}`, token, fields);
@@ -80,127 +70,183 @@ export function initJadeKeyAccounts(ctx) {
       if (error.status !== 409 || exists) throw error;
       await ctx.fsReq('PATCH', `jk2_clients/${encodeURIComponent(uid)}`, token, fields, Object.keys(fields));
     }
+    return true;
+  }
+
+  function renderForm(root) {
+    const register = formMode === 'register';
+    const reset = formMode === 'reset';
+    const caption = register ? 'Создать аккаунт' : reset ? 'Отправить письмо' : 'Войти';
+    root.insertAdjacentHTML('beforeend', `<form id="jkEmailForm" style="margin-top:12px">
+      <label class="sub" for="jkEmailAddress">Электронная почта</label>
+      <input id="jkEmailAddress" type="email" inputmode="email" autocomplete="email" required maxlength="255" placeholder="name@example.com" style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">
+      ${reset ? '' : `<label class="sub" for="jkEmailPassword">Пароль (не менее 8 символов)</label>
+      <input id="jkEmailPassword" type="password" autocomplete="${register ? 'new-password' : 'current-password'}" required ${register ? 'minlength="8"' : ''} style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">`}
+      ${register ? `<label class="sub" for="jkEmailPasswordRepeat">Повтори пароль</label>
+      <input id="jkEmailPasswordRepeat" type="password" autocomplete="new-password" required minlength="8" style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">` : ''}
+      <div class="btns"><button class="btn main" type="submit">${caption}</button><button class="btn" type="button" id="jkEmailCancel">Отмена</button></div>
+    </form>`);
+    root.querySelector('#jkEmailCancel').onclick = () => { formMode = null; display(); };
+    root.querySelector('#jkEmailForm').onsubmit = event => {
+      event.preventDefault();
+      const email = root.querySelector('#jkEmailAddress').value;
+      const password = root.querySelector('#jkEmailPassword')?.value;
+      if (register) registerEmail(email, password, root.querySelector('#jkEmailPasswordRepeat').value);
+      else if (reset) resetPassword(email);
+      else signIn(email, password);
+    };
   }
 
   async function display() {
     const root = document.getElementById('jkAccount');
     if (!root) return;
-    if (ctx.isNative) {
-      root.innerHTML = '<div class="h2">Аккаунт и сохранность камней</div><p class="sub">Вход по почте для приложения пока проходит проверку. Не удаляй приложение и его данные до выпуска восстановления.</p>';
-      return;
-    }
-    const cached = storageGet(LINKED_KEY);
-    let email = cached;
+    let user = null, offline = false;
     try {
-      const user = await currentAccount();
-      email = user?.emailVerified ? user.email : null;
-      if (email) {
-        storageSet(LINKED_KEY, email);
-        // Rebuild the admin index after a session has been restored on a
-        // different device, or if a prior index write was interrupted.
-        await ensureClientRecord(user).catch(() => {});
-      } else storageDel(LINKED_KEY);
-    } catch (_) { /* Keep UI usable while temporarily offline. */ }
-    const own = ctx.getStones().some(s => s.mode && !s.of && s.owner === ctx.myUid());
-    root.innerHTML = `<div class="h2">Аккаунт и сохранность камней</div>
-      ${email ? `<p class="sub">Почта подтверждена: <b>${ctx.esc(email)}</b>. Камни можно восстановить на другом телефоне.</p>`
-        : `<p class="sub">${own ? 'Камни пока привязаны только к этому браузеру. ' : ''}Привяжи почту, чтобы не потерять камни при смене телефона.</p>`}
-      ${email ? '' : '<button class="btn main" id="jkEmailLink">Привязать почту</button>'}
-      <button class="btn" id="jkEmailRestore" style="margin-top:8px">Восстановить камни по почте</button>`;
-    if (!email) root.querySelector('#jkEmailLink').onclick = () => sendEmail('link');
-    root.querySelector('#jkEmailRestore').onclick = () => sendEmail('signin');
-  }
-
-  async function sendEmail(mode) {
-    if (busy) return;
-    if (ctx.isNative) return ctx.toast('Вход по почте для приложения пока недоступен.');
-    let idToken = null, originalUid = null;
-    if (mode === 'link') {
-      try { idToken = await ctx.anonToken(false); } catch (_) { /* Show the error below. */ }
-      originalUid = ctx.myUid();
-      if (!idToken || !originalUid) {
-        ctx.toast('Сначала оживи камень или воспользуйся восстановлением.'); return;
-      }
-    } else {
-      const ownsOnThisDevice = ctx.getStones().some(s => s.mode && !s.of && s.owner === ctx.myUid());
-      if (ownsOnThisDevice && !confirm('На этом телефоне уже есть камни. При входе по другой почте они могут перестать отображаться здесь. Продолжить?')) return;
-    }
-
-    const entered = prompt(mode === 'link' ? 'Укажи почту, к которой привяжем твои камни' : 'Укажи почту, к которой уже привязаны камни');
-    if (entered === null) return;
-    const email = entered.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255) {
-      ctx.toast('Проверь адрес электронной почты.'); return;
-    }
-    busy = true;
-    try {
-      // The continue URL is authorized in Firebase Authentication settings.
-      // Email links do not place the customer's email in a URL.
-      await authCall('accounts:sendOobCode', {
-        requestType: 'EMAIL_SIGNIN', email,
-        continueUrl: `${location.origin}${location.pathname}?jk_email_return=1&jk_email_flow=${mode}`,
-        canHandleCodeInApp: true
-      });
-      storageSet(PENDING_KEY, JSON.stringify({ email, mode, uid: originalUid, sentAt: Date.now() }));
-      alert(`Письмо отправлено на ${email}. На iPhone открой ссылку в Safari — в том же браузере, где оживлял камень, а не внутри Gmail. Если письма нет — проверь «Спам».`);
-    } catch (e) {
-      const quota = /QUOTA|TOO_MANY|LIMIT|RESOURCE_EXHAUSTED/i.test(e.code);
-      ctx.toast(quota ? 'Лимит отправки писем Firebase исчерпан. Попробуй позже.' : `Не удалось отправить письмо: ${e.message}`, 6500);
-    } finally { busy = false; }
-  }
-
-  async function handleEmailReturn() {
-    const code = parseEmailCode(location.href);
-    if (!code || busy) return false;
-    busy = true;
-    const pending = readPending();
-    const flow = new URL(location.href).searchParams.get('jk_email_flow');
-    if (flow === 'link' && (!pending || pending.mode !== 'link' || pending.uid !== ctx.myUid())) {
-      ctx.toast('Открой ссылку в том браузере, где находится камень: иначе привязать его нельзя.', 8000);
-      busy = false;
-      return true;
-    }
-    let email = pending?.email || '';
-    if (!email) email = (prompt('Введите почту, на которую пришла ссылка (для безопасности)') || '').trim().toLowerCase();
-    if (!email) { busy = false; return true; }
-
-    try {
-      const params = { email, oobCode: code };
-      const mustLink = flow === 'link' || (flow !== 'signin' && pending?.mode === 'link');
-      if (mustLink) {
-        const oldToken = await ctx.anonToken(false);
-        if (!oldToken || !pending.uid || pending.uid !== ctx.myUid()) {
-          throw new Error('Открой письмо в браузере, где находится камень. Иначе старый аккаунт нельзя безопасно привязать.');
+      user = await currentAccount();
+      if (user?.emailVerified) {
+        try { await ensureClientRecord(user); }
+        catch (_) {
+          // A verification completed in another tab may leave a cached ID
+          // token without email_verified until Firebase refreshes it.
+          await ctx.refreshSession();
+          await ensureClientRecord(user);
         }
-        params.idToken = oldToken; // Firebase links the email without changing UID.
       }
-      const result = await authCall('accounts:signInWithEmailLink', params);
-      if (mustLink && result.localId !== pending.uid) {
-        throw new Error('Firebase вернул другой ID. Аккаунт не переключён. Обратись в поддержку JadeKey.');
+    } catch (_) { offline = true; }
+    const email = user?.email ? ctx.esc(user.email) : '';
+    root.innerHTML = `<div class="h2">Аккаунт и сохранность камней</div>
+      ${email && user.emailVerified
+        ? `<p class="sub">Почта подтверждена: <b>${email}</b>. Камни можно восстановить на другом телефоне по почте и паролю.</p>`
+        : email
+          ? `<p class="sub">Почта <b>${email}</b> привязана, но ещё не подтверждена. Открой письмо и проверь подтверждение здесь.</p>
+             <button class="btn main" id="jkEmailVerify">Проверить подтверждение</button>
+             <button class="btn" id="jkEmailResend">Отправить письмо ещё раз</button>`
+          : `<p class="sub">${hasOwnedStones() ? 'Твои камни пока привязаны к этому устройству. ' : ''}Зарегистрируй почту, чтобы восстановить доступ при смене телефона.</p>
+             <button class="btn main" id="jkEmailRegister">Зарегистрироваться</button>`}
+      <button class="btn" id="jkEmailLogin" style="margin-top:8px">Войти на другом устройстве</button>
+      <button class="btn" id="jkEmailReset" style="margin-top:8px">Забыли пароль?</button>
+      ${offline ? '<p class="sub">Не удалось проверить статус почты. Проверь соединение.</p>' : ''}`;
+    root.querySelector('#jkEmailRegister')?.addEventListener('click', () => showForm('register'));
+    root.querySelector('#jkEmailLogin').onclick = () => showForm('login');
+    root.querySelector('#jkEmailReset').onclick = () => showForm('reset');
+    root.querySelector('#jkEmailVerify')?.addEventListener('click', () => checkVerification());
+    root.querySelector('#jkEmailResend')?.addEventListener('click', () => sendVerification());
+    if (formMode) renderForm(root);
+  }
+
+  function showForm(mode) {
+    formMode = mode;
+    display().then(() => document.getElementById('jkEmailAddress')?.focus());
+  }
+
+  async function sendVerification() {
+    if (busy) return;
+    busy = true;
+    try {
+      const token = await ctx.anonToken(false);
+      const user = await currentAccount();
+      if (!token || !user?.email || user.localId !== ctx.myUid()) throw new Error('Нет привязанной почты');
+      if (user.emailVerified) return await checkVerification(true);
+      await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: token });
+      ctx.toast('Письмо для подтверждения отправлено. Проверь «Спам».', 6000);
+    } catch (error) { ctx.toast(friendlyError(error), 6500); }
+    finally { busy = false; }
+  }
+
+  async function checkVerification(skipBusy = false) {
+    if (busy && !skipBusy) return;
+    if (!skipBusy) busy = true;
+    try {
+      // Refresh cached JWT so Firestore sees updated email_verified claim.
+      await ctx.refreshSession();
+      const user = await currentAccount();
+      if (user?.emailVerified && user.localId === ctx.myUid()) {
+        await ensureClientRecord(user);
+        formMode = null;
+        ctx.toast('Почта подтверждена. Доступ к камням защищён!', 6500);
+      } else ctx.toast('Пока не подтверждено. Открой ссылку из письма и нажми ещё раз.', 6500);
+    } catch (error) { ctx.toast(friendlyError(error), 6500); }
+    finally { if (!skipBusy) busy = false; await display(); }
+  }
+
+  async function registerEmail(rawEmail, password, repeated) {
+    if (busy) return;
+    const email = validEmail(rawEmail);
+    if (!email) return ctx.toast('Проверь адрес электронной почты.');
+    if (!password || password.length < 8) return ctx.toast('Пароль должен содержать минимум 8 символов.');
+    if (password !== repeated) return ctx.toast('Пароли не совпадают.');
+    busy = true;
+    try {
+      // An existing anonymous UID owns the stones. Link email/password to it;
+      // for a new buyer, first create an anonymous UID.
+      // If an owner UID exists locally but its session expired, do not
+      // silently create a *different* anonymous owner.
+      const idToken = await ctx.anonToken(!ctx.myUid());
+      const originalUid = ctx.myUid();
+      const before = await currentAccount();
+      if (!idToken || !originalUid || (before && before.localId !== originalUid)) throw new Error('Не удалось проверить владельца');
+      if (before?.email) throw new Error('К аккаунту уже привязана почта');
+      const result = await authCall('accounts:update', { idToken, email, password, returnSecureToken: true });
+      if (!result.idToken || !result.refreshToken || result.localId !== originalUid) {
+        throw new Error('Firebase не подтвердил прежний ID владельца. Обратись в поддержку.');
       }
+      ctx.setSession(result);
+      formMode = null;
+      await display();
+      try {
+        await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: result.idToken });
+        ctx.toast('Аккаунт создан! Подтверди почту по ссылке из письма.', 7500);
+      } catch (error) {
+        ctx.toast(`Аккаунт создан, но письмо не отправлено: ${friendlyError(error)} Используй «Отправить письмо ещё раз».`, 8000);
+      }
+    } catch (error) { ctx.toast(friendlyError(error), 7500); }
+    finally { busy = false; }
+  }
+
+  async function signIn(rawEmail, password) {
+    if (busy) return;
+    const email = validEmail(rawEmail);
+    if (!email || !password) return ctx.toast('Введите почту и пароль.');
+    if (hasOwnedStones() && !confirm('На этом устройстве есть камни другого аккаунта. После входа они могут перестать отображаться. Продолжить?')) return;
+    busy = true;
+    try {
+      const result = await authCall('accounts:signInWithPassword', { email, password, returnSecureToken: true });
       if (!result.idToken || !result.refreshToken || !result.localId) throw new Error('Firebase не вернул данные входа');
       ctx.setSession(result);
-      const user = await currentAccount();
-      if (!user?.emailVerified || user.localId !== result.localId) {
-        throw new Error('Почта пока не подтверждена Firebase');
-      }
-      storageSet(LINKED_KEY, user.email);
-      storageDel(PENDING_KEY);
-      // Only after server verification, never based on a typed email alone.
-      try { await ensureClientRecord(user); }
-      catch (e) { ctx.toast(`Вход выполнен, но карточка клиента не сохранена: ${e.message}`, 6500); }
-      const clean = new URL(location.href);
-      for (const key of ['mode', 'oobCode', 'apiKey', 'continueUrl', 'lang', 'link', 'deep_link_id', 'jk_email_return', 'jk_email_flow']) clean.searchParams.delete(key);
-      history.replaceState(null, '', clean.pathname + clean.search + clean.hash);
+      formMode = null;
       await ctx.loadStones();
       ctx.showLiveTab();
       await ctx.liveHome();
-      await display();
-      alert('Почта подтверждена! Теперь доступ к камням можно восстановить по этой почте.');
-    } catch (e) { ctx.toast(`Не удалось подтвердить почту: ${e.message}`, 8000); }
+      const user = await currentAccount();
+      if (user?.emailVerified && user.localId === ctx.myUid()) {
+        try { await ensureClientRecord(user); }
+        catch (_) { ctx.toast('Вход выполнен, но список клиентов обновить не удалось.', 6500); }
+      }
+      ctx.toast('Вход выполнен. Камни аккаунта доступны.', 6000);
+    } catch (error) { ctx.toast(friendlyError(error), 7500); }
     finally { busy = false; }
-    return true;
   }
 
-  return { display, handleEmailReturn, startLink: () => sendEmail('link') };
+  async function resetPassword(rawEmail) {
+    if (busy) return;
+    const email = validEmail(rawEmail);
+    if (!email) return ctx.toast('Проверь адрес электронной почты.');
+    busy = true;
+    try {
+      await authCall('accounts:sendOobCode', { requestType: 'PASSWORD_RESET', email });
+      formMode = null;
+      await display();
+      ctx.toast('Если эта почта зарегистрирована, на неё придёт письмо для смены пароля.', 7000);
+    } catch (error) { ctx.toast(friendlyError(error), 6500); }
+    finally { busy = false; }
+  }
+
+  async function startLink() {
+    await ctx.liveHome();
+    showForm('register');
+  }
+
+  // No one-time email sign-in URL is needed for email/password accounts.
+  return { display, handleEmailReturn: async () => false, startLink,
+    registerEmail, signIn, resetPassword, checkVerification, sendVerification };
 }
