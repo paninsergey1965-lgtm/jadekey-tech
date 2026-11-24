@@ -14,9 +14,9 @@ function friendlyError(error) {
   if (/EMAIL_EXISTS/i.test(code)) return 'Эта почта уже зарегистрирована. Выбери «Войти».';
   if (/EMAIL_NOT_FOUND|INVALID_PASSWORD|INVALID_LOGIN_CREDENTIALS/i.test(code)) return 'Неверная почта или пароль.';
   if (/WEAK_PASSWORD/i.test(code)) return 'Пароль слишком простой.';
-  if (/OPERATION_NOT_ALLOWED/i.test(code)) return 'Регистрация по почте ещё не включена в Firebase.';
+  if (/OPERATION_NOT_ALLOWED/i.test(code)) return 'Firebase отклонил операцию входа. Проверь настройки авторизации тестового проекта.';
   if (/TOO_MANY|QUOTA|LIMIT|RESOURCE_EXHAUSTED/i.test(code)) return 'Лимит попыток или писем исчерпан. Попробуй позже.';
-  if (/NETWORK|Failed to fetch/i.test(code)) return 'Не удалось связаться с сервером. Проверь интернет.';
+  if (/NETWORK|Failed to fetch|Load failed|fetch failed/i.test(code)) return 'Не удалось связаться с Firebase. Проверь интернет и повтори попытку.';
   return `Не удалось завершить действие: ${code.slice(0, 110)}`;
 }
 
@@ -186,7 +186,9 @@ export function initJadeKeyAccounts(ctx) {
       const before = await currentAccount();
       if (!idToken || !originalUid || (before && before.localId !== originalUid)) throw new Error('Не удалось проверить владельца');
       if (before?.email) throw new Error('К аккаунту уже привязана почта');
-      const result = await authCall('accounts:update', { idToken, email, password, returnSecureToken: true });
+      // Email-enumeration protection rejects accounts:update for provider linking.
+      // accounts:signUp with the existing ID token links credentials in place.
+      const result = await authCall('accounts:signUp', { idToken, email, password, returnSecureToken: true });
       if (!result.idToken || !result.refreshToken || result.localId !== originalUid) {
         throw new Error('Firebase не подтвердил прежний ID владельца. Обратись в поддержку.');
       }
