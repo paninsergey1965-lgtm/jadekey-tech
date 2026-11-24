@@ -29,17 +29,34 @@ export function initJadeKeyAdmin(ctx) {
   };
   let clients = [], details = new Map(), listing = false;
 
-  async function apiCall(method, suffix, payload) {
+  async function apiCall(method, suffix, payload, { allow404 = false, timeoutMs = 12000 } = {}) {
     if (!ctx.isAdmin()) throw new Error('Нужен вход администратора');
     const token = await ctx.getAdminToken();
     if (!token) throw new Error('Сессия администратора истекла');
     const url = `${api}${suffix}${suffix.includes('?') ? '&' : '?'}key=${encodeURIComponent(ctx.firebaseKey)}`;
-    const response = await fetch(url, { method, headers: {
-      'Content-Type': 'application/json', Authorization: `Bearer ${token}`
-    }, body: payload ? JSON.stringify(payload) : undefined });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || data.error) throw new Error(data.error?.message || `HTTP ${response.status}`);
-    return data;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { method, headers: {
+        'Content-Type': 'application/json', Authorization: `Bearer ${token}`
+      }, body: payload ? JSON.stringify(payload) : undefined, signal: controller.signal });
+      if (allow404 && response.status === 404) return null;
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) throw new Error(data.error?.message || `HTTP ${response.status}`);
+      return data;
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Сервер не ответил за отведённое время');
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Read the activation itself, not the collection cache: loadStones() can
+  // swallow read errors and temporarily display an empty collection.
+  async function activationIsGone(stoneId) {
+    return (await apiCall('GET', `/jk2_stones/${encodeURIComponent(stoneId)}`,
+      undefined, { allow404: true, timeoutMs: 9000 })) === null;
   }
 
   async function loadClients() {
@@ -128,7 +145,7 @@ export function initJadeKeyAdmin(ctx) {
     document.getElementById('cliBack').onclick = () => render(query);
   }
 
-  async function commit(writes, event, stone, ownerBefore, ownerAfter, detail = '') {
+  async function commit(writes, event, stone, ownerBefore, ownerAfter, detail = '', refresh = true) {
     const logId = crypto.randomUUID();
     writes.push({ update: { name: `${root}/jk2_adminlog/${logId}`, ...asDocument({
       action: event, stoneId: stone, ownerBefore, ownerAfter: ownerAfter || '',
@@ -136,8 +153,10 @@ export function initJadeKeyAdmin(ctx) {
     }) }, currentDocument: { exists: false } });
     await apiCall('POST', ':commit', { writes });
     details.clear();
-    await ctx.loadStones();
-    await loadClients();
+    if (refresh) {
+      await ctx.loadStones();
+      await loadClients();
+    }
   }
 
   function updateWrite(collection, id, patch) {
@@ -182,20 +201,57 @@ export function initJadeKeyAdmin(ctx) {
       button.disabled = true;
       const status = document.getElementById('cliResetStatus');
       status.style.display = '';
-      status.textContent = 'Сбрасываю активацию…';
+      status.textContent = 'Отправляю сброс на сервер…';
+
+      const writes = [deleteWrite('jk2_private', s.id)];
+      for (const x of [s, ...group.sides]) writes.push(deleteWrite('jk2_patches', x.id));
+      for (const x of group.sides) writes.push(deleteWrite('jk2_stones', x.id));
+      writes.push(deleteWrite('jk2_stones', s.id, true));
+      let commitError = null;
       try {
-        const writes = [deleteWrite('jk2_private', s.id)];
-        for (const x of [s, ...group.sides]) writes.push(deleteWrite('jk2_patches', x.id));
-        for (const x of group.sides) writes.push(deleteWrite('jk2_stones', x.id));
-        writes.push(deleteWrite('jk2_stones', s.id, true));
-        await commit(writes, 'reset', s.id, uid, '', `catalog=${group.catalog.id}; jk=${exact}`);
-        if (ctx.getStones().some(x => x.id === s.id)) throw new Error('Запись активации всё ещё находится в базе после обновления. Проверь подключение и повтори проверку.');
-        ctx.toast('Активация сброшена, каталог сохранён'); openClient(uid, query);
+        // The Firestore commit includes one audit entry and is atomic.
+        // Do not wait for a full collection reload to confirm deletion.
+        await commit(writes, 'reset', s.id, uid, '', `catalog=${group.catalog.id}; jk=${exact}`, false);
       } catch (e) {
-        const message = 'Не удалось подтвердить сброс: ' + e.message;
-        status.textContent = message;
+        // A connection timeout does not prove that Firestore rejected a write.
+        // Read the original activation before ever offering another reset.
+        commitError = e;
+      }
+      status.textContent = 'Проверяю результат в базе…';
+      let gone;
+      try {
+        gone = await activationIsGone(s.id);
+      } catch (e) {
+        status.textContent = 'Не удалось проверить результат. Не нажимай сброс повторно. Обнови страницу и проверь камень: ' + e.message;
+        ctx.toast('Результат сброса не подтверждён. Проверь после обновления страницы.', 6500);
+        return;
+      }
+      if (!gone) {
+        status.textContent = commitError
+          ? 'Активация не сброшена: ' + commitError.message
+          : 'Активация всё ещё существует в базе. Повтори позже после проверки.';
         button.disabled = false;
-        ctx.toast(message, 6500);
+        ctx.toast(status.textContent, 6500);
+        return;
+      }
+
+      status.textContent = 'Активация сброшена. Обновляю список…';
+      ctx.toast('Активация сброшена, каталог сохранён');
+      // A read can hang on a phone even after a successful Firestore commit.
+      // Stop waiting after eight seconds; the user can reload the page.
+      let timer;
+      try {
+        const refreshed = await Promise.race([
+          Promise.all([ctx.loadStones(), loadClients()]).then(() => true, () => false),
+          new Promise(resolve => { timer = setTimeout(() => resolve(false), ctx.resetRefreshTimeoutMs ?? 8000); })
+        ]);
+        if (refreshed && !ctx.getStones().some(x => x.id === s.id)) {
+          openClient(uid, query);
+        } else {
+          status.textContent = 'Активация сброшена в базе. Список пока не обновился — обнови страницу.';
+        }
+      } finally {
+        clearTimeout(timer);
       }
     };
   }
