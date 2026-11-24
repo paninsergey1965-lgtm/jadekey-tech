@@ -2,7 +2,7 @@ import test, { before, beforeEach, after } from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 
 const ADMIN = 'IMrM4KZVGddIWBEXkJR1dj6YHxh2';
 const projectId = 'demo-jadekey-test'; // demo- prefix blocks real Firebase access.
@@ -96,15 +96,23 @@ test('verified buyer can index only their own verified email', async () => {
   await assertFails(setDoc(doc(unverified, 'jk2_clients', 'new-buyer'), client('new-buyer', 'new@example.com')));
 });
 
-test('only test administrator can list clients, transfer stones and append audit', async () => {
+test('only test administrator can reset activation atomically, preserving the original catalog', async () => {
   const admin = ctx(ADMIN, { email: 'jadekey1965@gmail.com', email_verified: true });
-  const buyer = ctx('buyer-1');
+  const stranger = ctx('stranger-1');
   const records = await assertSucceeds(getDocs(collection(admin, 'jk2_clients')));
   assert.equal(records.size, 1);
-  await assertSucceeds(updateDoc(doc(admin, 'jk2_stones', 'live-1'), { owner: 'recipient-1' }));
-  await assertSucceeds(updateDoc(doc(admin, 'jk2_private', 'live-1'), { owner: 'recipient-1' }));
-  await assertSucceeds(setDoc(doc(admin, 'jk2_adminlog', 'log-1'), { action: 'transfer' }));
+  await assertFails(deleteDoc(doc(stranger, 'jk2_private', 'live-1')));
+  const batch = writeBatch(admin);
+  batch.delete(doc(admin, 'jk2_private', 'live-1'));
+  // An optional live patch may not exist; its absence must not block reset.
+  batch.delete(doc(admin, 'jk2_patches', 'live-1'));
+  batch.delete(doc(admin, 'jk2_stones', 'live-1'));
+  batch.set(doc(admin, 'jk2_adminlog', 'log-1'), { action: 'reset' });
+  await assertSucceeds(batch.commit());
+  assert.equal((await assertSucceeds(getDoc(doc(admin, 'jk2_stones', 'live-1')))).exists(), false);
+  assert.equal((await assertSucceeds(getDoc(doc(admin, 'jk2_private', 'live-1')))).exists(), false);
+  assert.equal((await assertSucceeds(getDoc(doc(admin, 'jk2_stones', 'catalog-1')))).exists(), true);
+  assert.equal((await assertSucceeds(getDoc(doc(admin, 'jk2_patches', 'catalog-1')))).exists(), true);
   await assertFails(updateDoc(doc(admin, 'jk2_adminlog', 'log-1'), { action: 'tamper' }));
-  await assertFails(deleteDoc(doc(buyer, 'jk2_private', 'live-1')));
-  await assertFails(getDocs(collection(buyer, 'jk2_adminlog')));
+  await assertFails(getDocs(collection(stranger, 'jk2_adminlog')));
 });

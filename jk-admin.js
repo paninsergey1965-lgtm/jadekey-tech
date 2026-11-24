@@ -144,7 +144,14 @@ export function initJadeKeyAdmin(ctx) {
     return { update: { name: `${root}/${collection}/${id}`, ...asDocument(patch) },
       updateMask: { fieldPaths: Object.keys(patch) }, currentDocument: { exists: true } };
   }
-  const deleteWrite = (collection, id) => ({ delete: `${root}/${collection}/${id}`, currentDocument: { exists: true } });
+  function deleteWrite(collection, id, requireExists = false) {
+    const write = { delete: `${root}/${collection}/${id}` };
+    // Auxiliary private/patch documents may already be missing. Requiring
+    // each to exist would reject the *entire* atomic reset, including the
+    // live stone. Only the main activation must still exist.
+    if (requireExists) write.currentDocument = { exists: true };
+    return write;
+  }
 
   function openStone(group, uid, query = '') {
     if (!group) return;
@@ -153,8 +160,8 @@ export function initJadeKeyAdmin(ctx) {
       <p class="sub">${ctx.esc(group.catalog?.jk || s.id)} · ${group.sides.length + 1} сторон(ы)</p>
       <label class="lbl" for="cliMode">Режим</label><select class="fld" id="cliMode">${modeOptions.map(([m, label]) => `<option value="${ctx.esc(m)}" ${m === s.mode ? 'selected' : ''}>${ctx.esc(label)}</option>`).join('')}</select>
       <div class="btns"><button class="btn main" id="cliModeSave">Сохранить режим</button></div>
-      <div class="rows"><button class="row" id="cliTransfer"><span><b>Передать другому клиенту</b><small>Только на уже подтверждённую почту</small></span></button>
-      <button class="row" id="cliReset"><span><b>Сбросить активацию</b><small>Регистрация камня и отпечаток остаются</small></span></button></div>
+      <div class="rows"><button class="row" id="cliReset"><span><b>Сбросить активацию</b><small>Личные данные удалятся, исходный камень и отпечаток останутся</small></span></button></div>
+      <p class="sub" id="cliResetStatus" role="status" style="display:none"></p>
       <button class="btn" id="cliStoneBack">Назад</button>`);
     document.getElementById('cliStoneBack').onclick = () => openClient(uid, query);
     document.getElementById('cliModeSave').onclick = async () => {
@@ -166,31 +173,30 @@ export function initJadeKeyAdmin(ctx) {
         ctx.toast('Режим изменён'); openClient(uid, query);
       } catch (e) { ctx.toast('Не удалось изменить: ' + e.message, 6500); }
     };
-    document.getElementById('cliTransfer').onclick = async () => {
-      const toEmail = prompt('Почта нового владельца (уже подтверждённая в JadeKey)');
-      if (!toEmail) return;
-      const matching = clients.filter(c => safe(c.email) === safe(toEmail.trim()) && c.uid !== uid);
-      if (matching.length !== 1) return ctx.toast('Нужна одна подтверждённая почта другого клиента.');
-      if (!confirm(`Передать камень ${group.catalog?.jk || s.id} клиенту ${matching[0].email}?`)) return;
-      const nextUid = matching[0].uid;
-      try {
-        const writes = [s, ...group.sides].map(x => updateWrite('jk2_stones', x.id, { owner: nextUid }));
-        writes.push(updateWrite('jk2_private', s.id, { owner: nextUid, recipient: '', claimTry: '' }));
-        await commit(writes, 'transfer', s.id, uid, nextUid, matching[0].email);
-        ctx.toast('Передача выполнена'); openClient(nextUid, query);
-      } catch (e) { ctx.toast('Не удалось передать: ' + e.message, 6500); }
-    };
     document.getElementById('cliReset').onclick = async () => {
       if (!group.catalog) return ctx.toast('Сначала проверь исходную регистрацию: не найден каталоговый отпечаток. Сброс заблокирован.', 6500);
       const exact = group.catalog.jk || s.id;
       const answer = prompt(`Это сбросит активацию ${exact} и удалит личные данные. Исходный каталог останется. Для подтверждения введи: СБРОС`);
       if (answer !== 'СБРОС') return;
+      const button = document.getElementById('cliReset');
+      button.disabled = true;
+      const status = document.getElementById('cliResetStatus');
+      status.style.display = '';
+      status.textContent = 'Сбрасываю активацию…';
       try {
         const writes = [deleteWrite('jk2_private', s.id)];
-        for (const x of [s, ...group.sides]) writes.push(deleteWrite('jk2_patches', x.id), deleteWrite('jk2_stones', x.id));
+        for (const x of [s, ...group.sides]) writes.push(deleteWrite('jk2_patches', x.id));
+        for (const x of group.sides) writes.push(deleteWrite('jk2_stones', x.id));
+        writes.push(deleteWrite('jk2_stones', s.id, true));
         await commit(writes, 'reset', s.id, uid, '', `catalog=${group.catalog.id}; jk=${exact}`);
+        if (ctx.getStones().some(x => x.id === s.id)) throw new Error('Запись активации всё ещё находится в базе после обновления. Проверь подключение и повтори проверку.');
         ctx.toast('Активация сброшена, каталог сохранён'); openClient(uid, query);
-      } catch (e) { ctx.toast('Сброс не выполнен: ' + e.message, 6500); }
+      } catch (e) {
+        const message = 'Не удалось подтвердить сброс: ' + e.message;
+        status.textContent = message;
+        button.disabled = false;
+        ctx.toast(message, 6500);
+      }
     };
   }
 
