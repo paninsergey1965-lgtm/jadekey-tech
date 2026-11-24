@@ -1,107 +1,178 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
 import { initJadeKeyAccounts } from '../jk-accounts.js';
 
 const original = {};
-for (const key of ['localStorage', 'location', 'history', 'fetch', 'alert', 'prompt', 'document']) original[key] = globalThis[key];
+for (const key of ['localStorage', 'fetch', 'confirm', 'document']) original[key] = globalThis[key];
 
-function fakeBrowser(url, pending = null) {
+function testBrowser() {
   const saved = new Map();
-  if (pending) saved.set('jk2_email_pending', JSON.stringify(pending));
-  let replaced = null;
+  const writes = [];
   globalThis.localStorage = {
-    getItem: k => saved.get(k) ?? null,
-    setItem: (k, value) => saved.set(k, value),
-    removeItem: k => saved.delete(k)
+    getItem: key => saved.get(key) ?? null,
+    setItem(key, value) { writes.push([key, value]); saved.set(key, value); },
+    removeItem: key => saved.delete(key)
   };
-  globalThis.location = { href: url };
-  globalThis.history = { replaceState: (_s, _t, url) => { replaced = url; } };
-  globalThis.alert = () => {};
-  globalThis.prompt = () => { throw Error('No prompt expected'); };
   globalThis.document = { getElementById: () => null };
-  return { saved, get replaced() { return replaced; } };
+  globalThis.confirm = () => true;
+  return { saved, writes };
 }
 
-test('email link upgrades anonymous account without changing owner UID', async () => {
-  const browser = fakeBrowser('https://jadekey.tech/scan.html?jk_email_flow=link&mode=signIn&oobCode=once', {
-    email: 'sergei@example.com', mode: 'link', uid: 'owner-1', sentAt: Date.now()
-  });
-  let token = 'anonymous-id-token', uid = 'owner-1';
-  let completion = null, created = null, opened = 0;
+function response(body, status = 200) {
+  return { ok: status < 400, status, json: async () => body };
+}
+
+function makeContext({ userUid = 'owner-1', owned = true } = {}) {
+  let token = userUid ? 'anonymous-token' : null;
+  let uid = userUid;
+  const notices = [], sessions = [], stoneLoads = [];
+  const documents = [];
+  const ctx = {
+    firebaseKey: 'test-key',
+    anonToken: async create => {
+      if (!token && create) { uid = 'new-buyer'; token = 'new-anon-token'; }
+      return token;
+    },
+    myUid: () => uid,
+    setSession(result) { sessions.push(result); token = result.idToken; uid = result.localId; },
+    refreshSession: async () => { token = 'fresh-verified-token'; return token; },
+    fsReq: async (method, path, _token, fields) => {
+      if (method === 'GET') { const error = new Error('missing'); error.status = 404; throw error; }
+      documents.push({ method, path, fields });
+    },
+    getStones: () => owned && uid ? [{ mode: 'tal', of: '', owner: uid }] : [],
+    loadStones: async () => { stoneLoads.push(uid); },
+    liveHome: async () => {}, showLiveTab: () => {}, esc: value => value,
+    toast: message => { notices.push(message); }
+  };
+  return { ctx, notices, sessions, documents, stoneLoads, get uid() { return uid; } };
+}
+
+test('registration links an anonymous stone owner to email/password without changing UID or writing password locally', async () => {
+  const browser = testBrowser();
+  const fixture = makeContext();
+  let linked = null, verification = null;
   globalThis.fetch = async (url, options) => {
     const payload = JSON.parse(options.body);
-    if (url.includes('accounts:signInWithEmailLink')) {
-      completion = payload;
-      return { ok: true, json: async () => ({ idToken: 'linked-id-token', refreshToken: 'linked-refresh', localId: 'owner-1', expiresIn: '3600' }) };
+    if (url.includes('accounts:lookup')) return response({ users: [{ localId: 'owner-1' }] });
+    if (url.includes('accounts:update')) {
+      linked = payload;
+      return response({ idToken: 'linked-token', refreshToken: 'linked-refresh', localId: 'owner-1', expiresIn: '3600' });
     }
-    if (url.includes('accounts:lookup')) {
-      assert.equal(payload.idToken, 'linked-id-token');
-      return { ok: true, json: async () => ({ users: [{ localId: 'owner-1', email: 'sergei@example.com', emailVerified: true }] }) };
+    if (url.includes('accounts:sendOobCode')) {
+      verification = payload;
+      return response({ email: 'sergei@example.com' });
     }
     throw Error(`Unexpected fetch: ${url}`);
   };
-  const ctx = {
-    firebaseKey: 'mock-key', anonToken: async () => token, myUid: () => uid,
-    setSession(result) { token = result.idToken; uid = result.localId; },
-    fsReq: async (method, path, _token, data) => {
-      if (method === 'GET') { const err = new Error('missing'); err.status = 404; throw err; }
-      created = { method, path, data };
-    },
-    getStones: () => [{ mode: 'path', of: '', owner: uid }],
-    loadStones: async () => {}, liveHome: async () => {}, showLiveTab: () => { opened++; },
-    esc: x => x, toast: msg => { throw Error(`Unexpected toast: ${msg}`); }
-  };
-  const account = initJadeKeyAccounts(ctx);
-  assert.equal(await account.handleEmailReturn(), true);
-  assert.deepEqual(completion, { email: 'sergei@example.com', oobCode: 'once', idToken: 'anonymous-id-token' });
-  assert.equal(uid, 'owner-1');
-  assert.equal(created.method, 'POST');
-  assert.equal(created.path, 'jk2_clients?documentId=owner-1');
-  assert.equal(created.data.email, 'sergei@example.com');
-  assert.equal(browser.saved.get('jk2_email_pending'), undefined);
-  assert.equal(browser.replaced, '/scan.html');
-  assert.equal(opened, 1);
+
+  const recovery = initJadeKeyAccounts(fixture.ctx);
+  await recovery.registerEmail(' SERGEI@Example.com ', 'long-private-password', 'long-private-password');
+  assert.deepEqual(linked, {
+    idToken: 'anonymous-token', email: 'sergei@example.com',
+    password: 'long-private-password', returnSecureToken: true
+  });
+  assert.deepEqual(verification, { requestType: 'VERIFY_EMAIL', idToken: 'linked-token' });
+  assert.equal(fixture.uid, 'owner-1');
+  assert.equal(fixture.sessions.length, 1);
+  assert.equal(fixture.documents.length, 0, 'no client profile before verification');
+  assert.equal(browser.writes.length, 0, 'module must not save passwords or emails in localStorage');
+  assert.match(fixture.notices.join(' '), /подтверди почту/i);
 });
 
-test('a link on a new browser cannot silently replace the original owner', async () => {
-  fakeBrowser('https://jadekey.tech/scan.html?jk_email_flow=link&mode=signIn&oobCode=once');
-  let calls = 0, warning = '';
-  globalThis.fetch = async () => { calls++; throw Error('Must not contact Firebase'); };
-  const account = initJadeKeyAccounts({
-    firebaseKey: 'mock-key', myUid: () => null,
-    toast: message => { warning = message; }
-  });
-  assert.equal(await account.handleEmailReturn(), true);
-  assert.match(warning, /браузере, где находится камень/);
-  assert.equal(calls, 0);
+test('a new buyer may register before activating the first stone', async () => {
+  testBrowser();
+  const fixture = makeContext({ userUid: null, owned: false });
+  let linkToken = null;
+  globalThis.fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url.includes('accounts:lookup')) return response({ users: [{ localId: 'new-buyer' }] });
+    if (url.includes('accounts:update')) {
+      linkToken = body.idToken;
+      return response({ idToken: 'buyer-id-token', refreshToken: 'buyer-refresh', localId: 'new-buyer' });
+    }
+    if (url.includes('accounts:sendOobCode')) return response({});
+    throw Error(`Unexpected call: ${url}`);
+  };
+  await initJadeKeyAccounts(fixture.ctx).registerEmail('buyer@example.com', 'buyer-password', 'buyer-password');
+  assert.equal(linkToken, 'new-anon-token');
+  assert.equal(fixture.uid, 'new-buyer');
 });
 
-test('email handler only forwards one-time code to same-origin scanner', () => {
-  const html = readFileSync(new URL('../email-action.html', import.meta.url), 'utf8');
-  const source = /<script>([\s\S]+?)<\/script>/.exec(html)?.[1];
-  assert.ok(source);
-  const calls = [], status = { textContent: '', append() {} };
-  const location = {
-    href: 'https://jadekey.tech/email-action.html', origin: 'https://jadekey.tech',
-    search: '?mode=signIn&oobCode=ABC&continueUrl=' + encodeURIComponent('https://jadekey.tech/scan.html?jk_email_flow=link'),
-    replace: url => calls.push(url)
+test('server-confirmed email with refreshed token indexes client, never an unverified address', async () => {
+  testBrowser();
+  const fixture = makeContext();
+  const seenTokens = [];
+  globalThis.fetch = async (url, options) => {
+    if (!url.includes('accounts:lookup')) throw Error('Unexpected call');
+    const { idToken } = JSON.parse(options.body);
+    seenTokens.push(idToken);
+    return response({ users: [{ localId: 'owner-1', email: 'sergei@example.com', emailVerified: true }] });
   };
-  vm.runInNewContext(source, { location, URL, URLSearchParams,
-    document: { getElementById: () => status, createElement: () => ({}) }
-  });
-  const sent = new URL(calls[0]);
-  assert.equal(sent.searchParams.get('oobCode'), 'ABC');
-  assert.equal(sent.searchParams.get('jk_email_flow'), 'link');
+  await initJadeKeyAccounts(fixture.ctx).checkVerification();
+  assert.deepEqual(seenTokens, ['fresh-verified-token']);
+  assert.deepEqual(fixture.documents, [{ method: 'POST', path: 'jk2_clients?documentId=owner-1', fields: {
+    owner: 'owner-1', email: 'sergei@example.com', verified: true, updated: fixture.documents[0].fields.updated
+  } }]);
+  assert.match(fixture.notices.join(' '), /Почта подтверждена/);
+});
 
-  calls.length = 0;
-  location.search = '?mode=signIn&oobCode=ABC&continueUrl=' + encodeURIComponent('https://evil.example/scan.html');
-  vm.runInNewContext(source, { location, URL, URLSearchParams,
-    document: { getElementById: () => status, createElement: () => ({ href: '', textContent: '' }) }
-  });
-  assert.equal(calls.length, 0);
-  assert.match(status.textContent, /Некорректный адрес/);
+test('login on a different phone restores original UID and its stones', async () => {
+  testBrowser();
+  const fixture = makeContext({ userUid: null, owned: false });
+  globalThis.fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url.includes('accounts:signInWithPassword')) {
+      assert.deepEqual(body, { email: 'sergei@example.com', password: 'private-password', returnSecureToken: true });
+      return response({ idToken: 'restored-id', refreshToken: 'restored-refresh', localId: 'owner-1' });
+    }
+    if (url.includes('accounts:lookup')) return response({ users: [{ localId: 'owner-1', email: 'sergei@example.com', emailVerified: true }] });
+    throw Error(`Unexpected call: ${url}`);
+  };
+  await initJadeKeyAccounts(fixture.ctx).signIn('sergei@example.com', 'private-password');
+  assert.equal(fixture.uid, 'owner-1');
+  assert.deepEqual(fixture.stoneLoads, ['owner-1']);
+  assert.equal(fixture.documents.length, 1);
+});
+
+test('incorrect password cannot replace active stone owner or create client record', async () => {
+  testBrowser();
+  const fixture = makeContext();
+  globalThis.fetch = async (url) => {
+    if (url.includes('accounts:signInWithPassword')) return response({ error: { message: 'INVALID_LOGIN_CREDENTIALS' } }, 400);
+    throw Error('Unexpected request');
+  };
+  await initJadeKeyAccounts(fixture.ctx).signIn('someone@example.com', 'wrong-password');
+  assert.equal(fixture.uid, 'owner-1');
+  assert.equal(fixture.sessions.length, 0);
+  assert.equal(fixture.documents.length, 0);
+  assert.match(fixture.notices.join(' '), /Неверная почта или пароль/);
+});
+
+test('expired owner session must not accidentally create a new UID while registering', async () => {
+  testBrowser();
+  const fixture = makeContext();
+  fixture.ctx.anonToken = async create => { assert.equal(create, false); return null; };
+  let called = false;
+  globalThis.fetch = async () => { called = true; throw Error('Must not contact Firebase'); };
+  await initJadeKeyAccounts(fixture.ctx).registerEmail('sergei@example.com', 'long-password', 'long-password');
+  assert.equal(called, false);
+  assert.equal(fixture.uid, 'owner-1');
+});
+
+test('password reset sends a reset email and never logs the password', async () => {
+  const browser = testBrowser();
+  const fixture = makeContext({ userUid: null, owned: false });
+  let request = null;
+  globalThis.fetch = async (url, options) => {
+    assert.match(url, /accounts:sendOobCode/);
+    request = JSON.parse(options.body);
+    return response({});
+  };
+  await initJadeKeyAccounts(fixture.ctx).resetPassword('buyer@example.com');
+  assert.deepEqual(request, { requestType: 'PASSWORD_RESET', email: 'buyer@example.com' });
+  assert.equal(browser.writes.length, 0);
+  assert.match(fixture.notices.join(' '), /письмо для смены пароля/);
 });
 
 test.after(() => {
