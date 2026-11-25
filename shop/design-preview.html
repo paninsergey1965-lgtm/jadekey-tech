@@ -12,38 +12,28 @@
   <title>Магазин живых камней — JadeKey</title>
 <style>
 @font-face{font-family:PTSerif;src:url('/fonts/pt-serif-cyrillic-400-normal.woff2')}@font-face{font-family:ManropeJK;src:url('/fonts/manrope-cyrillic-500-normal.woff2')}body{background:#fff!important;color:#141414!important}.announcement{background:#a5192f!important;color:white!important}.site-header{background:white!important}.brand{letter-spacing:.25em!important}.brand span{color:#3fd8a2!important}.preview-intro{text-align:center;padding:34px 16px 22px;border-bottom:1px solid #e4ded6}.preview-intro p{font:12px ManropeJK,sans-serif;letter-spacing:.2em;color:#a5192f}.preview-intro h1{font:400 38px PTSerif,Georgia,serif;margin:12px 0}.preview-intro span{font:16px PTSerif,Georgia,serif;color:#6f6760}.catalog{padding-top:24px!important}.catalog-heading h2{font:400 27px PTSerif,Georgia,serif!important}.product-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:24px 12px!important}.product-card{border:0!important;border-radius:0!important;box-shadow:none!important;background:white!important;min-width:0}.product-media{border-radius:0!important;aspect-ratio:1!important;background:#f5f2ee!important}.product-media img{width:100%!important;height:100%!important;object-fit:contain!important}.product-details{padding:12px 4px!important}.product-details h3{font:400 21px PTSerif,Georgia,serif!important}.product-desc{display:none!important}.product-actions{display:flex!important;flex-wrap:wrap;gap:8px!important}.quick-add{background:#141414!important;color:white!important;border-radius:0!important;padding:10px!important}.filter-button{border-radius:0!important}.filter-button.selected{background:#a5192f!important;color:white!important}.status{border-radius:0!important}.site-footer,footer{background:#a5192f!important;color:white!important}@media(max-width:650px){.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:22px 8px!important}.catalog{padding-left:12px!important;padding-right:12px!important}.product-details h3{font-size:17px!important}.product-actions{flex-direction:column;align-items:stretch!important}.quick-add{width:100%}.preview-intro h1{font-size:32px}.catalog-heading{display:block!important}.catalog-heading>p{font-size:13px!important}}
+</style><style>@font-face{font-family:"PT Serif";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/pt-serif-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"PT Serif";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/pt-serif-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:"PT Serif";font-weight:400;font-style:italic;font-display:swap;src:url(/fonts/pt-serif-cyrillic-400-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"PT Serif";font-weight:400;font-style:italic;font-display:swap;src:url(/fonts/pt-serif-latin-400-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:Manrope;font-weight:500;font-display:swap;src:url(/fonts/manrope-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Manrope;font-weight:500;font-display:swap;src:url(/fonts/manrope-latin-500-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:Manrope;font-weight:600;font-display:swap;src:url(/fonts/manrope-cyrillic-600-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Manrope;font-weight:600;font-display:swap;src:url(/fonts/manrope-latin-600-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:"Cormorant Garamond";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/cormorant-garamond-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF}
+
+body{font:400 15px/1.7 "PT Serif",Georgia,serif!important;-webkit-font-smoothing:antialiased}.jk-top{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid #e4ded6;padding-top:env(safe-area-inset-top)}.jk-top-in{height:58px;padding:0 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;max-width:1280px;margin:auto}.jk-top a,.jk-top button{color:#a5192f;text-decoration:none;font:500 11px/1 Manrope,sans-serif;letter-spacing:.08em;text-transform:uppercase}.jk-top .jk-mark{font:400 21px/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.36em;color:#141414;padding-left:.36em}.jk-mark b{font-weight:400;color:#3fd8a2}.jk-gos{justify-self:end;display:flex;gap:12px;align-items:center}.jk-gos button{background:none;border:0;padding:0;cursor:pointer}.jk-intro{text-align:center;padding:28px 12px 22px}.jk-intro h1{font:500 17px/1.4 Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase;margin:0}.jk-intro p{color:#6f6760;margin:12px 0 0}.catalog{padding-top:0!important}.catalog-controls{display:flex!important;gap:12px!important;align-items:center!important;margin:0 0 12px!important}.search-wrap{flex:1;min-width:0}.search-wrap input{font:400 13px "PT Serif",Georgia,serif!important}.sort-wrap label{display:none}.sort-wrap select{font:500 11px Manrope,sans-serif!important;max-width:130px;border:0!important;background:white!important}.filters-bar{margin:0 0 14px!important}.filters{gap:12px!important}.filter-button{font:500 11px Manrope,sans-serif!important;white-space:nowrap;padding:8px 0!important;border:0!important;background:transparent!important;color:#6f6760!important}.filter-button.selected{background:transparent!important;color:#a5192f!important;border-bottom:1px solid #a5192f!important}.results-counter{display:none!important}.product-grid{gap:26px 2px!important}.product-media{background:#141414!important}.product-details{text-align:center;padding:13px 6px 0!important}.product-category{font:500 10px Manrope,sans-serif!important;letter-spacing:.08em!important;color:#6f6760!important}.product-details h3{font:500 12px/1.4 Manrope,sans-serif!important;letter-spacing:.1em;text-transform:uppercase;margin:9px 0!important}.product-price{font:400 15px "PT Serif",Georgia,serif!important;margin:5px 0!important}.product-actions{border:0!important;justify-content:center!important;align-items:center!important;flex-direction:row!important;padding:6px 0!important;gap:14px!important}.quick-add,.detail-link{font:400 13px "PT Serif",Georgia,serif!important;background:transparent!important;color:#141414!important;border:0!important;border-bottom:1px solid currentColor!important;padding:0 0 3px!important;width:auto!important;min-height:0!important;text-transform:none!important}.status{font:500 9px Manrope,sans-serif!important;letter-spacing:.05em}.favorite-button{width:30px!important;height:30px!important;font-size:19px!important}.product-card[hidden]{display:none!important}@media(max-width:650px){.catalog{padding-left:0!important;padding-right:0!important}.catalog-controls,.filters-bar{margin-left:12px!important;margin-right:12px!important}.jk-top-in{padding:0 12px}.jk-top .jk-mark{font-size:17px;letter-spacing:.22em;padding-left:.22em}.jk-gos{gap:7px}.jk-top a,.jk-top button{font-size:9px;letter-spacing:.04em}.jk-intro{padding:24px 12px 18px}}
 </style></head>
 <body><div style="text-align:center;background:#f5f2ee;padding:7px;font:11px sans-serif">ТЕСТОВЫЙ ДИЗАЙН · НЕ ОФОРМЛЯЕТ ЗАКАЗЫ</div>
   <a class="skip-link" href="#catalog">Перейти к каталогу</a>
-  <div class="announcement">Живые камни JadeKey <span aria-hidden="true">·</span> Доставка по России включена в цену</div>
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand" href="/" aria-label="JadeKey — главная">JADE<span>KEY</span></a>
-      <nav class="main-nav" aria-label="Навигация по магазину">
-        <a class="current" href="#catalog">Коллекция</a>
-        <a href="#how">Идея JadeKey</a>
-        <a href="/shop/delivery.html">Доставка</a>
-      </nav>
-      <div class="header-actions">
-        <a class="scanner-link" href="/scan.html">Сканер</a>
-        <button class="cart-trigger" id="cart-trigger" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="cart-drawer">
-          Корзина <span id="cart-count" class="count-pill">0</span>
-        </button>
-      </div>
-    </div>
-  </header>
+  
+  <header class="jk-top"><div class="jk-top-in"><a href="/">Главная</a><a class="jk-mark" href="/">JADE<b>KEY</b></a><div class="jk-gos"><a href="/scan.html">Сканер</a><button id="cart-trigger" type="button" aria-label="Корзина">Корзина <span id="cart-count">0</span></button></div></div></header>
 
   <main>
-    <section class="preview-intro"><p>JADEKEY · COLLECTION</p><h1>Живые камни</h1><span>Природа не делает копий.</span></section>
+    
 
     <section class="catalog section-wrap" id="catalog" aria-labelledby="catalog-heading">
-      <div class="section-heading catalog-heading">
-        <div>
-          <p class="eyebrow dark">Избранные камни</p>
-          <h2 id="catalog-heading">Коллекция</h2>
-        </div>
-        <p>Выберите камень по его рисунку. Режим, который он будет открывать, можно выбрать при оформлении заказа.</p>
-      </div>
+      <div class="jk-intro"><h1>Коллекция живых камней</h1><p>Природа не делает копий.</p></div>
 
       <div class="catalog-controls">
         <div class="search-wrap">
