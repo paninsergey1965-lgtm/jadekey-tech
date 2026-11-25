@@ -855,7 +855,14 @@ window.JKVoiceDemo = (() => {
       const button = document.getElementById(id);
       if (!button) continue;
       button.style.display = available ? 'inline-block' : 'none';
-      button.textContent = enabled ? '🔊 Голосовые подсказки включены · выключить' : '🔈 Включить голосовые подсказки';
+      button.textContent = enabled ? '🔊  Подсказки включены' : '🔇  Подсказки выключены';
+      button.setAttribute('aria-label', 'Голосовые подсказки');
+      button.style.background = enabled ? '#155941' : '#f1f1f1';
+      button.style.color = enabled ? '#fff' : '#292929';
+      button.style.borderColor = enabled ? '#155941' : '#757575';
+      button.style.fontSize = '17px';
+      button.style.fontWeight = '700';
+      button.style.minHeight = '48px';
       button.setAttribute('aria-pressed', String(enabled));
     }
   }
