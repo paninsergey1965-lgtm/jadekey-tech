@@ -129,10 +129,20 @@ body.love .gem{stroke:#ff8fb1}
 .legacy small{display:block;color:var(--mute);font-size:12px;margin-top:3px}
 .catalog-link{width:100%;text-align:left;margin-top:14px}
 .catalog-note{font-size:12px;color:var(--mute);margin-top:7px;line-height:1.45}
-/* Owner-only view switch; customer accounts and sessions are unchanged. */
+/* Owner-only view switch and isolated, read-only new-customer preview. */
+#vLive.preview-buyer #jkAccount{display:none}
+#vLive.preview-buyer #previewAccount,#vLive.preview-buyer #pvNotice{display:block}
+.preview-notice{display:none;margin:0 0 18px;padding:12px 14px;border-radius:12px;border:1px solid #65d5a84f;background:#65d5a812;color:var(--fg);font-size:14px;line-height:1.5}
+.preview-notice b{display:block;font-size:15px;margin-bottom:3px;color:var(--jade)}
+#previewAccount{display:none;margin-top:18px}
+#previewAccount .btn{margin-top:8px}
+#pvForm{border:1px solid var(--line);background:var(--panel);padding:12px;border-radius:12px;margin-top:12px}
+#pvForm label{display:block;margin-top:10px;margin-bottom:5px;font-size:14px;color:var(--mute)}
+#pvForm input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#ffffff13;color:var(--text);font-size:16px}
+#pvForm input:disabled{opacity:.7}
 .role-switch{align-items:center;gap:5px;padding:6px;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin:0 0 14px}
-.role-switch span{font-size:11px;color:var(--mute);white-space:nowrap;padding:0 4px}
-.role-switch button{flex:1;min-width:0;padding:9px 5px;border-radius:9px;color:var(--mute);font-size:13px;border:1px solid transparent}
+.role-switch span{font-size:13px;color:var(--mute);white-space:nowrap;padding:0 4px}
+.role-switch button{flex:1;min-width:0;padding:9px 5px;border-radius:9px;color:var(--mute);font-size:14px;border:1px solid transparent}
 .role-switch button.on{background:var(--jade);color:#061a11;font-weight:700}
 .empty{padding:50px 20px;text-align:center;color:var(--mute)}
 
@@ -408,7 +418,8 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 <section class="view" id="vLive">
   <div class="page">
     <div id="lvHomeBox">
-      <div class="role-switch" id="roleSwitch" style="display:none" aria-label="Режим сканера"><span>Режим:</span><button type="button" id="roleBuyer">Покупатель</button><button type="button" id="roleAdmin">Администратор</button></div>
+      <div class="role-switch" id="roleSwitch" style="display:none" aria-label="Режим сканера"><span>Режим:</span><button type="button" id="roleBuyer">Тест покупателя</button><button type="button" id="roleAdmin">Администратор</button></div>
+      <div id="pvNotice" class="preview-notice"><b>Тест нового покупателя</b>Так выглядит приложение на новом телефоне. Твои камни и почта здесь скрыты, но сохранены. В тесте ничего не регистрируется и не привязывается.</div>
       <h1>Живой камень</h1>
       <div class="sub">Купил камень JadeKey? Наведи на него телефон, выбери режим и имя — и камень будет каждый день открывать послание. Оживить можно только камни из магазина JadeKey.</div>
       <button class="btn main" id="lvStart">Оживить камень</button>
@@ -422,6 +433,14 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <button class="btn catalog-link" id="catalogEntry" type="button">Все камни JadeKey · каталог продавца</button>
       <div class="catalog-note">Здесь можно посмотреть зарегистрированные и старые камни. Вход для владельца каталога.</div>
       <div id="jkAccount" style="margin-top:18px"></div>
+      <div id="previewAccount">
+        <div class="h2">Аккаунт и сохранность камней</div>
+        <p class="sub">Зарегистрируй почту, чтобы восстановить доступ при смене телефона.</p>
+        <button class="btn main" id="pvRegister" type="button">Зарегистрироваться</button>
+        <button class="btn" id="pvLogin" type="button">Войти на другом устройстве</button>
+        <button class="btn" id="pvReset" type="button">Забыли пароль?</button>
+        <div id="pvForm" style="display:none"></div>
+      </div>
     </div>
     <div id="lvWiz" style="display:none">
       <div class="steps" id="lvSteps"></div>
@@ -1588,6 +1607,15 @@ function updateRoleSwitch() {
   buyer.setAttribute('aria-pressed', String(!isAdmin));
   admin.setAttribute('aria-pressed', String(isAdmin));
 }
+function buyerPreviewActive() {
+  if (isAdmin) return false;
+  try { return !!localStorage.getItem('jk2_rt') && localStorage.getItem('jk2_buyer_preview') === '1'; }
+  catch (e) { return false; }
+}
+function updateBuyerPreviewUI() {
+  $('vLive').classList.toggle('preview-buyer', buyerPreviewActive());
+  if (!buyerPreviewActive()) $('pvForm').style.display = 'none';
+}
 function setAdmin(on) {
   isAdmin = !!on;
   $('nColl').style.display = isAdmin ? '' : 'none';
@@ -1597,6 +1625,7 @@ function setAdmin(on) {
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
   if ($('soldBtn')) $('soldBtn').onclick = () => { window.showSold = !window.showSold; updateSoldBtn(); renderColl(); };
   updateRoleSwitch();
+  updateBuyerPreviewUI();
 }
 function updateSoldBtn() {
   $('soldBtn').textContent = window.showSold ? 'Проданные: скрыть' : 'Проданные: показать';
@@ -2595,6 +2624,11 @@ const NOW = () => { const q = new URLSearchParams(location.search).get('date'); 
 // ---------- phone identity (Firebase anonymous sign-in) ----------
 const ANON = { id: null, exp: 0, uid: null };
 async function anonToken(create = true) {
+  // Never reuse the owner's customer identity or create another user in preview.
+  if (buyerPreviewActive()) {
+    if (create) throw new Error('Это тест нового покупателя. Для настоящей активации открой отдельный телефон.');
+    return null;
+  }
   if (ANON.id && Date.now() < ANON.exp) return ANON.id;
   const rt = ls.get('jk2_anon_rt');
   if (rt) {
@@ -2614,12 +2648,15 @@ async function anonToken(create = true) {
   ls.set('jk2_anon_rt', j.refreshToken); ls.set('jk2_anon_uid', j.localId);
   return ANON.id;
 }
-const myUid = () => ANON.uid || ls.get('jk2_anon_uid');
+const myUid = () => buyerPreviewActive() ? null : ANON.uid || ls.get('jk2_anon_uid');
 async function readToken() {
+  if (buyerPreviewActive()) return null;
   if (isAdmin) { const t = await authToken(); if (t) return t; }
   try { return await anonToken(false); } catch (e) { return null; }
 }
 async function fsReq(method, path, token, data, mask) {
+  // Preview may read public records, but cannot write any real user/stone data.
+  if (buyerPreviewActive() && String(method).toUpperCase() !== 'GET') throw new Error('Тест нового покупателя: запись отключена');
   const url = `${BASE}/${path}${path.includes('?') ? '&' : '?'}key=${FS.key}${(mask || []).map(k => '&updateMask.fieldPaths=' + k).join('')}`;
   const h = { 'Content-Type': 'application/json' }; if (token) h.Authorization = 'Bearer ' + token;
   const r = await fetch(url, { method, headers: h, body: data ? JSON.stringify(fsFields(data)) : undefined });
@@ -2637,6 +2674,7 @@ async function readPriv(id) {
 }
 function remember(id, kind) { const k = 'jk2_mine_' + kind, a = ls.list(k); if (!a.includes(id)) { a.push(id); ls.set(k, JSON.stringify(a)); } }
 function myIds() {
+  if (buyerPreviewActive()) return new Set();
   const a = new Set(ls.list('jk2_mine_own').concat(ls.list('jk2_mine_got'))), u = myUid();
   if (u) stones.forEach(s => { if (s.owner === u && !s.of) a.add(s.id); });
   return a;
@@ -3487,6 +3525,7 @@ async function showLive(s, scanned) {
 
 // ---------- gift link: ?g=<stone>.<claim> ----------
 async function openGift(id, claim) {
+  if (buyerPreviewActive()) return toast('Это тест нового покупателя. Подарок здесь не привязывается.', 6500);
   veil('Открываю подарок…');
   try {
     await loadStones();
@@ -3634,6 +3673,7 @@ function liveForm() {
   $('lvForm').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { liveCollect(); P.kid = b.dataset.k === '1'; liveForm(); });
 }
 async function liveSave() {
+  if (buyerPreviewActive()) return toast('Это тест нового покупателя. Активация и сохранение камня отключены.', 6500);
   liveCollect();
   const P = LV.p, m = LV.mode;
   if (!P.consented) { toast('Чтобы оживить камень, нужно согласие на обработку данных.'); return; }
@@ -3706,6 +3746,10 @@ function liveDone() {
 async function liveHome() {
   stopCam(); LV.busy = false;
   $('lvHomeBox').style.display = ''; $('lvWiz').style.display = 'none';
+  if (buyerPreviewActive()) {
+    $('lvMine').innerHTML = '<p class="sub">Здесь появятся камни, которые ты оживишь или получишь в подарок.</p>';
+    return; // Real account and local UID remain untouched while this view is active.
+  }
   if (Date.now() - lastLoad > 15000) await loadStones();
   const uid = myUid(), got = new Set(ls.list('jk2_mine_got'));
   const own = stones.filter(s => !s.of && s.mode && uid && s.owner === uid), recv = stones.filter(s => !s.of && s.mode && got.has(s.id) && s.owner !== uid);
@@ -4777,8 +4821,25 @@ $('roleBuyer').onclick = async () => {
   setAdmin(false);
   tab('live');
   await liveHome();
-  toast('Режим покупателя. Камни и почта не изменены.');
+  toast('Тест нового покупателя: твои данные скрыты, но не изменены.');
 };
+function previewAccountForm(mode) {
+  if (!buyerPreviewActive()) return;
+  const meta = {register:['Создать аккаунт', true], login:['Войти', true], reset:['Отправить письмо', false]}[mode];
+  if (!meta) return;
+  const [caption, needPassword] = meta;
+  $('pvForm').style.display = 'block';
+  $('pvForm').innerHTML = `<b>${caption} · пример формы</b>
+    <p class="sub">Это безопасный просмотр. Поля здесь неактивны, письма не отправляются. Настоящую регистрацию проверяем на отдельном устройстве.</p>
+    <label>Электронная почта</label><input type="email" disabled placeholder="name@example.com">
+    ${needPassword ? '<label>Пароль (не менее 8 символов)</label><input type="password" disabled placeholder="••••••••">' : ''}
+    ${mode === 'register' ? '<label>Повтори пароль</label><input type="password" disabled placeholder="••••••••">' : ''}
+    <button class="btn" id="pvFormClose" type="button">Закрыть пример</button>`;
+  $('pvFormClose').onclick = () => { $('pvForm').style.display = 'none'; };
+}
+$('pvRegister').onclick = () => previewAccountForm('register');
+$('pvLogin').onclick = () => previewAccountForm('login');
+$('pvReset').onclick = () => previewAccountForm('reset');
 $('roleAdmin').onclick = async () => {
   if (isAdmin) return;
   // A stored admin session is not proof of authorization until Firebase refreshes it.
