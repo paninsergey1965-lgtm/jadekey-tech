@@ -406,6 +406,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <h1>Живой камень</h1>
       <div class="sub">Купил камень JadeKey? Наведи на него телефон, выбери режим и имя — и камень будет каждый день открывать послание. Оживить можно только камни из магазина JadeKey.</div>
       <button class="btn main" id="lvStart">Оживить камень</button>
+      <button class="day-pill" id="voiceDemoBtn" type="button" style="display:none;margin:12px 0 4px;border:1px solid var(--jade);color:var(--jade)">🔈 Включить голосовые подсказки (тест)</button>
       <button class="btn" id="lvPaste" style="display:none;margin-top:10px">🎁 У меня есть ссылка-подарок</button>
       <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
@@ -808,6 +809,50 @@ R(c,a.tt,m.Jupiter,2.825345909524226E-7);b[m.Saturn]=R(c,a.tt,m.Saturn,8.4597151
 2.959122082855911E-4),H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Mercury].r,4.912547451450812E-11),H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Venus].r,7.243452486162703E-10),H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Earth].r,8.997011346712498E-10),H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Mars].r,9.549535105779258E-11),H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Jupiter].r,2.825345909524226E-7),H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Saturn].r,8.459715185680659E-8),
 H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Uranus].r,1.292024916781969E-8),H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Neptune].r,1.524358900784276E-8)};H.AddAcceleration=function(a,b,c,d){var f=c.x-b.x,g=c.y-b.y;b=c.z-b.z;c=f*f+g*g+b*b;d/=c*Math.sqrt(c);a.x+=f*d;a.y+=g*d;a.z+=b*d};H.prototype.Duplicate=function(){var a={};for(b in this.curr.gravitators)a[b]=this.curr.gravitators[b].clone();var b=[];for(var c=$jscomp.makeIterator(this.curr.bodies),d=c.next();!d.done;d=c.next())b.push(d.value.clone());
 return new kd(this.curr.time,a,b)};$jscomp.global.Object.defineProperties(H.prototype,{OriginBody:{configurable:!0,enumerable:!0,get:function(){return this.originBody}},Time:{configurable:!0,enumerable:!0,get:function(){return this.curr.time}}});e.GravitySimulator=H;var kd=function(a,b,c){this.time=a;this.gravitators=b;this.bodies=c}},{}]},{},[1])(1)});
+</script>
+<script>
+// Temporary opt-in spoken guidance. Available only with ?voice=1; never affects normal visitors.
+window.JKVoiceDemo = (() => {
+  const active = new URLSearchParams(location.search).get('voice') === '1';
+  const supported = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
+  let enabled = false;
+  function say(message) {
+    if (!active || !enabled || !supported || (window.JK_LANG && window.JK_LANG !== 'ru')) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = 'ru-RU';
+      utterance.rate = 0.94;
+      utterance.pitch = 0.97;
+      utterance.volume = 0.85;
+      const russian = window.speechSynthesis.getVoices().find(v => /^ru[-_]/i.test(v.lang));
+      if (russian) utterance.voice = russian;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) { /* Spoken guidance is optional and must never block the scanner. */ }
+  }
+  function step(number) {
+    const prompts = [
+      'Положите камень на белый лист бумаги. Лучше использовать дневной свет. Избегайте яркой лампы прямо сверху: блики мешают сканеру. Нажмите Снять.',
+      'Переверните камень. Теперь отсканируйте вторую сторону.',
+      'Выберите режим и введите необходимые данные. Затем нажмите Оживить камень.'
+    ];
+    if (prompts[number]) say(prompts[number]);
+  }
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!active) return;
+    const button = document.getElementById('voiceDemoBtn');
+    if (!button) return;
+    button.style.display = 'inline-block';
+    button.onclick = () => {
+      if (!supported) { button.textContent = 'Голос не поддерживается этим браузером'; button.disabled = true; return; }
+      enabled = !enabled;
+      button.textContent = enabled ? '🔊 Голос включён · выключить' : '🔈 Включить голосовые подсказки (тест)';
+      if (enabled) say('Голосовые подсказки включены. Нажмите Оживить камень, чтобы начать.');
+      else window.speechSynthesis.cancel();
+    };
+  });
+  return { say, step };
+})();
 </script>
 <script type="module">
 import { initJadeKeyAccounts } from './jk-accounts.js';
@@ -2189,9 +2234,8 @@ $('shutter').onclick = async () => {
     if (!best) { camS.msg.textContent = 'Не получилось, попробуй ещё'; return; }
     camS.msg.textContent = 'Готов';
     dsSave(best.cv, { kind: 'scan', result: best.state, stone: best.stone ? (best.stone.of || best.stone.id) : '', name: best.stone ? best.stone.name : '', ratio: best.res ? +best.res.ratio.toFixed(3) : null, inl: best.res ? best.res.inl.length : null });
-    if (best.state === 'found') showFound(best);
-    else if (best.state === 'unsure') showUnknown({ ...best }, best.cv);
-    else showUnknown(best, best.cv);
+    if (best.state === 'found') { showFound(best); window.JKVoiceDemo?.say('Сканирование успешно. Камень узнан.'); }
+    else { if (best.state === 'unsure') showUnknown({ ...best }, best.cv); else showUnknown(best, best.cv); window.JKVoiceDemo?.say('Камень не удалось узнать. Попробуйте ещё раз при дневном свете.'); }
     stopCam();
   } catch (e) { toast('Ошибка: ' + e.message, 4500); }
   finally { scanning = false; $('shutter').classList.remove('busy'); if (camS.msg.textContent !== 'Готов') camS.msg.textContent = 'Готов'; }
@@ -3570,6 +3614,7 @@ async function liveSave() {
     Object.assign(LV, { link: giftLink(id, claim), id, toName: pubName });
     await loadStones();
     LV.step = 3; LV.busy = false; liveRender(); liveDone();
+    window.JKVoiceDemo?.say('Я ожил. Теперь мы связаны.');
   } catch (e) {
     for (const [c, id] of made.reverse()) { try { await fsReq('DELETE', `${c}/${id}`, await anonToken()); } catch (x) {} }
     toast('Не получилось оживить: ' + e.message, 6000);
@@ -3594,7 +3639,7 @@ function giftText(mode, name) { return mode === 'fc' ? `${name}, тебе под
 function liveDone() {
   $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён и теперь твой. Каждый день открывай «Сканер» и наводи телефон на камень.</p><div class="btns"><button class="btn main" id="lvHome">Готово</button><button class="btn" id="lvLinkEmail">Сохранить камень по почте</button></div>`;
   $('lvHome').onclick = liveHome;
-  if ($('lvLinkEmail')) $('lvLinkEmail').onclick = () => accountRecovery.startLink();
+  if ($('lvLinkEmail')) $('lvLinkEmail').onclick = () => { window.JKVoiceDemo?.say('Для сохранения камня введите вашу электронную почту. Затем подтвердите письмо.'); accountRecovery.startLink(); };
 }
 async function liveHome() {
   stopCam(); LV.busy = false;
@@ -3664,12 +3709,13 @@ $('lvStart').onclick = () => {
   Object.assign(LV, { step: 0, a: null, b: null, src: null, srcBack: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
   $('lvHomeBox').style.display = 'none'; $('lvWiz').style.display = '';
   liveRender();
+  window.JKVoiceDemo?.step(0);
 };
 $('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
 $('lvHidden').onclick = () => { if (LV.busy) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
 const skipB = () => LV.srcBack && LV.srcBack.length && LV.a;
 $('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; if (LV.step === 1 && skipB()) LV.step = 0; liveRender(); };
-$('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; if (LV.step === 1 && skipB()) { LV.hidden = true; LV.b = null; LV.step = 2; } liveRender(); };
+$('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; if (LV.step === 1 && skipB()) { LV.hidden = true; LV.b = null; LV.step = 2; } liveRender(); window.JKVoiceDemo?.step(LV.step); };
 
 // install as an app (Chrome on Android)
 let installEv = null;
