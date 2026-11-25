@@ -50,6 +50,29 @@ nav button.on{color:var(--jade)}
 .chip{font-size:12px;padding:5px 10px;border-radius:999px;background:#ffffff14;color:var(--warn);max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip.ok{color:var(--jade)} .chip.err{color:var(--bad)}
 
+/* Only the signed-in administrator sees these workspace controls. */
+.admin-quick,.admin-dashboard,.admin-note{display:none}
+body.admin-mode .admin-quick{display:flex}
+body.admin-mode .admin-dashboard,body.admin-mode .admin-note{display:block}
+.admin-quick{position:absolute;z-index:6;top:calc(env(safe-area-inset-top) + 62px);left:12px;right:12px;
+  align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;
+  background:#112b22f2;border:1px solid #d8b45c88;border-radius:14px;box-shadow:0 8px 24px #0008}
+.admin-quick strong{display:block;color:var(--gold);font-size:12px;letter-spacing:.09em;text-transform:uppercase}
+.admin-quick small{display:block;color:#d0e5d8;font-size:12px}
+.admin-quick button{flex:none;border-radius:10px;padding:10px 12px;background:#d8b45c;color:#1b1b10;font-size:13px;font-weight:700}
+.admin-dashboard{padding:16px;border:1px solid #d8b45c88;border-radius:18px;
+  background:linear-gradient(145deg,#203b2d,#11221a);margin:0 0 18px}
+.admin-dashboard .admin-heading{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+.admin-dashboard h2{font-family:var(--serif);font-size:25px;font-weight:400;margin:5px 0 7px}
+.admin-dashboard p,.admin-note p{color:#bfd5c8;font-size:14px;line-height:1.45;margin:0 0 12px}
+.admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.admin-actions button{background:#d8b45c;color:#211d10;border-radius:11px;padding:12px 8px;font-size:14px;font-weight:700}
+.admin-actions button.secondary{background:#ffffff18;color:#e8f2eb;border:1px solid #ffffff30}
+.admin-dashboard .admin-exit{display:block;margin:12px 0 0;padding:8px 0;color:#d3e1d8;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.admin-note{padding:13px 14px;margin:0 0 18px;background:#1d3329;border:1px solid #d8b45c66;border-radius:14px}
+.admin-note strong{display:block;color:var(--gold);font-size:13px;letter-spacing:.08em;margin-bottom:6px}
+.admin-note button{border:1px solid #d8b45c;color:#f0d48e;border-radius:10px;font-weight:600;font-size:14px;padding:10px 12px}
+
 /* scan view */
 .stage{position:relative;flex:1;background:#000;overflow:hidden}
 .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
@@ -318,6 +341,10 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 <!-- ============ SCAN ============ -->
 <section class="view on" id="vScan">
   <div class="top"><div class="word">Jade<i>Key</i></div><div class="tb"><button class="tbtn" id="btnExp" title="Режим эксперта" style="display:none;width:auto;padding:0 12px;font-size:13px">Эксперт</button><button class="tbtn" id="btnLang">EN</button><div class="chip" id="chip">Загружаю модель…</div></div></div>
+  <div class="admin-quick" aria-label="Панель администратора">
+    <div><strong>Администратор · активен</strong><small>Управление всеми камнями</small></div>
+    <button id="adminScanClients" type="button">Клиенты</button>
+  </div>
   <div class="stage">
     <video id="vidS" playsinline muted autoplay></video>
     <canvas class="ov" id="ovS"></canvas>
@@ -339,8 +366,18 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 <section class="view" id="vColl">
   <div class="page">
     <h1>Коллекция</h1>
+    <div class="admin-dashboard" aria-label="Рабочее место администратора">
+      <div class="admin-heading">JADEKEY · режим администратора</div>
+      <h2>Управление камнями</h2>
+      <p>Здесь ты управляешь зарегистрированными камнями и владельцами. Личный раздел покупателя находится во вкладке «Живой».</p>
+      <div class="admin-actions">
+        <button id="clientsBtn" type="button">Клиенты и камни</button>
+        <button id="adminNewStone" class="secondary" type="button">Новый камень</button>
+      </div>
+      <button class="admin-exit" type="button">Выйти из режима администратора</button>
+    </div>
     <div class="sub" id="collSub">Загружаю…</div>
-    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button>
+    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button>
     <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
     <div class="grid" id="grid"></div>
   </div>
@@ -349,6 +386,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 <!-- ============ ADD ============ -->
 <section class="view" id="vAdd">
   <div class="page">
+    <div class="admin-note"><strong>Режим администратора</strong><p>Регистрация нового физического камня в каталоге JadeKey.</p></div>
     <h1 id="addTitle">Новый камень</h1>
     <div class="sub">Одного снимка достаточно: сканер сам разворачивает камень.</div>
     <div id="camPart">
@@ -395,6 +433,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 <section class="view" id="vLive">
   <div class="page">
     <div id="lvHomeBox">
+      <div class="admin-note"><strong>Администратор · личный раздел покупателя</strong><p>Здесь показаны только камни текущего аккаунта. Для управления камнями других покупателей открой список клиентов.</p><button id="adminLiveClients" type="button">Управление клиентами</button></div>
       <h1>Живой камень</h1>
       <div class="sub">Купил камень JadeKey? Наведи на него телефон, выбери режим и имя — и камень будет каждый день открывать послание. Оживить можно только камни из магазина JadeKey.</div>
       <button class="btn main" id="lvStart">Оживить камень</button>
@@ -1475,9 +1514,9 @@ function setExpert(on) {
 }
 function setAdmin(on) {
   isAdmin = !!on;
+  document.body.classList.toggle('admin-mode', isAdmin);
   $('nColl').style.display = isAdmin ? '' : 'none';
   $('nAdd').style.display = isAdmin ? '' : 'none';
-  if ($('clientsBtn')) $('clientsBtn').style.display = isAdmin ? '' : 'none';
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
   if ($('soldBtn')) $('soldBtn').onclick = () => { window.showSold = !window.showSold; $('soldBtn').textContent = window.showSold ? 'Проданные: скрыть' : 'Проданные: показать'; renderColl(); };
 }
@@ -4607,7 +4646,19 @@ $('nLive').onclick = () => { tab('live'); liveHome(); };
   document.documentElement.style.webkitTouchCallout = 'none';
   document.querySelectorAll('input,textarea').forEach(x => { x.style.webkitUserSelect = 'text'; });
 })();
-try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
+// A saved refresh token is not proof of an administrator session. Restore
+// the admin workspace only after Firebase validates it for the admin email.
+try {
+  if (localStorage.getItem('jk2_rt')) {
+    authToken().then(token => {
+      if (!token) return setAdmin(false);
+      let claims = null;
+      try { claims = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch (_) {}
+      if (claims?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) setAdmin(true);
+      else setAdmin(false);
+    }).catch(() => setAdmin(false));
+  }
+} catch (e) {}
 try { if (localStorage.getItem('jk2_exp') && !window.Capacitor) setExpert(true); } catch (e) {}
 document.getElementById('btnExp').onclick = () => expertPanel();
 if (new URLSearchParams(location.search).has('love')) {
@@ -4774,6 +4825,14 @@ const customerAdmin = initJadeKeyAdmin({
   fromFs, esc, toast, sheet, hideSheet, loadStones, modeNames: LIVE_MODES
 });
 $('clientsBtn').onclick = () => customerAdmin.open();
+const openAdminClients = () => {
+  if (!isAdmin) return;
+  tab('coll'); renderColl(); customerAdmin.open();
+};
+$('adminScanClients').onclick = openAdminClients;
+$('adminLiveClients').onclick = openAdminClients;
+$('adminNewStone').onclick = () => { if (isAdmin) $('nAdd').click(); };
+document.querySelectorAll('.admin-exit').forEach(button => button.onclick = () => { if (isAdmin) adminLogout(); });
 loadStones().then(async () => { adminDeepLink(); dayPill(); await accountRecovery.handleEmailReturn(); });
 window.__coi.then(() => { loadModel(); liveInit(); });
 if (new URLSearchParams(location.search).has('test')) window.JKL = { showRel, memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
