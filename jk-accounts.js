@@ -14,6 +14,8 @@ function friendlyError(error) {
   if (/EMAIL_EXISTS/i.test(code)) return 'Эта почта уже зарегистрирована. Выбери «Войти».';
   if (/EMAIL_NOT_FOUND|INVALID_PASSWORD|INVALID_LOGIN_CREDENTIALS/i.test(code)) return 'Неверная почта или пароль.';
   if (/WEAK_PASSWORD/i.test(code)) return 'Пароль слишком простой.';
+  if (/CREDENTIAL_TOO_OLD_LOGIN_AGAIN|REQUIRES_RECENT_LOGIN/i.test(code)) return 'Для смены почты нужно заново войти в текущий аккаунт с прежней почтой и паролем, затем повторить.';
+  if (/INVALID_EMAIL/i.test(code)) return 'Неверный формат электронной почты.';
   if (/OPERATION_NOT_ALLOWED/i.test(code)) return 'Firebase отклонил операцию входа. Проверь настройки авторизации проекта.';
   if (/TOO_MANY|QUOTA|LIMIT|RESOURCE_EXHAUSTED/i.test(code)) return 'Лимит попыток или писем исчерпан. Попробуй позже.';
   if (/NETWORK|Failed to fetch|Load failed|fetch failed/i.test(code)) return 'Не удалось связаться с Firebase. Проверь интернет и повтори попытку.';
@@ -23,6 +25,7 @@ function friendlyError(error) {
 export function initJadeKeyAccounts(ctx) {
   let busy = false;
   let formMode = null;
+  let pendingChangeEmail = null;
   const speak = text => { try { window.JKVoiceDemo?.say(text); } catch (_) {} };
 
   async function authCall(endpoint, payload) {
@@ -98,6 +101,20 @@ export function initJadeKeyAccounts(ctx) {
     };
   }
 
+  function renderEmailChangeForm(root) {
+    root.insertAdjacentHTML('beforeend', `<form id="jkEmailChangeForm" style="margin-top:12px">
+      <label class="sub" for="jkEmailAddress">Новая электронная почта</label>
+      <input id="jkEmailAddress" type="email" inputmode="email" autocomplete="email" required maxlength="255" placeholder="name@example.com" style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">
+      <p class="sub">Мы отправим ссылку на новый адрес. Пока ты не откроешь её, старая почта останется привязанной. Камни и аккаунт сохранятся.</p>
+      <div class="btns"><button class="btn main" type="submit">Подтвердить новую почту</button><button class="btn" type="button" id="jkEmailCancel">Отмена</button></div>
+    </form>`);
+    root.querySelector('#jkEmailCancel').onclick = () => { formMode = null; display(); };
+    root.querySelector('#jkEmailChangeForm').onsubmit = event => {
+      event.preventDefault();
+      requestEmailChange(root.querySelector('#jkEmailAddress').value);
+    };
+  }
+
   async function display() {
     const root = document.getElementById('jkAccount');
     if (!root) return;
@@ -124,21 +141,56 @@ export function initJadeKeyAccounts(ctx) {
              <button class="btn" id="jkEmailResend">Отправить письмо ещё раз</button>`
           : `<p class="sub">${hasOwnedStones() ? 'Твои камни пока привязаны к этому устройству. ' : ''}Зарегистрируй почту, чтобы восстановить доступ при смене телефона.</p>
              <button class="btn main" id="jkEmailRegister">Зарегистрироваться</button>`}
+      ${email ? `<button class="btn" id="jkEmailChange" style="margin-top:8px">Изменить почту</button>` : ''}
+      ${email && pendingChangeEmail && !user?.emailVerified
+        ? `<p class="sub">Ожидается подтверждение нового адреса <b>${ctx.esc(pendingChangeEmail)}</b>. Открой письмо на этой почте и затем нажми «Проверить подтверждение».</p>` : ''}
       <button class="btn" id="jkEmailLogin" style="margin-top:8px">Войти на другом устройстве</button>
       <button class="btn" id="jkEmailReset" style="margin-top:8px">Забыли пароль?</button>
       ${offline ? '<p class="sub">Не удалось проверить статус почты. Проверь соединение.</p>' : ''}`;
     root.querySelector('#jkEmailRegister')?.addEventListener('click', () => showForm('register'));
     root.querySelector('#jkEmailLogin').onclick = () => showForm('login');
     root.querySelector('#jkEmailReset').onclick = () => showForm('reset');
+    root.querySelector('#jkEmailChange')?.addEventListener('click', () => showForm('change'));
     root.querySelector('#jkEmailVerify')?.addEventListener('click', () => checkVerification());
     root.querySelector('#jkEmailResend')?.addEventListener('click', () => sendVerification());
-    if (formMode) renderForm(root);
+    if (formMode === 'change') renderEmailChangeForm(root);
+    else if (formMode) renderForm(root);
   }
 
   function showForm(mode) {
     formMode = mode;
     display().then(() => document.getElementById('jkEmailAddress')?.focus());
     if (mode === 'register') speak('Введите адрес электронной почты. Придумайте пароль не короче восьми символов и повторите его в следующем поле. Затем нажмите Создать аккаунт.');
+    if (mode === 'change') speak('Введите новый адрес электронной почты, затем нажмите Подтвердить новую почту. На новый адрес придёт письмо со ссылкой.');
+  }
+
+  async function requestEmailChange(rawEmail) {
+    if (busy) return;
+    const newEmail = validEmail(rawEmail);
+    if (!newEmail) return ctx.toast('Проверь новый адрес электронной почты.');
+    busy = true;
+    try {
+      const idToken = await ctx.anonToken(false);
+      const account = await currentAccount();
+      if (!idToken || !account?.email || account.localId !== ctx.myUid()) {
+        throw new Error('Не удалось проверить текущий аккаунт. Не создавай новый.');
+      }
+      if (account.email.toLowerCase() === newEmail) {
+        ctx.toast('Это уже текущий адрес. Для него используй «Отправить письмо ещё раз».', 6500);
+        return;
+      }
+      // Firebase verifies ownership of the new mailbox BEFORE switching the
+      // email; the localId/stone owner UID is never replaced.
+      await authCall('accounts:sendOobCode', {
+        requestType: 'VERIFY_AND_CHANGE_EMAIL', idToken, newEmail
+      });
+      pendingChangeEmail = newEmail;
+      formMode = null;
+      await display();
+      ctx.toast('Запрос отправлен. Проверь новую почту (и «Спам»), открой ссылку и вернись сюда.', 8000);
+      speak('Запрос на смену электронной почты отправлен. Откройте письмо в новой почте, нажмите ссылку подтверждения и вернитесь в JadeKey. Затем нажмите Проверить подтверждение. Ваши камни останутся привязаны к тому же аккаунту.');
+    } catch (error) { ctx.toast(friendlyError(error), 8000); }
+    finally { busy = false; }
   }
 
   async function sendVerification() {
@@ -165,6 +217,7 @@ export function initJadeKeyAccounts(ctx) {
       const user = await currentAccount();
       if (user?.emailVerified && user.localId === ctx.myUid()) {
         await ensureClientRecord(user);
+        pendingChangeEmail = null;
         formMode = null;
         ctx.toast('Почта подтверждена. Доступ к камням защищён!', 6500);
         speak('Почта успешно подтверждена. Теперь ваши камни можно восстановить на другом телефоне по электронной почте и паролю.');
@@ -259,5 +312,5 @@ export function initJadeKeyAccounts(ctx) {
 
   // No one-time email sign-in URL is needed for email/password accounts.
   return { display, handleEmailReturn: async () => false, startLink,
-    registerEmail, signIn, resetPassword, checkVerification, sendVerification };
+    registerEmail, signIn, resetPassword, checkVerification, sendVerification, requestEmailChange };
 }
