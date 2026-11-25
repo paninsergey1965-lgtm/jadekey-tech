@@ -67,52 +67,9 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 <header class="top"><div><a class="cap l" href="/shop/">Каталог</a><a class="mark" href="/shop/">JADE<b>KEY</b></a><a class="cap r" href="/scan.html">Сканер</a></div></header>
 
 <section class="prod"><div class="ph"><img src="/img/stone-m1.jpg" alt="Агат-кулон «Ночной шторм»"></div>
-<div class="info"><h1>Агат-кулон «Ночной шторм»</h1><p class="sz">крупный срез · отверстие для шнурка · в единственном экземпляре · под заказ, 2–3 дня</p><p class="pr" id="pr">от 2 900 ₽</p>
+<div class="info"><h1>Агат-кулон «Ночной шторм»</h1><p class="sz">крупный срез · отверстие для шнурка · в единственном экземпляре</p><p class="pr" id="pr">Продан</p>
 <p class="tx">Чёрный агат с сотнями тонких белых и бронзовых линий, закрученных, как шторм ночью. Сверху — полоса глубокого зелёного. Сдержанный, мужской камень; отверстие у основания — можно носить на шнурке.</p>
-<p class="tx" style="color:#a5192f;margin-top:10px">Под заказ: камень привезём и внесём в JadeKey за 2–3 дня после оплаты, затем отправим.</p><ul class="inc"><li>Камень, тот самый, что на фото</li><li>Доставка по России включена в цену</li><li>Оживить камень можно за пару минут в приложении JadeKey или на jadekey.tech</li><li>Режим выбираешь при покупке — вместе с ним открыты и все режимы дешевле, переключаешься сам. Дорогие режимы можно открыть потом за доплату разницы</li></ul>
-
-<fieldset class="modes" id="modes"><legend>Чем станет камень</legend><label class="md"><input type="radio" name="mode" value="love"><b>Love + Печенье</b><i>2 900 ₽</i><small>Каждый день новое признание с именами и счётчиком дней вместе. Печенье с предсказанием в подарок — переключаешь сам</small></label><label class="md"><input type="radio" name="mode" value="luna"><b>Луна</b><i>3 500 ₽</i><small>Лунный календарь: лунные сутки и их символ, фаза и знак Луны, что делать и что отложить. По дате рождения — твой лунный день</small></label><label class="md"><input type="radio" name="mode" value="tal" checked><b>Талисман</b><i>4 200 ₽</i><small>Западная астрология: планета, камень и цвет дня, твой знак и твой камень, пожелание и совет</small></label><label class="md"><input type="radio" name="mode" value="path"><b>Путь</b><i>5 500 ₽</i><small>Джйотиш по дате рождения: накшатра, лунный день, тара, строка Дао и практика дня</small></label></fieldset>
-<form id="f" novalidate>
-  <label>Имя<input name="name" autocomplete="name" required></label>
-  <label>Телефон — напишем в Telegram или WhatsApp<input name="phone" type="tel" autocomplete="tel" required></label>
-  <label>Эл. почта — для чека<input name="email" type="email" autocomplete="email" required></label>
-  <label>Доставка<select name="delivery"><option value="cdek">СДЭК по России — доставка включена</option><option value="post">Почта России — доставка включена</option></select></label>
-  <label id="adr">Адрес, индекс или пункт СДЭК<textarea name="address" rows="2" autocomplete="street-address"></textarea></label>
-  <label>Комментарий<textarea name="comment" rows="2"></textarea></label>
-  <label class="pdok"><input type="checkbox" name="pd" value="1"><span>Даю <a href="/consent.html" target="_blank">согласие на обработку персональных данных</a> и принимаю <a href="/privacy.html" target="_blank">политику конфиденциальности</a>.</span></label>
-  <p class="agree">Нажимая «Оплатить», вы принимаете условия <a href="/shop/oferta.html">оферты</a> и <a href="/shop/delivery.html">доставки и возврата</a>.</p>
-  <p class="err" id="err" role="alert"></p>
-  <button class="btn" id="go" type="submit">Оплатить</button>
-</form>
-<script>
-(() => {
-  const f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go'), adr = document.getElementById('adr');
-  const PR = {"fc": 1900, "love": 2900, "luna": 3500, "tal": 4200, "path": 5500}, NM = {"fc": "Печенье", "luna": "Луна", "love": "Love", "tal": "Талисман", "path": "Путь"}, fmt = n => n.toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
-  const q = new URLSearchParams(location.search).get('m'); const picked = document.querySelector(`#modes input[value="${q}"]`) || document.querySelector('#modes input[value="love"]'); picked.checked = true;
-  const mode = () => (document.querySelector('#modes input:checked') || {}).value || 'tal';
-  let label = '';
-  const upd = () => { const m = mode(); label = 'Оплатить ' + fmt(PR[m]) + ' ₽ · ' + NM[m]; go.textContent = label; document.getElementById('pr').textContent = fmt(PR[m]) + ' ₽'; };
-  document.getElementById('modes').onchange = upd; upd();
-  const sync = () => { adr.style.display = f.delivery.value === 'pickup' ? 'none' : ''; };
-  f.delivery.onchange = sync; sync();
-  f.onsubmit = async (e) => {
-    e.preventDefault(); err.textContent = '';
-    if (!f.pd.checked) { err.textContent = 'Отметьте согласие на обработку персональных данных.'; return; }
-    const d = Object.fromEntries(new FormData(f)); d.id = 'night-agate:' + mode();
-    if (!d.name.trim() || !d.phone.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { err.textContent = 'Заполните имя, телефон и почту — на неё придёт чек.'; return; }
-    if (d.delivery !== 'pickup' && !d.address.trim()) { err.textContent = 'Укажите адрес доставки.'; return; }
-    if (d.delivery === 'post') { d.delivery = 'cdek'; d.address = 'Почта России: ' + d.address; }
-    go.disabled = true; go.textContent = 'Переходим к оплате…';
-    try {
-      const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
-      const j = await r.json();
-      if (j.paymentUrl) { location.href = j.paymentUrl; return; }
-      err.textContent = j.message || 'Не удалось создать платёж. Напишите нам: jadekey1965@gmail.com';
-    } catch (x) { err.textContent = 'Нет связи с платёжной системой. Попробуйте ещё раз.'; }
-    go.disabled = false; go.textContent = label;
-  };
-})();
-</script></div></section>
+<p><a href="/shop/">Выбрать другой камень</a></p></div></section>
 <footer><div><a href="/shop/">Каталог</a><a href="/shop/delivery.html">Доставка и возврат</a><a href="/shop/oferta.html">Оферта</a><a href="/privacy.html">Конфиденциальность</a><a href="https://jadekey.tech">jadekey.tech</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></div>
 <small>ИП Панин Сергей Николаевич · ИНН 771501067019, ОГРНИП 324774600501998</small></footer>
 </body></html>
