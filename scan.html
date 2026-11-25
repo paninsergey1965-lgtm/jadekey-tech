@@ -920,7 +920,7 @@ window.JKVoiceDemo = (() => {
 })();
 </script>
 <script type="module">
-import { initJadeKeyAccounts } from './jk-accounts.js?v=20261125-account-status04';
+import { initJadeKeyAccounts } from './jk-accounts.js?v=20261125-account-status05';
 import { initJadeKeyAdmin } from './jk-admin.js?v=20261124-08';
 import { initJadeKeySupport } from './jk-support.js?v=20261124-01';
 import { pipeline, RawImage, env } from './vendor/transformers.min.js';
@@ -5028,7 +5028,7 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 }
 
 const accountRecovery = initJadeKeyAccounts({
-  firebaseKey: FS.key, anonToken, myUid, fsReq, esc, toast, loadStones, liveHome,
+  firebaseKey: FS.key, project: FS.project, anonToken, myUid, fsReq, esc, toast, loadStones, liveHome,
   getStones: () => stones, isNative: inApp, showLiveTab: () => tab('live'),
   setSession(result) {
     ANON.id = result.idToken;
