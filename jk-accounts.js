@@ -105,13 +105,15 @@ export function initJadeKeyAccounts(ctx) {
     root.insertAdjacentHTML('beforeend', `<form id="jkEmailChangeForm" style="margin-top:12px">
       <label class="sub" for="jkEmailAddress">Новая электронная почта</label>
       <input id="jkEmailAddress" type="email" inputmode="email" autocomplete="email" required maxlength="255" placeholder="name@example.com" style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">
-      <p class="sub">Мы отправим ссылку на новый адрес. Пока ты не откроешь её, старая почта останется привязанной. Камни и аккаунт сохранятся.</p>
+      <label class="sub" for="jkEmailCurrentPassword">Пароль текущего аккаунта JadeKey</label>
+      <input id="jkEmailCurrentPassword" type="password" autocomplete="current-password" required style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">
+      <p class="sub">Введи пароль от текущей почты JadeKey, не пароль от новой iCloud. Мы проверим, что это тот же владелец камней, затем отправим письмо на новый адрес. До подтверждения старая почта остаётся привязанной.</p>
       <div class="btns"><button class="btn main" type="submit">Подтвердить новую почту</button><button class="btn" type="button" id="jkEmailCancel">Отмена</button></div>
     </form>`);
     root.querySelector('#jkEmailCancel').onclick = () => { formMode = null; display(); };
     root.querySelector('#jkEmailChangeForm').onsubmit = event => {
       event.preventDefault();
-      requestEmailChange(root.querySelector('#jkEmailAddress').value);
+      requestEmailChange(root.querySelector('#jkEmailAddress').value, root.querySelector('#jkEmailCurrentPassword').value);
     };
   }
 
@@ -161,28 +163,38 @@ export function initJadeKeyAccounts(ctx) {
     formMode = mode;
     display().then(() => document.getElementById('jkEmailAddress')?.focus());
     if (mode === 'register') speak('Введите адрес электронной почты. Придумайте пароль не короче восьми символов и повторите его в следующем поле. Затем нажмите Создать аккаунт.');
-    if (mode === 'change') speak('Введите новый адрес электронной почты, затем нажмите Подтвердить новую почту. На новый адрес придёт письмо со ссылкой.');
+    if (mode === 'change') speak('Введите новый адрес электронной почты и пароль от вашего текущего аккаунта JadeKey. Не используйте пароль от новой почты. Затем нажмите Подтвердить новую почту.');
   }
 
-  async function requestEmailChange(rawEmail) {
+  async function requestEmailChange(rawEmail, currentPassword) {
     if (busy) return;
     const newEmail = validEmail(rawEmail);
     if (!newEmail) return ctx.toast('Проверь новый адрес электронной почты.');
+    if (!currentPassword) return ctx.toast('Введи пароль текущего аккаунта JadeKey.');
     busy = true;
     try {
-      const idToken = await ctx.anonToken(false);
+      const originalUid = ctx.myUid();
       const account = await currentAccount();
-      if (!idToken || !account?.email || account.localId !== ctx.myUid()) {
+      if (!originalUid || !account?.email || account.localId !== originalUid) {
         throw new Error('Не удалось проверить текущий аккаунт. Не создавай новый.');
       }
       if (account.email.toLowerCase() === newEmail) {
         ctx.toast('Это уже текущий адрес. Для него используй «Отправить письмо ещё раз».', 6500);
         return;
       }
-      // Firebase verifies ownership of the new mailbox BEFORE switching the
-      // email; the localId/stone owner UID is never replaced.
+      // Reauthenticate against the CURRENT email, not the new address.
+      // Do not update local credentials until the returned UID is verified.
+      const login = await authCall('accounts:signInWithPassword', {
+        email: account.email, password: currentPassword, returnSecureToken: true
+      });
+      if (login.localId !== originalUid || !login.idToken || !login.refreshToken) {
+        throw new Error('Вход не совпал с текущим владельцем камней. Сеанс не изменён.');
+      }
+      ctx.setSession(login);
+      // Firebase verifies the NEW mailbox before changing the email.
+      // Owner UID and stones are never replaced.
       await authCall('accounts:sendOobCode', {
-        requestType: 'VERIFY_AND_CHANGE_EMAIL', idToken, newEmail
+        requestType: 'VERIFY_AND_CHANGE_EMAIL', idToken: login.idToken, newEmail
       });
       pendingChangeEmail = newEmail;
       formMode = null;
