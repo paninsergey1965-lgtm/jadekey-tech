@@ -408,6 +408,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <button class="btn main" id="lvStart">Оживить камень</button>
       <button class="day-pill" id="voiceDemoBtn" type="button" style="display:none;margin:12px 0 4px;border:1px solid var(--jade);color:var(--jade)">🔈 Включить голосовые подсказки (тест)</button>
       <button class="day-pill" id="voicePreviewBtn" type="button" style="display:none;margin:4px 0 12px;border:1px solid var(--jade);color:var(--jade)">▶ Прослушать сценарий без сканирования</button>
+      <button class="day-pill" id="voiceEmailPreviewBtn" type="button" style="display:none;margin:4px 0 12px;border:1px solid var(--jade);color:var(--jade)">✉ Прослушать привязку почты</button>
       <button class="btn" id="lvPaste" style="display:none;margin-top:10px">🎁 У меня есть ссылка-подарок</button>
       <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
@@ -846,17 +847,26 @@ window.JKVoiceDemo = (() => {
     ['Камень узнан', 'Сканирование успешно. Камень узнан.'],
     ['Не распознан', 'Камень не удалось узнать. Попробуйте ещё раз при дневном свете.'],
     ['Камень ожил', 'Я ожил. Теперь мы связаны.'],
-    ['Регистрация почты', 'Для сохранения камня введите вашу электронную почту. Затем подтвердите письмо.']
+    ['Ввести почту', 'Введите адрес электронной почты. Придумайте пароль не короче восьми символов и повторите его в следующем поле. Затем нажмите Создать аккаунт.'],
+    ['Письмо отправлено', 'Аккаунт создан. Мы отправили на вашу почту письмо со ссылкой подтверждения. Откройте почту, найдите письмо и нажмите ссылку. Если письма нет, проверьте папку Спам. Затем вернитесь в JadeKey и нажмите Проверить подтверждение.'],
+    ['Пока не подтверждена', 'Почта пока не подтверждена. Откройте письмо, нажмите ссылку подтверждения и вернитесь в JadeKey. Затем снова нажмите Проверить подтверждение.'],
+    ['Отправить повторно', 'Новое письмо для подтверждения отправлено. Откройте почту, проверьте папку Спам, нажмите ссылку в письме и вернитесь в JadeKey. Затем нажмите Проверить подтверждение.'],
+    ['Почта подтверждена', 'Почта успешно подтверждена. Теперь ваши камни можно восстановить на другом телефоне по электронной почте и паролю.']
   ];
   window.addEventListener('DOMContentLoaded', () => {
     if (!active) return;
     const button = document.getElementById('voiceDemoBtn');
     const preview = document.getElementById('voicePreviewBtn');
-    if (!button || !preview) return;
+    const emailPreview = document.getElementById('voiceEmailPreviewBtn');
+    if (!button || !preview || !emailPreview) return;
     let previewIndex = 0;
+    const emailStart = 6;
+    let emailPreviewIndex = emailStart;
     const updatePreview = () => {
       preview.style.display = enabled ? 'inline-block' : 'none';
       preview.textContent = '▶ Прослушать: ' + previewItems[previewIndex][0] + ' (' + (previewIndex + 1) + '/' + previewItems.length + ')';
+      emailPreview.style.display = enabled ? 'inline-block' : 'none';
+      emailPreview.textContent = '✉ Почта: ' + previewItems[emailPreviewIndex][0] + ' (' + (emailPreviewIndex - emailStart + 1) + '/' + (previewItems.length - emailStart) + ')';
     };
     button.style.display = 'inline-block';
     button.onclick = () => {
@@ -872,6 +882,12 @@ window.JKVoiceDemo = (() => {
       const item = previewItems[previewIndex];
       say(item[1]);
       previewIndex = (previewIndex + 1) % previewItems.length;
+      updatePreview();
+    };
+    emailPreview.onclick = () => {
+      if (!enabled) return;
+      say(previewItems[emailPreviewIndex][1]);
+      emailPreviewIndex = emailPreviewIndex + 1 < previewItems.length ? emailPreviewIndex + 1 : emailStart;
       updatePreview();
     };
   });
