@@ -26,6 +26,8 @@ export function initJadeKeyAccounts(ctx) {
   let busy = false;
   let formMode = null;
   let pendingChangeEmail = null;
+  let lastVerificationAttempt = null;
+  const verificationSender = `noreply@${ctx.project}.firebaseapp.com`;
   const speak = text => { try { window.JKVoiceDemo?.say(text); } catch (_) {} };
 
   async function authCall(endpoint, payload) {
@@ -144,7 +146,8 @@ export function initJadeKeyAccounts(ctx) {
         : email && user.emailVerified
         ? `<p class="sub">Почта подтверждена: <b>${email}</b>. Камни можно восстановить на другом телефоне по почте и паролю.</p>`
         : email
-          ? `<p class="sub">Почта <b>${email}</b> привязана, но ещё не подтверждена. Открой письмо, нажми ссылку подтверждения, вернись сюда и нажми «Проверить подтверждение». Если письма нет, проверь «Спам».</p>
+          ? `<p class="sub">Почта <b>${email}</b> привязана, но ещё не подтверждена. Открой письмо от <b>${ctx.esc(verificationSender)}</b>, нажми ссылку подтверждения, вернись сюда и нажми «Проверить подтверждение». Если письма нет, проверь «Спам».</p>
+             ${lastVerificationAttempt?.email === user.email.toLowerCase() ? `<p class="sub" role="status">Последняя попытка в ${ctx.esc(lastVerificationAttempt.time)}: ${lastVerificationAttempt.accepted ? 'сервер принял запрос на отправку письма, но доставку не подтвердил' : `сервер отклонил запрос — ${ctx.esc(lastVerificationAttempt.error)}`}.</p>` : ''}
              <button class="btn main" id="jkEmailVerify">Проверить подтверждение</button>
              <button class="btn" id="jkEmailResend">Отправить письмо ещё раз</button>`
           : `<p class="sub">${hasOwnedStones() ? 'Твои камни пока привязаны к этому устройству. ' : ''}Зарегистрируй почту, чтобы восстановить доступ при смене телефона.</p>
@@ -217,16 +220,25 @@ export function initJadeKeyAccounts(ctx) {
   async function sendVerification() {
     if (busy) return;
     busy = true;
+    let requestedEmail = null;
     try {
       const token = await ctx.anonToken(false);
       const user = await currentAccount();
       if (!token || !user?.email || user.localId !== ctx.myUid()) throw new Error('Нет привязанной почты');
       if (user.emailVerified) return await checkVerification(true);
-      await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: token });
-      ctx.toast('Письмо для подтверждения отправлено. Проверь «Спам».', 6000);
-      speak('Новое письмо для подтверждения отправлено. Откройте почту, проверьте папку Спам, нажмите ссылку в письме и вернитесь в JadeKey. Затем нажмите Проверить подтверждение.');
-    } catch (error) { ctx.toast(friendlyError(error), 6500); }
-    finally { busy = false; }
+      requestedEmail = validEmail(user.email);
+      const result = await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: token });
+      const intendedEmail = validEmail(user.email);
+      const serverEmail = result.email ? validEmail(result.email) : null;
+      if (serverEmail && serverEmail !== intendedEmail) throw new Error('Адрес в ответе сервера не совпал с адресом аккаунта.');
+      lastVerificationAttempt = { email: intendedEmail, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: true };
+      ctx.toast(`Сервер принял запрос для ${intendedEmail}. Проверь почту, включая «Спам».`, 7000);
+      speak('Сервер принял запрос на отправку письма. Откройте почту, проверьте папку Спам и найдите письмо от JadeKey. Нажмите ссылку, затем вернитесь и нажмите Проверить подтверждение.');
+    } catch (error) {
+      if (requestedEmail) lastVerificationAttempt = { email: requestedEmail, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: false, error: friendlyError(error) };
+      ctx.toast(friendlyError(error), 6500);
+    }
+    finally { busy = false; await display(); }
   }
 
   async function checkVerification(skipBusy = false) {
@@ -277,11 +289,16 @@ export function initJadeKeyAccounts(ctx) {
       formMode = null;
       await display();
       try {
-        await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: result.idToken });
-        ctx.toast('Аккаунт создан! Подтверди почту по ссылке из письма.', 7500);
+        const sent = await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: result.idToken });
+        if (sent.email && validEmail(sent.email) !== email) throw new Error('Адрес в ответе сервера не совпал с адресом аккаунта.');
+        lastVerificationAttempt = { email, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: true };
+        await display();
+        ctx.toast('Аккаунт создан! Сервер принял запрос на письмо подтверждения.', 7500);
         speak('Аккаунт создан. Мы отправили на вашу почту письмо со ссылкой подтверждения. Откройте почту, найдите письмо и нажмите ссылку. Если письма нет, проверьте папку Спам. Затем вернитесь в JadeKey и нажмите Проверить подтверждение.');
       } catch (error) {
-        ctx.toast(`Аккаунт создан, но письмо не отправлено: ${friendlyError(error)} Используй «Отправить письмо ещё раз».`, 8000);
+        lastVerificationAttempt = { email, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: false, error: friendlyError(error) };
+        await display();
+        ctx.toast(`Аккаунт создан, но сервер отклонил запрос на письмо: ${friendlyError(error)} Используй «Отправить письмо ещё раз».`, 8000);
         speak('Аккаунт создан, но письмо не удалось отправить. Нажмите Отправить письмо ещё раз.');
       }
     } catch (error) { ctx.toast(friendlyError(error), 7500); }
