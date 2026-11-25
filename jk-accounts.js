@@ -173,6 +173,7 @@ export function initJadeKeyAccounts(ctx) {
 
   function showForm(mode) {
     formMode = mode;
+    if (mode === 'register') window.JKVoiceDemo?.begin();
     display().then(() => document.getElementById('jkEmailAddress')?.focus());
     if (mode === 'register') speak('Введите адрес электронной почты. Придумайте пароль не короче восьми символов и повторите его в следующем поле. Затем нажмите Создать аккаунт.');
     if (mode === 'change') speak('Введите новый адрес электронной почты и пароль от вашего текущего аккаунта JadeKey. Не используйте пароль от новой почты. Затем нажмите Подтвердить новую почту.');
@@ -219,6 +220,7 @@ export function initJadeKeyAccounts(ctx) {
 
   async function sendVerification() {
     if (busy) return;
+    window.JKVoiceDemo?.begin();
     busy = true;
     let requestedEmail = null;
     try {
@@ -243,6 +245,7 @@ export function initJadeKeyAccounts(ctx) {
 
   async function checkVerification(skipBusy = false) {
     if (busy && !skipBusy) return;
+    window.JKVoiceDemo?.begin();
     if (!skipBusy) busy = true;
     try {
       // Refresh cached JWT so Firestore sees updated email_verified claim.
@@ -301,7 +304,10 @@ export function initJadeKeyAccounts(ctx) {
         ctx.toast(`Аккаунт создан, но сервер отклонил запрос на письмо: ${friendlyError(error)} Используй «Отправить письмо ещё раз».`, 8000);
         speak('Аккаунт создан, но письмо не удалось отправить. Нажмите Отправить письмо ещё раз.');
       }
-    } catch (error) { ctx.toast(friendlyError(error), 7500); }
+    } catch (error) {
+      ctx.toast(friendlyError(error), 7500);
+      speak('Не получилось зарегистрироваться. Проверь введённые данные и сообщение на экране.');
+    }
     finally { busy = false; }
   }
 
@@ -344,6 +350,8 @@ export function initJadeKeyAccounts(ctx) {
   }
 
   async function startLink() {
+    window.JKVoiceDemo?.begin();
+    speak('Сохрани камень по почте, чтобы открыть его на новом телефоне. Сейчас появится форма регистрации.');
     await ctx.liveHome();
     showForm('register');
   }
