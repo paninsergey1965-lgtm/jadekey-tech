@@ -430,8 +430,10 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
       <div id="lvMine"></div>
-      <button class="btn catalog-link" id="catalogEntry" type="button">Все камни JadeKey · каталог продавца</button>
-      <div class="catalog-note">Здесь можно посмотреть зарегистрированные и старые камни. Вход для владельца каталога.</div>
+      <div id="catalogAdminBox" style="display:none">
+        <button class="btn catalog-link" id="catalogEntry" type="button">Все камни JadeKey · каталог продавца</button>
+        <div class="catalog-note">Здесь можно посмотреть зарегистрированные и старые камни. Вход для владельца каталога.</div>
+      </div>
       <div id="jkAccount" style="margin-top:18px"></div>
       <div id="previewAccount">
         <div class="h2">Аккаунт и сохранность камней</div>
@@ -1643,6 +1645,7 @@ function setAdmin(on) {
   isAdmin = !!on;
   $('nColl').style.display = isAdmin ? '' : 'none';
   $('nAdd').style.display = isAdmin ? '' : 'none';
+  $('catalogAdminBox').style.display = isAdmin ? '' : 'none';
   if ($('clientsBtn')) $('clientsBtn').style.display = isAdmin ? '' : 'none';
   if ($('supportInboxBtn')) $('supportInboxBtn').style.display = isAdmin ? '' : 'none';
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
