@@ -407,6 +407,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <div class="sub">Купил камень JadeKey? Наведи на него телефон, выбери режим и имя — и камень будет каждый день открывать послание. Оживить можно только камни из магазина JadeKey.</div>
       <button class="btn main" id="lvStart">Оживить камень</button>
       <button class="day-pill" id="voiceDemoBtn" type="button" style="display:none;margin:12px 0 4px;border:1px solid var(--jade);color:var(--jade)">🔈 Включить голосовые подсказки (тест)</button>
+      <button class="day-pill" id="voicePreviewBtn" type="button" style="display:none;margin:4px 0 12px;border:1px solid var(--jade);color:var(--jade)">▶ Прослушать сценарий без сканирования</button>
       <button class="btn" id="lvPaste" style="display:none;margin-top:10px">🎁 У меня есть ссылка-подарок</button>
       <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
@@ -830,18 +831,33 @@ window.JKVoiceDemo = (() => {
       window.speechSynthesis.speak(utterance);
     } catch (e) { /* Spoken guidance is optional and must never block the scanner. */ }
   }
+  const prompts = [
+    'Положите камень на белый лист бумаги. Лучше использовать дневной свет. Избегайте яркой лампы прямо сверху: блики мешают сканеру. Нажмите Снять.',
+    'Переверните камень. Теперь отсканируйте вторую сторону.',
+    'Выберите режим и введите необходимые данные. Затем нажмите Оживить камень.'
+  ];
   function step(number) {
-    const prompts = [
-      'Положите камень на белый лист бумаги. Лучше использовать дневной свет. Избегайте яркой лампы прямо сверху: блики мешают сканеру. Нажмите Снять.',
-      'Переверните камень. Теперь отсканируйте вторую сторону.',
-      'Выберите режим и введите необходимые данные. Затем нажмите Оживить камень.'
-    ];
     if (prompts[number]) say(prompts[number]);
   }
+  const previewItems = [
+    ['Сторона А', prompts[0]],
+    ['Сторона Б', prompts[1]],
+    ['Выбор режима', prompts[2]],
+    ['Камень узнан', 'Сканирование успешно. Камень узнан.'],
+    ['Не распознан', 'Камень не удалось узнать. Попробуйте ещё раз при дневном свете.'],
+    ['Камень ожил', 'Я ожил. Теперь мы связаны.'],
+    ['Регистрация почты', 'Для сохранения камня введите вашу электронную почту. Затем подтвердите письмо.']
+  ];
   window.addEventListener('DOMContentLoaded', () => {
     if (!active) return;
     const button = document.getElementById('voiceDemoBtn');
-    if (!button) return;
+    const preview = document.getElementById('voicePreviewBtn');
+    if (!button || !preview) return;
+    let previewIndex = 0;
+    const updatePreview = () => {
+      preview.style.display = enabled ? 'inline-block' : 'none';
+      preview.textContent = '▶ Прослушать: ' + previewItems[previewIndex][0] + ' (' + (previewIndex + 1) + '/' + previewItems.length + ')';
+    };
     button.style.display = 'inline-block';
     button.onclick = () => {
       if (!supported) { button.textContent = 'Голос не поддерживается этим браузером'; button.disabled = true; return; }
@@ -849,6 +865,14 @@ window.JKVoiceDemo = (() => {
       button.textContent = enabled ? '🔊 Голос включён · выключить' : '🔈 Включить голосовые подсказки (тест)';
       if (enabled) say('Голосовые подсказки включены. Нажмите Оживить камень, чтобы начать.');
       else window.speechSynthesis.cancel();
+      updatePreview();
+    };
+    preview.onclick = () => {
+      if (!enabled) return;
+      const item = previewItems[previewIndex];
+      say(item[1]);
+      previewIndex = (previewIndex + 1) % previewItems.length;
+      updatePreview();
     };
   });
   return { say, step };
