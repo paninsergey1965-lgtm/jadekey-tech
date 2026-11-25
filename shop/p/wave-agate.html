@@ -63,7 +63,7 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 .md small{grid-column:2/4;color:var(--mute);font-size:13px}
 .md:has(input:checked){border-color:var(--ink);outline:1px solid var(--ink)}
 .md:focus-within{outline:2px solid var(--red)}
-</style></head><body>
+</style><link rel="stylesheet" href="/shop/product-refresh.css?v=2"></head><body>
 <header class="top"><div><a class="cap l" href="/shop/">Каталог</a><a class="mark" href="/shop/">JADE<b>KEY</b></a><a class="cap r" href="/scan.html">Сканер</a></div></header>
 
 <section class="prod"><div class="ph"><img src="/img/stone-n10.jpg" alt="Агат «Розовая волна»"></div>
@@ -88,7 +88,7 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 (() => {
   const f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go'), adr = document.getElementById('adr');
   const PR = {"fc": 1900, "love": 2900, "luna": 3500, "tal": 4200, "path": 5500}, NM = {"fc": "Печенье", "luna": "Луна", "love": "Love", "tal": "Талисман", "path": "Путь"}, fmt = n => n.toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
-  const q = new URLSearchParams(location.search).get('m'); if (PR[q]) document.querySelector(`#modes input[value="${q}"]`).checked = true;
+  const q = new URLSearchParams(location.search).get('m'); const picked = document.querySelector(`#modes input[value="${q}"]`) || document.querySelector('#modes input[value="love"]'); picked.checked = true;
   const mode = () => (document.querySelector('#modes input:checked') || {}).value || 'tal';
   let label = '';
   const upd = () => { const m = mode(); label = 'Оплатить ' + fmt(PR[m]) + ' ₽ · ' + NM[m]; go.textContent = label; document.getElementById('pr').textContent = fmt(PR[m]) + ' ₽'; };

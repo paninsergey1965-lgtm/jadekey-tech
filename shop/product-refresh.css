@@ -1,0 +1,43 @@
+/* JadeKey boutique checkout styling. Payment and form behaviour remain unchanged. */
+:root{--ink:#1d2825;--mute:#7b817b;--line:#dcd7ce;--stone:#eee7dd;--red:#71343f;--jade:#2b755d}
+body{background:#f5f1eb;color:var(--ink)}
+.top{background:#f5f1ebf7;border-bottom:1px solid #d9d4cb;backdrop-filter:blur(14px)}
+.top>div{max-width:1230px;height:72px;padding:0 clamp(20px,4vw,45px)}
+.top .l,.top .r{font-size:11px;letter-spacing:.12em}
+.top .r{color:#205642}
+.mark{font-size:24px;letter-spacing:.32em}
+.mark b{color:#29775e}
+.prod{max-width:1240px;margin:clamp(16px,3vw,42px) auto clamp(55px,6vw,100px);grid-template-columns:1fr;gap:0;padding:0 clamp(16px,3.5vw,44px)}
+.prod>.ph{background:#1b2a27;aspect-ratio:1;min-width:0}
+.prod>.ph img{object-fit:contain;object-position:center;width:100%;height:100%}
+.info{background:#fffcf8;padding:clamp(25px,4vw,60px);min-width:0}
+.info h1{font:400 clamp(32px,3.3vw,51px)/1.24 var(--serif);letter-spacing:-.035em;text-transform:none}
+.info .sz{margin-top:13px;font-size:12px;color:#838983;line-height:1.7}
+.info .pr{font:400 27px/1.4 var(--serif);margin-top:17px}
+.info .tx{font-size:14px;line-height:1.9;color:#636e66}
+.inc{font-size:12px;line-height:1.8;color:#7a847c;border-top:1px solid #e0dbd2;padding-top:20px}
+.inc li{margin-top:7px}
+.modes{gap:8px;margin-top:32px}
+.modes legend{font-size:11px;letter-spacing:.1em;color:#65766b;margin-bottom:14px}
+.md{background:#faf8f4;border:1px solid #ddd8cf;padding:16px;gap:6px 10px}
+.md:has(input:checked){background:#f0f5ef;border-color:#2d745d;outline:1px solid #2d745d}
+.md input{accent-color:#2d745d;margin-top:1px}
+.md b{font-size:12px;color:var(--ink)}
+.md i{font-size:15px}
+.md small{font-size:12px;line-height:1.75;color:#818781}
+form{margin-top:32px;gap:15px}
+form>label{font-size:10px;letter-spacing:.1em;color:#617268}
+input,select,textarea{font:400 15px/1.5 var(--serif);background:#fff;border:1px solid #dad8cf;color:var(--ink);padding:14px;border-radius:0}
+input:focus,select:focus,textarea:focus{outline:2px solid #477967;outline-offset:-2px}
+.pdok{font-size:12px;line-height:1.65;color:#787c76}
+.pdok input{width:18px;height:18px;accent-color:#27775e}
+.agree{font-size:12px;line-height:1.8}
+.btn{background:#17483c;color:#fff;min-height:58px;font-size:12px;letter-spacing:.1em;transition:background .2s}
+.btn:hover{background:#286452}
+footer{background:#142c28;padding:43px 25px calc(50px + env(safe-area-inset-bottom))}
+footer div{gap:14px 25px}
+footer a:hover{text-decoration:underline}
+footer small{color:#a5b7aa}
+@media(min-width:860px){.prod{grid-template-columns:minmax(0,1fr) minmax(0,.98fr);align-items:start;gap:0}.prod>.ph{position:sticky;top:105px;aspect-ratio:.92}.info{min-height:650px}}
+@media(max-width:859px){.prod{margin:0 auto 50px;padding:0}.prod>.ph{aspect-ratio:1.24}.info{padding:30px 22px 45px}.info h1{font-size:36px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
