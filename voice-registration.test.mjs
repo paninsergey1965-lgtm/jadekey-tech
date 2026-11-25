@@ -96,11 +96,29 @@ test('preview buttons stay test-only', () => {
   assert.match(h.spoken.at(-1), /электронной почты/);
 });
 
-test('voice hooks cover activation and email registration, not daily scanning', () => {
+test('recognizing a living stone greets its owner only for a real scan', () => {
+  const h = voiceHarness();
+  h.voice.greet('stone-a', { name: 'Сергей' }, 'love');
+  assert.match(h.spoken.at(-1), /Сергей/);
+  assert.match(h.spoken.at(-1), /послание/);
+  h.voice.greet('stone-a', { name: 'Сергей' }, 'love');
+  assert.equal(h.spoken.length, 1, 'repeated scan events must not spam speech');
+  h.voice.greet('stone-b', { name: 'Елена' }, 'mem');
+  assert.match(h.spoken.at(-1), /воспоминание/);
+  assert.equal(h.spoken.length, 2);
+  h.controls.voiceDemoBtn.onclick();
+  h.voice.greet('stone-c', { name: 'Ксюша' }, 'path');
+  assert.equal(h.spoken.length, 2, 'mute setting must also silence daily greetings');
+  const live = html.match(/async function showLive\(s, scanned\)[\s\S]*?\/\/ ---------- gift link:/)?.[0] || '';
+  assert.match(live, /if \(scanned\) window\.JKVoiceDemo\?\.greet\(s\.id, P, s\.mode\)/);
+  assert.match(html, /b\.onclick = \(\) => showLive\(s\);/);
+});
+
+test('voice hooks cover activation, email registration, and recognized daily stones', () => {
   assert.match(html, /\$\('lvStart'\)\.onclick[\s\S]{0,400}JKVoiceDemo\?\.begin\(\)/);
   assert.match(html, /JKVoiceDemo\?\.say\('Я живой!/);
   assert.match(accounts, /if \(mode === 'register'\) window\.JKVoiceDemo\?\.begin\(\)/);
   assert.match(accounts, /async function startLink\(\)[\s\S]{0,160}JKVoiceDemo\?\.begin\(\)/);
-  assert.doesNotMatch(html.match(/\$\('shutter'\)\.onclick = async[\s\S]*?\/\/ ---------- collection view ----------/)?.[0] || '', /JKVoiceDemo/);
+  assert.doesNotMatch(html.match(/\$\('shutter'\)\.onclick = async[\s\S]*?\/\/ ---------- collection view ----------/)?.[0] || '', /JKVoiceDemo/, 'unrecognized stones must not trigger a voice greeting');
   assert.doesNotMatch(guide, /SpeechRecognition|MediaRecorder|getUserMedia/);
 });

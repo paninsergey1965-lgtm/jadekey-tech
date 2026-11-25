@@ -841,8 +841,8 @@ H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Uranus].r,1.292024916781969E-8
 return new kd(this.curr.time,a,b)};$jscomp.global.Object.defineProperties(H.prototype,{OriginBody:{configurable:!0,enumerable:!0,get:function(){return this.originBody}},Time:{configurable:!0,enumerable:!0,get:function(){return this.curr.time}}});e.GravitySimulator=H;var kd=function(a,b,c){this.time=a;this.gravitators=b;this.bodies=c}},{}]},{},[1])(1)});
 </script>
 <script>
-// Spoken registration guidance. Starts when the buyer begins activation or email
-// registration; never records audio or uses the microphone. ?voice=1 adds test previews.
+// Spoken buyer guidance: activation/email steps and a short hello when an already
+// living stone is scanned. Never records audio or uses the microphone.
 window.JKVoiceDemo = (() => {
   const testMode = new URLSearchParams(location.search).get('voice') === '1';
   const supported = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
@@ -850,6 +850,7 @@ window.JKVoiceDemo = (() => {
   let enabled = true;
   try { enabled = localStorage.getItem('jk2_voice_muted') !== '1'; } catch (e) {}
   let registering = false;
+  let lastGreeting = { id: null, at: 0 };
   function updateButton() {
     for (const id of ['voiceDemoBtn', 'voiceWizardBtn']) {
       const button = document.getElementById(id);
@@ -885,6 +886,20 @@ window.JKVoiceDemo = (() => {
   ];
   function step(number) {
     if (prompts[number]) say(prompts[number]);
+  }
+  function greet(id, profile = {}, mode = '') {
+    if (!available || !enabled || registering || !id) return;
+    const now = Date.now();
+    if (lastGreeting.id === id && now - lastGreeting.at < 15000) return;
+    const rawName = String(profile.name || profile.to || '').trim().replace(/\s+/g, ' ').slice(0, 30);
+    const name = /^[\p{L}\p{M}][\p{L}\p{M} '-]*$/u.test(rawName) ? ', ' + rawName : '';
+    const hour = new Date(now).getHours();
+    const hello = hour >= 5 && hour < 12 ? 'Доброе утро' : 'О, привет';
+    const message = mode === 'mem'
+      ? `${hello}${name}! Давай откроем воспоминание, которое хранит твой камень.`
+      : `${hello}${name}! Как здорово тебя снова видеть. Давай откроем твоё сегодняшнее послание.`;
+    say(message, true);
+    lastGreeting = { id, at: now };
   }
   const previewItems = [
     ['Сторона А', prompts[0]],
@@ -941,7 +956,7 @@ window.JKVoiceDemo = (() => {
       updatePreview();
     };
   });
-  return { say, step, begin, stop };
+  return { say, step, begin, stop, greet };
 })();
 </script>
 <script type="module">
@@ -3536,6 +3551,7 @@ async function showLive(s, scanned) {
   if (scanned) { const m = new Date(); m.setHours(24, 0, 0, 0); ls.set('jk2_day', JSON.stringify({ id: s.id, until: m.getTime() })); dayPill(); }
   if (myUid() && p.recipient === myUid()) remember(s.id, 'got');
   const P = p.profile || {};
+  if (scanned) window.JKVoiceDemo?.greet(s.id, P, s.mode);
   talShift = habShift = fcShift = pathShift = lunaShift = 0;
   // a stone's mode is its tier: every cheaper mode is unlocked too (Love always includes Печенье)
   if (s.mode === 'mem') { memView(s, P); return; }
