@@ -191,7 +191,7 @@ h1 em,h2 em{font-weight:400;font-style:normal;color:var(--ink)}
   .header-inner>.brand{grid-column:1;grid-row:1;font-size:27px}
   .header-actions{grid-column:2;grid-row:1}
   .main-nav{grid-column:1/-1;grid-row:2;justify-content:space-between;gap:15px;border-top:1px solid var(--line)}
-  .scanner-link{display:none}
+  .scanner-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;color:var(--wine);font-weight:600}
   .hero{padding:39px 22px}
   .hero h1{font-size:clamp(42px,6vw,64px)}
   .hero-description{font-size:14px}
