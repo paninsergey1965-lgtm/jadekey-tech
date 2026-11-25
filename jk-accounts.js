@@ -133,9 +133,15 @@ export function initJadeKeyAccounts(ctx) {
         }
       }
     } catch (_) { offline = true; }
+    // Do not offer registration when Firebase lookup failed or a previously
+    // stored owner UID exists but its session could not be verified.
+    const accountUnknown = !user && (offline || Boolean(ctx.myUid()));
     const email = user?.email ? ctx.esc(user.email) : '';
     root.innerHTML = `<div class="h2">Аккаунт и сохранность камней</div>
-      ${email && user.emailVerified
+      ${accountUnknown
+        ? `<p class="sub">Не удалось проверить, привязана ли почта к этому аккаунту. Камни остаются на месте. Пока не создавай новый аккаунт — сначала повтори проверку соединения.</p>
+           <button class="btn main" id="jkEmailRetry">Повторить проверку</button>`
+        : email && user.emailVerified
         ? `<p class="sub">Почта подтверждена: <b>${email}</b>. Камни можно восстановить на другом телефоне по почте и паролю.</p>`
         : email
           ? `<p class="sub">Почта <b>${email}</b> привязана, но ещё не подтверждена. Открой письмо, нажми ссылку подтверждения, вернись сюда и нажми «Проверить подтверждение». Если письма нет, проверь «Спам».</p>
@@ -143,20 +149,23 @@ export function initJadeKeyAccounts(ctx) {
              <button class="btn" id="jkEmailResend">Отправить письмо ещё раз</button>`
           : `<p class="sub">${hasOwnedStones() ? 'Твои камни пока привязаны к этому устройству. ' : ''}Зарегистрируй почту, чтобы восстановить доступ при смене телефона.</p>
              <button class="btn main" id="jkEmailRegister">Зарегистрироваться</button>`}
-      ${email ? `<button class="btn" id="jkEmailChange" style="margin-top:8px">Изменить почту</button>` : ''}
+      ${!accountUnknown && email ? `<button class="btn" id="jkEmailChange" style="margin-top:8px">Изменить почту</button>` : ''}
       ${email && pendingChangeEmail && !user?.emailVerified
         ? `<p class="sub">Ожидается подтверждение нового адреса <b>${ctx.esc(pendingChangeEmail)}</b>. Открой письмо на этой почте и затем нажми «Проверить подтверждение».</p>` : ''}
-      <button class="btn" id="jkEmailLogin" style="margin-top:8px">Войти на другом устройстве</button>
-      <button class="btn" id="jkEmailReset" style="margin-top:8px">Забыли пароль?</button>
-      ${offline ? '<p class="sub">Не удалось проверить статус почты. Проверь соединение.</p>' : ''}`;
+      ${accountUnknown ? '' : `<button class="btn" id="jkEmailLogin" style="margin-top:8px">Войти на другом устройстве</button>
+      <button class="btn" id="jkEmailReset" style="margin-top:8px">Забыли пароль?</button>`}
+      ${offline && !accountUnknown ? '<p class="sub">Не удалось синхронизировать профиль с сервером. Повтори попытку позже.</p>' : ''}`;
+    root.querySelector('#jkEmailRetry')?.addEventListener('click', () => display());
     root.querySelector('#jkEmailRegister')?.addEventListener('click', () => showForm('register'));
-    root.querySelector('#jkEmailLogin').onclick = () => showForm('login');
-    root.querySelector('#jkEmailReset').onclick = () => showForm('reset');
+    if (!accountUnknown) {
+      root.querySelector('#jkEmailLogin').onclick = () => showForm('login');
+      root.querySelector('#jkEmailReset').onclick = () => showForm('reset');
+    }
     root.querySelector('#jkEmailChange')?.addEventListener('click', () => showForm('change'));
     root.querySelector('#jkEmailVerify')?.addEventListener('click', () => checkVerification());
     root.querySelector('#jkEmailResend')?.addEventListener('click', () => sendVerification());
-    if (formMode === 'change') renderEmailChangeForm(root);
-    else if (formMode) renderForm(root);
+    if (!accountUnknown && formMode === 'change') renderEmailChangeForm(root);
+    else if (!accountUnknown && formMode) renderForm(root);
   }
 
   function showForm(mode) {
