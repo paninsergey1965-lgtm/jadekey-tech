@@ -129,6 +129,11 @@ body.love .gem{stroke:#ff8fb1}
 .legacy small{display:block;color:var(--mute);font-size:12px;margin-top:3px}
 .catalog-link{width:100%;text-align:left;margin-top:14px}
 .catalog-note{font-size:12px;color:var(--mute);margin-top:7px;line-height:1.45}
+/* Owner-only view switch; customer accounts and sessions are unchanged. */
+.role-switch{align-items:center;gap:5px;padding:6px;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin:0 0 14px}
+.role-switch span{font-size:11px;color:var(--mute);white-space:nowrap;padding:0 4px}
+.role-switch button{flex:1;min-width:0;padding:9px 5px;border-radius:9px;color:var(--mute);font-size:13px;border:1px solid transparent}
+.role-switch button.on{background:var(--jade);color:#061a11;font-weight:700}
 .empty{padding:50px 20px;text-align:center;color:var(--mute)}
 
 /* add */
@@ -403,6 +408,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 <section class="view" id="vLive">
   <div class="page">
     <div id="lvHomeBox">
+      <div class="role-switch" id="roleSwitch" style="display:none" aria-label="Режим сканера"><span>Режим:</span><button type="button" id="roleBuyer">Покупатель</button><button type="button" id="roleAdmin">Администратор</button></div>
       <h1>Живой камень</h1>
       <div class="sub">Купил камень JadeKey? Наведи на него телефон, выбери режим и имя — и камень будет каждый день открывать послание. Оживить можно только камни из магазина JadeKey.</div>
       <button class="btn main" id="lvStart">Оживить камень</button>
@@ -1535,7 +1541,7 @@ async function authToken() {
   if (AUTH.id && Date.now() < AUTH.exp) return AUTH.id;
   const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FS.key}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt) });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok || !j.id_token) { try { localStorage.removeItem('jk2_rt'); } catch (e) {} setAdmin(false); return null; }
+  if (!r.ok || !j.id_token) { try { localStorage.removeItem('jk2_rt'); localStorage.removeItem('jk2_buyer_preview'); } catch (e) {} setAdmin(false); return null; }
   AUTH.id = j.id_token; AUTH.exp = Date.now() + (Number(j.expires_in || 3600) - 120) * 1000;
   try { localStorage.setItem('jk2_rt', j.refresh_token); } catch (e) {}
   return AUTH.id;
@@ -1552,13 +1558,14 @@ async function adminLogin() {
     if (!r.ok || !j.idToken) throw new Error((j.error && j.error.message) || ('HTTP ' + r.status));
     AUTH.id = j.idToken; AUTH.exp = Date.now() + (Number(j.expiresIn || 3600) - 120) * 1000;
     try { localStorage.setItem('jk2_rt', j.refreshToken); } catch (e) {}
+    try { localStorage.removeItem('jk2_buyer_preview'); } catch (e) {}
     setAdmin(true); toast('Режим администратора включён');
   } catch (e) { toast('Вход не удался: ' + e.message, 4000); }
   finally { veil(''); }
 }
 function adminLogout() {
   if (!confirm('Выйти из режима администратора?')) return;
-  try { localStorage.removeItem('jk2_rt'); } catch (e) {}
+  try { localStorage.removeItem('jk2_rt'); localStorage.removeItem('jk2_buyer_preview'); } catch (e) {}
   AUTH.id = null; setAdmin(false); tab('scan'); toast('Режим администратора выключен');
 }
 let isAdmin = false, isExpert = false;
@@ -1569,6 +1576,18 @@ function setExpert(on) {
   try { on ? localStorage.setItem('jk2_exp', '1') : localStorage.removeItem('jk2_exp'); } catch (e) {}
   const b = document.getElementById('btnExp'); if (b) b.style.display = isExpert ? '' : 'none';
 }
+function updateRoleSwitch() {
+  const root = document.getElementById('roleSwitch');
+  if (!root) return;
+  let hasAdminSession = false;
+  try { hasAdminSession = !!localStorage.getItem('jk2_rt'); } catch (e) {}
+  root.style.display = hasAdminSession ? 'flex' : 'none';
+  const buyer = document.getElementById('roleBuyer'), admin = document.getElementById('roleAdmin');
+  buyer.classList.toggle('on', !isAdmin);
+  admin.classList.toggle('on', isAdmin);
+  buyer.setAttribute('aria-pressed', String(!isAdmin));
+  admin.setAttribute('aria-pressed', String(isAdmin));
+}
 function setAdmin(on) {
   isAdmin = !!on;
   $('nColl').style.display = isAdmin ? '' : 'none';
@@ -1577,11 +1596,14 @@ function setAdmin(on) {
   if ($('supportInboxBtn')) $('supportInboxBtn').style.display = isAdmin ? '' : 'none';
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
   if ($('soldBtn')) $('soldBtn').onclick = () => { window.showSold = !window.showSold; updateSoldBtn(); renderColl(); };
+  updateRoleSwitch();
 }
 function updateSoldBtn() {
   $('soldBtn').textContent = window.showSold ? 'Проданные: скрыть' : 'Проданные: показать';
 }
 async function authHeaders() {
+  // Buyer preview must behave like a buyer even while admin credentials stay saved.
+  if (!isAdmin) return { 'Content-Type': 'application/json' };
   const t = await authToken();
   return t ? { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t } : { 'Content-Type': 'application/json' };
 }
@@ -4749,6 +4771,26 @@ function tab(name) {
 }
 $('nScan').onclick = () => tab('scan');
 $('nLive').onclick = () => { tab('live'); liveHome(); };
+$('roleBuyer').onclick = async () => {
+  if (!isAdmin) return;
+  try { localStorage.setItem('jk2_buyer_preview', '1'); } catch (e) {}
+  setAdmin(false);
+  tab('live');
+  await liveHome();
+  toast('Режим покупателя. Камни и почта не изменены.');
+};
+$('roleAdmin').onclick = async () => {
+  if (isAdmin) return;
+  // A stored admin session is not proof of authorization until Firebase refreshes it.
+  let token = null;
+  try { token = await authToken(); } catch (e) {}
+  if (!token) { await adminLogin(); return; }
+  try { localStorage.removeItem('jk2_buyer_preview'); } catch (e) {}
+  setAdmin(true);
+  tab('live');
+  await liveHome();
+  toast('Режим администратора включён');
+};
 (() => {
   const w = document.querySelector('#vScan .word'); if (!w) return;
   let t = null;
@@ -4769,7 +4811,15 @@ $('nLive').onclick = () => { tab('live'); liveHome(); };
   document.documentElement.style.webkitTouchCallout = 'none';
   document.querySelectorAll('input,textarea').forEach(x => { x.style.webkitUserSelect = 'text'; });
 })();
-try { if (localStorage.getItem('jk2_rt')) { setAdmin(true); authToken(); } } catch (e) {}
+try {
+  if (localStorage.getItem('jk2_rt')) {
+    const showAdminAfterAuth = localStorage.getItem('jk2_buyer_preview') !== '1';
+    setAdmin(false);
+    authToken().then(token => {
+      if (token && showAdminAfterAuth) setAdmin(true);
+    }).catch(() => { setAdmin(false); });
+  }
+} catch (e) {}
 try { if (localStorage.getItem('jk2_exp') && !window.Capacitor) setExpert(true); } catch (e) {}
 document.getElementById('btnExp').onclick = () => expertPanel();
 if (new URLSearchParams(location.search).has('love')) {
