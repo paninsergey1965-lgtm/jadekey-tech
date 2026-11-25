@@ -23,6 +23,7 @@ function friendlyError(error) {
 export function initJadeKeyAccounts(ctx) {
   let busy = false;
   let formMode = null;
+  const speak = text => { try { window.JKVoiceDemo?.say(text); } catch (_) {} };
 
   async function authCall(endpoint, payload) {
     const response = await fetch(`${API}${endpoint}?key=${encodeURIComponent(ctx.firebaseKey)}`, {
@@ -118,7 +119,7 @@ export function initJadeKeyAccounts(ctx) {
       ${email && user.emailVerified
         ? `<p class="sub">Почта подтверждена: <b>${email}</b>. Камни можно восстановить на другом телефоне по почте и паролю.</p>`
         : email
-          ? `<p class="sub">Почта <b>${email}</b> привязана, но ещё не подтверждена. Открой письмо и проверь подтверждение здесь.</p>
+          ? `<p class="sub">Почта <b>${email}</b> привязана, но ещё не подтверждена. Открой письмо, нажми ссылку подтверждения, вернись сюда и нажми «Проверить подтверждение». Если письма нет, проверь «Спам».</p>
              <button class="btn main" id="jkEmailVerify">Проверить подтверждение</button>
              <button class="btn" id="jkEmailResend">Отправить письмо ещё раз</button>`
           : `<p class="sub">${hasOwnedStones() ? 'Твои камни пока привязаны к этому устройству. ' : ''}Зарегистрируй почту, чтобы восстановить доступ при смене телефона.</p>
@@ -137,6 +138,7 @@ export function initJadeKeyAccounts(ctx) {
   function showForm(mode) {
     formMode = mode;
     display().then(() => document.getElementById('jkEmailAddress')?.focus());
+    if (mode === 'register') speak('Введите адрес электронной почты. Придумайте пароль не короче восьми символов и повторите его в следующем поле. Затем нажмите Создать аккаунт.');
   }
 
   async function sendVerification() {
@@ -149,6 +151,7 @@ export function initJadeKeyAccounts(ctx) {
       if (user.emailVerified) return await checkVerification(true);
       await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: token });
       ctx.toast('Письмо для подтверждения отправлено. Проверь «Спам».', 6000);
+      speak('Новое письмо для подтверждения отправлено. Откройте почту, проверьте папку Спам, нажмите ссылку в письме и вернитесь в JadeKey. Затем нажмите Проверить подтверждение.');
     } catch (error) { ctx.toast(friendlyError(error), 6500); }
     finally { busy = false; }
   }
@@ -164,7 +167,11 @@ export function initJadeKeyAccounts(ctx) {
         await ensureClientRecord(user);
         formMode = null;
         ctx.toast('Почта подтверждена. Доступ к камням защищён!', 6500);
-      } else ctx.toast('Пока не подтверждено. Открой ссылку из письма и нажми ещё раз.', 6500);
+        speak('Почта успешно подтверждена. Теперь ваши камни можно восстановить на другом телефоне по электронной почте и паролю.');
+      } else {
+        ctx.toast('Пока не подтверждено. Открой ссылку из письма и нажми ещё раз.', 6500);
+        speak('Почта пока не подтверждена. Откройте письмо, нажмите ссылку подтверждения и вернитесь в JadeKey. Затем снова нажмите Проверить подтверждение.');
+      }
     } catch (error) { ctx.toast(friendlyError(error), 6500); }
     finally { if (!skipBusy) busy = false; await display(); }
   }
@@ -172,9 +179,9 @@ export function initJadeKeyAccounts(ctx) {
   async function registerEmail(rawEmail, password, repeated) {
     if (busy) return;
     const email = validEmail(rawEmail);
-    if (!email) return ctx.toast('Проверь адрес электронной почты.');
-    if (!password || password.length < 8) return ctx.toast('Пароль должен содержать минимум 8 символов.');
-    if (password !== repeated) return ctx.toast('Пароли не совпадают.');
+    if (!email) { ctx.toast('Проверь адрес электронной почты.'); speak('Проверьте адрес электронной почты и попробуйте ещё раз.'); return; }
+    if (!password || password.length < 8) { ctx.toast('Пароль должен содержать минимум 8 символов.'); speak('Пароль должен содержать не менее восьми символов.'); return; }
+    if (password !== repeated) { ctx.toast('Пароли не совпадают.'); speak('Пароли не совпадают. Введите одинаковый пароль в обоих полях.'); return; }
     busy = true;
     try {
       // An existing anonymous UID owns the stones. Link email/password to it;
@@ -198,8 +205,10 @@ export function initJadeKeyAccounts(ctx) {
       try {
         await authCall('accounts:sendOobCode', { requestType: 'VERIFY_EMAIL', idToken: result.idToken });
         ctx.toast('Аккаунт создан! Подтверди почту по ссылке из письма.', 7500);
+        speak('Аккаунт создан. Мы отправили на вашу почту письмо со ссылкой подтверждения. Откройте почту, найдите письмо и нажмите ссылку. Если письма нет, проверьте папку Спам. Затем вернитесь в JadeKey и нажмите Проверить подтверждение.');
       } catch (error) {
         ctx.toast(`Аккаунт создан, но письмо не отправлено: ${friendlyError(error)} Используй «Отправить письмо ещё раз».`, 8000);
+        speak('Аккаунт создан, но письмо не удалось отправить. Нажмите Отправить письмо ещё раз.');
       }
     } catch (error) { ctx.toast(friendlyError(error), 7500); }
     finally { busy = false; }
