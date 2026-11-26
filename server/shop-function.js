@@ -13,7 +13,7 @@ async function loadItems() {
   if (!r.ok) throw new Error('catalog ' + r.status);
   return r.json();
 }
-const DELIVERY = { pickup: 'Самовывоз, Москва', cdek: 'СДЭК по России' };
+const DELIVERY = { pickup: 'Самовывоз, Москва', cdek: 'СДЭК по России', post: 'Почта России' };
 const ORIGINS = ['https://jadekey.tech', 'http://localhost:8765'];
 const RETURN_URL = 'https://jadekey.tech/shop/thanks.html?paid=1';
 
@@ -29,9 +29,90 @@ async function telegram(text) {
   } catch (e) {}
 }
 
+const crypto = require('node:crypto');
+const STONE_PRICES = { love: 2900, luna: 3500, tal: 4200, path: 5500 };
+const digest = text => crypto.createHash('sha256').update(text).digest('hex');
+const field = (doc, name) => doc?.fields?.[name]?.stringValue || '';
+
+async function updateInventory(doc, changes) {
+  const values = Object.fromEntries(Object.entries(changes).map(([k,v]) => [k, { stringValue: v }]));
+  await fs('POST', ':commit', { writes: [{ update: { name: doc.name, fields: values },
+    updateMask: { fieldPaths: Object.keys(values) }, currentDocument: { updateTime: doc.updateTime } }] });
+}
+
+async function settleStone(payment) {
+  const { stoneId, reserve, stoneMode } = payment.metadata || {};
+  if (!/^[a-zA-Z0-9]{20}$/.test(stoneId || '') || !Object.hasOwn(STONE_PRICES, stoneMode)) return;
+  const doc = await fs('GET', '/jk2_stones/' + stoneId);
+  if (field(doc, 'shopState') !== 'reserved' || field(doc, 'shopReserve') !== reserve) return;
+  if (payment.status === 'canceled') {
+    await updateInventory(doc, { shopState: 'available', shopReserve: '', shopPayment: '' });
+  } else if (payment.status === 'succeeded' && payment.amount?.currency === 'RUB' &&
+             Number(payment.amount.value) === STONE_PRICES[stoneMode]) {
+    await updateInventory(doc, { shopState: 'sold', buy: stoneMode, shopPayment: payment.id });
+  }
+}
+
+async function payStone(b) {
+  const { sid, mode, attempt } = b;
+  if (!/^[A-Za-z0-9]{20}$/.test(sid || '') || !Object.hasOwn(STONE_PRICES, mode) ||
+      !/^[a-f0-9-]{36}$/.test(attempt || '')) return [400, { message: 'Некорректный заказ.' }];
+  if (!s(b.name,80) || !s(b.phone,30) || !/^\S+@\S+\.\S+$/.test(s(b.email,100)) ||
+      !['post','cdek'].includes(b.delivery) || !s(b.address,200) || !b.termsAccepted) {
+    return [400,{ message:'Заполните контактные данные, доставку и согласие.' }];
+  }
+  let doc = await fs('GET', '/jk2_stones/' + sid);
+  const code = [field(doc,'jk'),field(doc,'name')].find(x => /^L[ -]?\d+$/i.test(x.trim()));
+  const price = STONE_PRICES[mode];
+  if (!code || field(doc,'owner') || field(doc,'mode') || field(doc,'of')) return [400,{message:'Камень не продаётся.'}];
+  const key = digest(JSON.stringify([sid, mode, attempt, s(b.name,80),s(b.phone,30),s(b.email,100),b.delivery,s(b.address,200),s(b.comment,200)]));
+  const reserve = digest(key);
+  if (!field(doc,'shopPreview')) return [409,{message:'Камень не опубликован.'}];
+  const state = field(doc,'shopState');
+  if (state === 'available') {
+    try { await updateInventory(doc, { shopState:'reserved', shopReserve:reserve, shopPayment:'', shopReservedAt:String(Date.now()) }); }
+    catch (e) {
+      doc = await fs('GET','/jk2_stones/' + sid);
+      if (field(doc,'shopState') !== 'reserved' || field(doc,'shopReserve') !== reserve) return [409,{message:'Этот камень больше недоступен.'}];
+    }
+  } else if (state !== 'reserved' || field(doc,'shopReserve') !== reserve) {
+    return [409,{message:'Этот камень уже куплен или зарезервирован.'}];
+  } else if (field(doc,'shopPayment')) {
+    const payment = await getPayment(field(doc,'shopPayment'));
+    await settleStone(payment);
+    if (payment.status === 'pending' && payment.confirmation?.confirmation_url) return [200,{paymentUrl:payment.confirmation.confirmation_url}];
+    return [409,{newAttempt:payment.status === 'canceled',message:payment.status === 'succeeded' ? 'Заказ уже оплачен.' : 'Платёж завершён. Обновите страницу.'}];
+  } else if (Date.now()-Number(field(doc,'shopReservedAt')) > 23*3600000) {
+    return [409,{message:'Статус предыдущей попытки уточняется. Свяжитесь с магазином.'}];
+  }
+  const result = await createPayment(b,{name:'Камень '+code+' · '+NAMES[mode],price},key,{stoneId:sid,stoneMode:mode,reserve});
+  if (result[0] === 200) {
+    const fresh = await fs('GET','/jk2_stones/'+sid);
+    if (field(fresh,'shopState') === 'reserved' && field(fresh,'shopReserve') === reserve && !field(fresh,'shopPayment')) {
+      await updateInventory(fresh,{shopPayment:result[1].paymentId});
+    }
+    delete result[1].paymentId;
+  }
+  if (result[0] === 422) {
+    const fresh = await fs('GET','/jk2_stones/'+sid);
+    if (field(fresh,'shopState') === 'reserved' && field(fresh,'shopReserve') === reserve && !field(fresh,'shopPayment')) {
+      await updateInventory(fresh,{shopState:'available',shopReserve:''});
+    }
+  }
+  return result;
+}
+async function getPayment(id) {
+  const r = await fetch('https://api.yookassa.ru/v3/payments/' + encodeURIComponent(id),{headers:{Authorization:auth()}});
+  if (!r.ok) throw new Error('Не удалось сверить платёж');
+  return r.json();
+}
 async function pay(b) {
+  if (b.id === 'catalog-stone') return payStone(b);
   const p = (await loadItems())[b.id];
   if (!p || !(p.price > 0)) return [400, { message: 'Такого камня нет или он уже продан.' }];
+  return createPayment(b,p,crypto.randomUUID(),{});
+}
+async function createPayment(b,p,key,stoneMeta) {
   const name = s(b.name, 80), phone = s(b.phone, 30), email = s(b.email, 100);
   const delivery = DELIVERY[b.delivery] ? b.delivery : 'cdek';
   const address = s(b.address, 200), comment = s(b.comment, 200);
@@ -43,18 +124,23 @@ async function pay(b) {
   const upm = sid ? { sid, nm: s(b.nm, 40), bd: /^\d{4}-\d\d-\d\d$/.test(b.bd || '') ? b.bd : '', bt: /^\d\d:\d\d$/.test(b.bt || '') ? b.bt : '', bz: /^[A-Za-z_\/+\-|]{0,40}$/.test(b.bz || '') ? (b.bz || '') : '' } : {};
   const r = await fetch('https://api.yookassa.ru/v3/payments', {
     method: 'POST',
-    headers: { Authorization: auth(), 'Content-Type': 'application/json', 'Idempotence-Key': crypto.randomUUID() },
+    headers: { Authorization: auth(), 'Content-Type': 'application/json', 'Idempotence-Key': key },
     body: JSON.stringify({
       amount: { value, currency: 'RUB' },
       confirmation: { type: 'redirect', return_url: RETURN_URL },
       capture: true,
       description: 'JadeKey Shop: ' + p.name,
-      metadata: { shop: '1', package: 'SHOP ' + b.id, name, email, phone, delivery, address, comment, ...upm },
+      metadata: { shop: '1', package: 'SHOP ' + b.id, name, email, phone, delivery, address, comment, ...upm, ...stoneMeta },
       receipt: { customer: { email }, items: [{ description: p.name, quantity: '1.00', amount: { value, currency: 'RUB' }, vat_code: 1, payment_subject: 'commodity', payment_mode: 'full_payment' }] },
     }),
   });
   const d = await r.json();
-  if (d.confirmation && d.confirmation.confirmation_url) return [200, { paymentUrl: d.confirmation.confirmation_url }];
+  if (stoneMeta.stoneId && d.status === 'canceled') {
+    await settleStone(d);
+    return [409,{newAttempt:true,message:'Предыдущий платёж отменён. Можно оформить заказ снова.'}];
+  }
+  if (d.confirmation && d.confirmation.confirmation_url) return [200, { paymentUrl: d.confirmation.confirmation_url, ...(stoneMeta.stoneId ? {paymentId:d.id} : {}) }];
+  if (r.status === 400 && d.type === 'error' && d.code === 'invalid_request') return [422,{message:'Проверьте данные заказа и попробуйте снова.'}];
   return [502, { message: 'Платёжная система не приняла заказ. Напишите нам: jadekey1965@gmail.com' }];
 }
 
@@ -110,10 +196,12 @@ async function applyMode(sid, from, to, m) {
 }
 
 async function webhook(b) {
-  if (b.event !== 'payment.succeeded' || !b.object || !b.object.id) return [200, 'ok'];
+  if (!['payment.succeeded','payment.canceled'].includes(b.event) || !b.object || !b.object.id) return [200, 'ok'];
   // never trust the notification body: re-read the payment from YooKassa
   const r = await fetch('https://api.yookassa.ru/v3/payments/' + encodeURIComponent(b.object.id), { headers: { Authorization: auth() } });
   const o = await r.json();
+  if (!r.ok) throw new Error('Не удалось проверить оплату');
+  if (o.metadata?.stoneId) await settleStone(o);
   if (o.status !== 'succeeded') return [200, 'ok'];
   const m = o.metadata || {};
   let t = 'Оплачено ' + o.amount.value + ' ₽\n' + (o.description || m.package || '') + '\n' + (m.name || '') + '\n' + (m.email || '');
@@ -131,6 +219,29 @@ async function webhook(b) {
   return [200, 'ok'];
 }
 
+let nextInventoryCheck = 0;
+async function shopInventory() {
+  const fields = ['shopState','shopPreview','jk','name','owner','mode','of'];
+  // Reconcile lost notifications using provider status; elapsed time alone never releases a stone.
+  if (Date.now() >= nextInventoryCheck) {
+    nextInventoryCheck = Date.now()+60000;
+    const reserved = await fs('POST',':runQuery',{structuredQuery:{
+      from:[{collectionId:'jk2_stones'}],select:{fields:[{fieldPath:'shopPayment'}]},
+      where:{fieldFilter:{field:{fieldPath:'shopState'},op:'EQUAL',value:str('reserved')}}}});
+    await Promise.allSettled(reserved.filter(x=>field(x.document,'shopPayment')).map(async x=>
+      settleStone(await getPayment(field(x.document,'shopPayment')))));
+  }
+  const docs = await fs('POST',':runQuery',{structuredQuery:{
+    from:[{collectionId:'jk2_stones'}],select:{fields:fields.map(fieldPath=>({fieldPath}))},
+    where:{fieldFilter:{field:{fieldPath:'shopState'},op:'IN',value:{arrayValue:{
+      values:['available','sold'].map(stringValue=>({stringValue}))}}}}
+  }});
+  return docs.map(x=>x.document).filter(doc=>doc && !field(doc,'owner') && !field(doc,'mode') && !field(doc,'of'))
+    .map(doc=>({id:doc.name.split('/').pop(), name:[field(doc,'jk'),field(doc,'name')].find(v=>/^L[ -]?\d+$/i.test(v)),
+      photo:field(doc,'shopPreview'),state:field(doc,'shopState')}))
+    .filter(x=>x.name && x.photo.startsWith('data:image/jpeg;base64,'));
+}
+
 module.exports.handler = async (event) => {
   const origin = (event.headers && (event.headers.Origin || event.headers.origin)) || '';
   const cors = {
@@ -140,7 +251,11 @@ module.exports.handler = async (event) => {
     'Content-Type': 'application/json; charset=utf-8',
   };
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors, body: '' };
-  if (event.httpMethod !== 'POST') return { statusCode: 200, headers: cors, body: JSON.stringify({ ok: true, service: 'jadekey-shop' }) };
+  if (event.httpMethod === 'GET' && event.queryStringParameters?.inventory === '1' && process.env.FIREBASE_SA) {
+    try { return {statusCode:200,headers:{...cors,'Cache-Control':'no-store'},body:JSON.stringify({version:1,stones:await shopInventory()})}; }
+    catch (e) { return {statusCode:503,headers:cors,body:JSON.stringify({message:'Каталог временно недоступен.'})}; }
+  }
+  if (event.httpMethod !== 'POST') return { statusCode: 200, headers: cors, body: JSON.stringify({ ok: true, service: 'jadekey-shop', inventoryVersion: process.env.FIREBASE_SA ? 1 : 0 }) };
   let b = {};
   try { b = JSON.parse(event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString() : event.body || '{}'); } catch (e) {}
   try {

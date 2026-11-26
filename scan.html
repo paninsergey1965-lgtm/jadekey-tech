@@ -2245,7 +2245,7 @@ async function showFound(r) {
   if (s.mode) { await showLive(s, !!r.cv); return; }
   const pct = Math.round(r.res.ratio * 100);
   if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
-  const needsActivation = r.state === 'found' && !s.of && !s.consumed && !r.stone.mode && !r.stone.consumed;
+  const needsActivation = r.state === 'found' && !s.of && !s.consumed && !r.stone.mode && !r.stone.consumed && (!s.shopState || s.shopState === 'sold');
   const instruction = 'Камень JadeKey узнан. Сначала оживите его. Нажмите кнопку Оживить камень и следуйте подсказкам.';
   const activation = needsActivation ? '<p class="sh-note">' + instruction + '</p><button type="button" class="btn main" id="activateFoundStone">Оживить камень</button>' : '';
   sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div>${activation}<div class="btns"><button class="btn${needsActivation ? '' : ' main'}" id="again">Сканировать ещё</button></div>`));
@@ -2316,7 +2316,7 @@ function renderColl() {
   const all = stones.filter(s => !s.of && (window.showSold || !s.consumed));
   const list = all.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
   $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)} в основном каталоге` : 'В основном каталоге пока нет камней.';
-  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${esc(s.id)}"><img loading="lazy" src="${esc(s.thumb || '')}" alt=""><div><b>${esc(s.name)}</b><span>${s.consumed ? 'продан · ' : ''}${s.mode ? '<i class="tag t-' + s.mode + '">' + MODE_NAMES[s.mode] + '</i>' : esc(s.jk || '')}</span>${canPrepareForShop(s) ? '<small>' + (s.shopPreview ? 'Фото подготовлено' : 'Фото не подготовлено') + '</small>' : ''}</div></button>`).join('');
+  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${esc(s.id)}"><img loading="lazy" src="${esc(s.thumb || '')}" alt=""><div><b>${esc(s.name)}</b><span>${s.consumed ? 'продан · ' : ''}${s.mode ? '<i class="tag t-' + s.mode + '">' + MODE_NAMES[s.mode] + '</i>' : esc(s.jk || '')}</span>${canPrepareForShop(s) ? '<small>' + shopStatusLabel(s) + '</small>' : ''}</div></button>`).join('');
   $('grid').querySelectorAll('.card').forEach(b => b.onclick = () => showInfo(stones.find(s => s.id === b.dataset.id)));
   renderLegacy();
 }
@@ -2364,6 +2364,24 @@ async function openCatalog() {
   loadLegacyStones();
 }
 
+const shopStatusLabel = s => ({available:'В магазине', reserved:'Зарезервирован', sold:'Куплен'})[s.shopState] || (s.shopPreview ? 'Фото подготовлено' : 'Фото не подготовлено');
+async function shopReady() {
+  const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v?inventory=1', {cache:'no-store'});
+  return r.ok && (await r.json()).version === 1;
+}
+async function publishStone(s,button) {
+  button.disabled=true;
+  try {
+    if (!canPrepareForShop(s) || s.shopState || !s.shopPreview || !(await ownerOk())) return;
+    if (!stones.some(x=>x.of === s.id && !x.mode)) throw new Error('Для магазина нужны снимки обеих сторон.');
+    if (!(await shopReady())) throw new Error('Приём заказов на новые камни ещё не подключён. Фото сохранено.');
+    const updated = await fsCall(`${BASE}/${COL}/${s.id}?key=${FS.key}&updateMask.fieldPaths=shopState&currentDocument.updateTime=${encodeURIComponent(s.updateTime)}`,{
+      method:'PATCH',headers:await authHeaders(),body:JSON.stringify(fsFields({shopState:'available'}))});
+    s.shopState='available'; s.updateTime=updated.updateTime;
+    renderColl(); if ($('shopPublish')===button || $('shopPrep')===button) showInfo(s);
+  } catch(e) { toast(e.message,6500); }
+  finally { button.disabled=false; }
+}
 function canPrepareForShop(s) {
   return isAdmin && !s.of && !s.mode && !s.consumed && catalogChannel(s) === 'shop';
 }
@@ -2392,10 +2410,11 @@ async function prepareShopPhoto(s, button) {
     ctx.font = '15px Georgia, serif';
     ctx.fillText(s.jk || s.name, 150, 282, 270);
     const shopPreview = canvas.toDataURL('image/jpeg', 0.88);
-    await fsCall(`${BASE}/${COL}/${s.id}?key=${FS.key}&updateMask.fieldPaths=shopPreview&currentDocument.updateTime=${encodeURIComponent(s.updateTime)}`, {
+    const updated = await fsCall(`${BASE}/${COL}/${s.id}?key=${FS.key}&updateMask.fieldPaths=shopPreview&currentDocument.updateTime=${encodeURIComponent(s.updateTime)}`, {
       method: 'PATCH', headers: await authHeaders(), body: JSON.stringify(fsFields({ shopPreview }))
     });
-    s.shopPreview = shopPreview;
+    s.shopPreview = shopPreview; s.updateTime = updated.updateTime;
+    await publishStone(s,button);
     renderColl();
     if ($('shopPrep') === button) showInfo(s);
   } catch (e) { toast('Фото не сохранено: ' + e.message, 5000); }
@@ -2420,10 +2439,11 @@ function showInfo(s) {
   const channel = catalogChannel(s);
   const channelNote = channel ? `<p class="sh-note">Канал продажи: ${channel === 'wb' ? 'Wildberries' : 'Магазин JADEKEY'}</p>` : '';
   const preparation = canPrepareForShop(s) ? (s.shopPreview ?
-    `<div class="shot"><img src="${esc(s.shopPreview)}" alt="Фото для магазина"><div><b>Фото подготовлено</b><span>Черновик витрины</span></div></div>` :
-    '<button class="btn main" id="shopPrep">Обработать для магазина</button>') : '';
+    `<div class="shot"><img src="${esc(s.shopPreview)}" alt="Фото для магазина"><div><b>${shopStatusLabel(s)}</b></div></div>${s.shopState ? '' : '<button class="btn main" id="shopPublish">Опубликовать в магазине</button>'}` :
+    '<button class="btn main" id="shopPrep">Обработать и опубликовать</button>') : '';
   sheet(stoneCard(s, 'info', `${channelNote}${preparation}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
+  if ($('shopPublish')) $('shopPublish').onclick = e => publishStone(s,e.currentTarget);
   if ($('shopPrep')) $('shopPrep').onclick = e => prepareShopPhoto(s, e.currentTarget);
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
   $('del').onclick = async () => {
@@ -3638,11 +3658,21 @@ async function liveCapture(side) {
       let cs = r.stone;
       if (cs.of && !cs.mode) cs = stones.find(x => x.id === cs.of) || cs;   // the shop shot both sides: either side opens the stone
       if (cs.mode || cs.of) { const m = cs.of || cs.id; return fail(myIds().has(m) ? 'Этот камень ты уже оживил. Он в «Моих камнях».' : 'Этот камень уже оживлён.'); }
+      if (cs.shopState) {
+        const fresh = fromFs((await fsCall(`${BASE}/${COL}/${cs.id}?key=${FS.key}&mask.fieldPaths=shopState&mask.fieldPaths=buy`)).fields);
+        if (fresh.shopState !== 'sold') return fail('Оживление этого камня откроется после оплаты.');
+        cs.buy=fresh.buy; cs.shopState=fresh.shopState;
+      }
+      LV.firstMatch = r.stone.id;
       LV.src = cs;
       LV.srcBack = stones.filter(x => x.of === cs.id && !x.mode);
-      if (LV.srcBack.length) { LV.hidden = true; LV.b = null; }
+      LV.b = null; LV.hidden = !!LV.srcBack.length && !cs.shopState;
       LV.mode = activationMode(cs, r.stone);
       LV.lock = true;
+    } else if (LV.src?.shopState === 'sold') {
+      const r = await lvTO(identify(frames[0],t=>veil(t)),60000);
+      if (r.state !== 'found' || (r.stone.of || r.stone.id) !== LV.src.id || r.stone.id === LV.firstMatch)
+        return fail('Покажи другую сторону этого же камня.');
     } else if (stones.length) {
       veil('Проверяю, нет ли такого камня…');
       const r = await lvTO(identify(frames[0], t => veil(t)), 60000);
@@ -3651,7 +3681,7 @@ async function liveCapture(side) {
     }
     const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(A.f.cv, 0, 0, 240, 240);
     LV[side === 'A' ? 'a' : 'b'] = { f: A.f, hue: A.b.hue, thumb: t.toDataURL('image/jpeg', 0.8) };
-    lvVerdict('ok', side === 'A' ? (LV.srcBack && LV.srcBack.length && !isAdmin ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.') : 'Обе стороны готовы. Камень узнаётся любой стороной.');
+    lvVerdict('ok', side === 'A' ? (LV.srcBack && LV.srcBack.length && !LV.src?.shopState && !isAdmin ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.') : 'Обе стороны готовы. Камень узнаётся любой стороной.');
   } catch (e) { fail(e.message === 'hang' ? 'Сканер завис: телефон долго держал страницу в фоне. Обнови страницу (стрелка в адресной строке) и сними ещё раз.' : 'Ошибка: ' + e.message); }
   finally { veil(); LV.busy = false; stopCam(); lvNav(); }
 }
@@ -3670,11 +3700,11 @@ function liveRender() {
   $('lvCam').style.display = st <= 1 ? '' : 'none';
   $('lvForm').style.display = st === 2 ? '' : 'none';
   $('lvDone').style.display = st === 3 ? '' : 'none';
-  $('lvHiddenBox').style.display = st === 1 ? '' : 'none';
+  $('lvHiddenBox').style.display = st === 1 && !LV.src?.shopState ? '' : 'none';
   $('lvH').textContent = ['Сторона А', 'Переверни камень', 'Кому и чем станет камень', 'Камень ожил'][st];
   $('lvSub').textContent = ['Положи камень на белый лист бумаги. Не сканируй под лампой сверху — от неё блик: лучше у окна днём или с лампой сбоку. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', 'Режим можно будет поменять позже.', ''][st];
   lvQ(null); lvVerdict('', '');
-  if (st === 0 && LV.a) lvVerdict('ok', LV.srcBack && LV.srcBack.length ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.');
+  if (st === 0 && LV.a) lvVerdict('ok', LV.srcBack && LV.srcBack.length && !LV.src?.shopState ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.');
   if (st === 1 && LV.b) lvVerdict('ok', 'Обе стороны готовы.');
   if (st === 1 && LV.hidden) lvVerdict('ok', LV.srcBack && LV.srcBack.length ? 'Обе стороны этого камня уже сняты в магазине JadeKey — жми «Далее».' : 'Хватит одной стороны.');
   if (st === 2) liveForm();
@@ -3739,7 +3769,7 @@ async function liveSave() {
         await fsReq('POST', `${COLP}?documentId=${bid}`, tok, { idx: pb.idx, p: pb.p, sc: pb.sc }); made.push([COLP, bid]);
       }
     } else id = await side(LV.a, '');
-    if (LV.b && !LV.hidden) await side(LV.b, id);
+    if (LV.b && !LV.hidden && !LV.srcBack?.length) await side(LV.b, id);
     const claim = rnd(14);
     await fsReq('POST', `${COLV}?documentId=${id}`, tok, { owner: uid, recipient: '', claim, claimTry: '', share: false, profile: JSON.stringify(prof), created: Date.now() });
     remember(id, 'own');
@@ -3846,8 +3876,8 @@ $('lvStart').onclick = () => {
   liveRender();
 };
 $('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
-$('lvHidden').onclick = () => { if (LV.busy) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
-const skipB = () => LV.srcBack && LV.srcBack.length && LV.a;
+$('lvHidden').onclick = () => { if (LV.busy || LV.src?.shopState) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
+const skipB = () => !LV.src?.shopState && LV.srcBack && LV.srcBack.length && LV.a;
 $('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; if (LV.step === 1 && skipB()) LV.step = 0; liveRender(); };
 $('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; if (LV.step === 1 && skipB()) { LV.hidden = true; LV.b = null; LV.step = 2; } liveRender(); };
 

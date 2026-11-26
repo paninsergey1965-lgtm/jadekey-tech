@@ -1,11 +1,40 @@
 /* JadeKey storefront: client-only filters, favourites and a one-stone basket.
    Checkout stays on the existing product page with the existing payment service. */
-(() => {
+(async () => {
   'use strict';
 
   const grid = document.getElementById('product-grid');
   if (!grid) return;
 
+  const service = 'https://functions.yandexcloud.net/d4eif8g25o2652dmff0v';
+  let loadFailed = false;
+  try {
+    const response = await fetch(service + '?inventory=1', {cache:'no-store'});
+    if (!response.ok) throw new Error('catalog');
+    const result = await response.json();
+    for (const stone of result.stones || []) {
+      if (!/^[a-zA-Z0-9]{20}$/.test(stone.id) || !/^L[ -]?\d+$/i.test(stone.name) ||
+          !stone.photo?.startsWith('data:image/jpeg;base64,')) continue;
+      const img = new Image(); img.src = stone.photo; img.alt = 'Камень ' + stone.name;
+      if (stone.state === 'sold') {
+        const tile = document.createElement('div'), label = document.createElement('strong');
+        label.textContent = stone.name + ' · Продан'; tile.append(img,label);
+        document.getElementById('sold-grid').append(tile); document.getElementById('sold-archive').hidden=false;
+        continue;
+      }
+      if (stone.state !== 'available') continue;
+      const card = document.createElement('article'), href='/shop/stone.html?s='+stone.id;
+      card.className='product-card';
+      Object.assign(card.dataset,{id:stone.id,name:stone.name,filter:'her him',stock:'available',price:'2900',image:stone.photo,href});
+      card.innerHTML='<div class="product-media"><a class="product-image-link"></a><button type="button" class="favorite-button">♡</button></div><div class="product-details"><h3><a></a></h3><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link">Подробнее</a><button type="button" class="add-button">В корзину</button></div></div>';
+      card.querySelectorAll('a').forEach(a=>a.href=href);
+      card.querySelector('.product-image-link').append(img);
+      card.querySelector('h3 a').textContent='Камень '+stone.name;
+      card.querySelector('.favorite-button').dataset.favorite=stone.id;
+      card.querySelector('.add-button').dataset.add=stone.id;
+      grid.append(card);
+    }
+  } catch (_) { loadFailed=true; }
   const cards = [...grid.querySelectorAll('.product-card')];
   const byId = new Map(cards.map((card, index) => {
     card.dataset.position = String(index);
@@ -73,6 +102,9 @@
     });
     sorted.forEach(card => grid.append(card));
     empty.hidden = visible !== 0;
+    empty.querySelector('h3').textContent = cards.length ? 'Ничего не найдено' : loadFailed ? 'Не удалось загрузить каталог' : 'Сейчас в продаже нет камней';
+    empty.querySelector('p').textContent = cards.length ? 'Попробуйте другой запрос.' : loadFailed ? 'Обновите страницу.' : 'Новые камни появятся здесь.';
+    document.getElementById('reset-filters').hidden = !cards.length;
     count.textContent = visible + ' ' + (visible % 10 === 1 && visible % 100 !== 11 ? 'камень' : visible % 10 >= 2 && visible % 10 <= 4 && (visible % 100 < 12 || visible % 100 > 14) ? 'камня' : 'камней');
   }
 
