@@ -1466,7 +1466,7 @@ async function fsList(col, mask = []) {
   do {
     const q = mask.map(m => '&mask.fieldPaths=' + m).join('');
     const j = await fsCall(`${BASE}/${col}?key=${FS.key}&pageSize=100${q}${tok ? '&pageToken=' + tok : ''}`, { headers: await authHeaders() });
-    (j.documents || []).forEach(d => out.push({ id: d.name.split('/').pop(), ...fromFs(d.fields) }));
+    (j.documents || []).forEach(d => out.push({ id: d.name.split('/').pop(), updateTime: d.updateTime, ...fromFs(d.fields) }));
     tok = j.nextPageToken || '';
   } while (tok);
   return out;
@@ -1592,10 +1592,40 @@ async function cleanOrphans() {
   try { for (const x of bad) { await fsDelete(COLP, x.id).catch(() => {}); await fsDelete(COL, x.id).catch(() => {}); patchCache.delete(x.id); } stones = stones.filter(x => !bad.includes(x)); }
   finally { orphanBusy = false; }
 }
+// PW5 was registered twice, once with each face first. Keep all four
+// original descriptors and patches under the earlier catalog record.
+async function reconcilePW5(list) {
+  if (FS.project !== 'jadekey-46f37') return;
+  const ids = ['mOsZVWysISYGIlF4Pw0b', 'ikWxucgkSzpi7QMmKKFH',
+    'MPHrFpawy3l9WmhVUOnE', 'WMJu0M8XWAduv5JA0fut'];
+  const records = ids.map(id => list.find(s => s.id === id));
+  if (records.some(s => !s || s.mode)) return;
+  const [main, back, repeat, repeatBack] = records;
+  if (main.of || back.of !== main.id || repeat.of || repeatBack.of !== repeat.id) return;
+  if (records.some(s => s.name !== 'PW5')) return;
+  // Do not regroup a catalog copy if a buyer already activated either copy.
+  const fingerprints = new Set(records.map(s => s.g));
+  if (list.some(s => s.mode && s.g && fingerprints.has(s.g))) return;
+  repeat.of = repeatBack.of = main.id;
+  if (!isAdmin) return;
+  const writes = records.map(s => {
+    const name = `projects/${FS.project}/databases/(default)/documents/${COL}/${s.id}`;
+    const currentDocument = { updateTime: s.updateTime };
+    if (s === main || s === back) return { verify: name, currentDocument };
+    return { update: { name, ...fsFields({ of: main.id }) },
+      updateMask: { fieldPaths: ['of'] }, currentDocument };
+  });
+  try {
+    await fsCall(`${BASE}:commit?key=${FS.key}`, {
+      method: 'POST', headers: await authHeaders(), body: JSON.stringify({ writes })
+    });
+  } catch (e) { console.warn('Связь снимков PW5 пока применена только в сканере:', e.message); }
+}
 async function loadStones() {
   lastLoad = Date.now();
   try {
     const list = await fsList(COL);
+    await reconcilePW5(list);
     stones = list.map(prepStone).sort((a, b) => (b.created || 0) - (a.created || 0));
     await cleanOrphans();
     // a catalog stone whose features were taken over by a living stone is hidden from search
@@ -2332,7 +2362,7 @@ async function openCatalog() {
 function showInfo(s) {
   if (s.mode) {
     const sides = stones.filter(x => x.of === s.id).length + 1;
-    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides === 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button><button class="row" id="amOpen"><span><b>Сменить режим</b><small>Печенье, Love, Луна, Талисман, Путь</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
+    sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">Живой камень · ${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(s.name || '')}</div><div class="sh-note" style="margin:0;font-size:13px">${sides >= 2 ? 'две стороны' : 'одна сторона'} · ${new Date(s.created || 0).toLocaleDateString('ru-RU')}</div></div></div><div class="rows"><button class="row" id="lvOpen"><span><b>Открыть как получатель</b><small>Посмотреть послание этого камня</small></span></button><button class="row" id="amOpen"><span><b>Сменить режим</b><small>Печенье, Love, Луна, Талисман, Путь</small></span></button></div><div class="btns"><button class="btn danger" id="del">Удалить</button><button class="btn main" id="again">Закрыть</button></div>`);
     $('again').onclick = hideSheet;
     $('lvOpen').onclick = () => showLive(s);
     $('amOpen').onclick = () => adminMode(s);
@@ -3726,7 +3756,7 @@ async function mineSheet(s, kind) {
   const shareRow = FS.project === 'jadekey-test'
     ? '<div class="row"><span><b>Общий доступ к посланиям временно закрыт</b><small>В тесте защищаем имя и дату рождения. Подарочные ссылки работают.</small></span></div>'
     : `<button class="row" id="mShare"><span><b>${p.share ? 'Послания видят все, кто отсканирует' : 'Послания видит только получатель'}</b><small>Нажми, чтобы переключить</small></span></button>`;
-  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(privateName)}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides === 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
+  sheet(`<div class="sh-head"><img class="sh-thumb" src="${s.thumb || ''}" alt=""><div><div class="sh-state">${MODE_NAMES[s.mode] || ''}</div><div class="sh-name">${esc(privateName)}</div><div class="sh-note" style="margin:0;font-size:13px">${p.recipient ? (p.recipient === p.owner ? 'Открыт на этом телефоне' : 'Получатель открыл подарок') : 'Ссылку ещё не открывали'} · ${sides >= 2 ? 'две стороны' : 'одна сторона'}</div></div></div>
     <div id="giftBox" style="display:none"><div class="h2">Ссылка для получателя</div>${sb.html}</div>
     <div class="rows"><button class="row" id="mOpen"><span><b>Открыть камень</b><small>Посмотреть, что видит получатель</small></span></button>${inApp ? '' : '<button class="row" id="mUp"><span><b>Открыть другой режим</b><small>Луна, Талисман, Путь — доплата разницы</small></span></button>'}${shareRow}<button class="row" id="mGift"><span><b>Подарить по ссылке</b><small>Только если камень уже у человека, а оживил его ты</small></span></button><button class="row" id="mNew"><span><b>Новая ссылка</b><small>Старая перестанет работать, камень привяжется к новому телефону</small></span></button></div>
     <div class="btns"><button class="btn danger" id="mDel">Удалить камень</button><button class="btn main" id="again">Закрыть</button></div>`);
