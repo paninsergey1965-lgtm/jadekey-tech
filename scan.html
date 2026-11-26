@@ -1566,6 +1566,20 @@ let stones = [], legacy = [], legacyLoading = false, legacyLoaded = false, legac
 const patchCache = new Map();
 const D = 384;
 
+function catalogChannel(stone) {
+  for (const value of [stone.jk, stone.name]) {
+    const code = String(value || '').trim().toUpperCase();
+    if (/^(?:PW|V)[ -]?\d+$/.test(code)) return 'wb';
+    if (/^L[ -]?\d+$/.test(code)) return 'shop';
+  }
+  return '';
+}
+function activationMode(stone, side) {
+  if (catalogChannel(stone) === 'wb') return 'love';
+  const purchased = stone.buy || side.buy || 'love';
+  const mode = purchased === 'ny' ? 'luna' : purchased;
+  return LIVE_MODES[mode] ? mode : 'love';
+}
 function prepStone(s) { s.gv = s.g ? b64F32(s.g) : null; try { s.love = s.love ? JSON.parse(s.love) : null; } catch (e) { s.love = null; } s.contacts = (() => { try { return JSON.parse(s.contacts || '{}'); } catch (e) { return {}; } })(); return s; }
 let lastLoad = 0;
 // admin: remove side records whose main stone no longer exists (they would block re-activation)
@@ -2331,7 +2345,9 @@ function showInfo(s) {
     };
     return;
   }
-  sheet(stoneCard(s, 'info', `<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  const channel = catalogChannel(s);
+  const channelNote = channel ? `<p class="sh-note">Канал продажи: ${channel === 'wb' ? 'Wildberries' : 'Магазин JADEKEY'}</p>` : '';
+  sheet(stoneCard(s, 'info', `${channelNote}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
   $('del').onclick = async () => {
@@ -2373,6 +2389,13 @@ function setAddMode(mode) {   // 'cam' | 'form'
   $('shotPart').style.display = mode === 'form' && addShot ? '' : 'none';
   $('formPart').style.display = mode === 'form' ? '' : 'none';
 }
+function updateCatalogPackage() {
+  const wb = catalogChannel({ name: $('fName').value, jk: $('fJk').value }) === 'wb';
+  $('fBuy').disabled = wb;
+  if (wb) $('fBuy').value = 'love';
+}
+$('fName').addEventListener('input', updateCatalogPackage);
+$('fJk').addEventListener('input', updateCatalogPackage);
 async function openAdd(ctx = {}) {
   if (!(await ownerOk())) return;
   addCtx = ctx; addShot = null; addShot2 = null; addSide = 0; drawSide2();
@@ -2386,6 +2409,7 @@ async function openAdd(ctx = {}) {
     $('fName').value = src.name || ''; $('fJk').value = src.jk || (/JK-\d+/i.exec(c.site || '') || [''])[0].toUpperCase();
     $('fPhone').value = c.phone || ''; $('fTg').value = c.tg || ''; $('fMail').value = c.email || ''; $('fSite').value = c.site || '';
   }
+  updateCatalogPackage();
   $('addTitle').textContent = ctx.edit ? 'Изменить' : ctx.legacy ? 'Переснять камень' : 'Новый камень';
   tab('add');
   if (ctx.edit) { setAddMode('form'); $('shotPart').style.display = 'none'; $('btnSave').textContent = 'Сохранить'; return; }
@@ -2484,7 +2508,8 @@ $('btnSave').onclick = async () => {
   if (!name) { toast('Введи название'); return; }
   const contacts = {};
   for (const [id, k] of [['fPhone', 'phone'], ['fTg', 'tg'], ['fMail', 'email'], ['fSite', 'site']]) { const v = $(id).value.trim(); if (v) contacts[k] = v; }
-  const jk = $('fJk').value.trim().toUpperCase(), buy = $('fBuy').value;
+  const jk = $('fJk').value.trim().toUpperCase();
+  const buy = catalogChannel({ name, jk }) === 'wb' ? 'love' : $('fBuy').value;
   const loveTo = $('fLoveTo').value.trim();
   const love = loveTo ? JSON.stringify({ to: loveTo, from: $('fLoveFrom').value.trim(), since: $('fLoveSince').value, tone: $('fLoveTone').value }) : '';
   veil('Сохраняю…');
@@ -3540,7 +3565,8 @@ async function liveCapture(side) {
       LV.src = cs;
       LV.srcBack = stones.filter(x => x.of === cs.id && !x.mode);
       if (LV.srcBack.length) { LV.hidden = true; LV.b = null; }
-      { const b0 = cs.buy || r.stone.buy || 'love', bm = b0 === 'ny' ? 'luna' : b0; LV.mode = LIVE_MODES[bm] ? bm : 'love'; LV.lock = true; }
+      LV.mode = activationMode(cs, r.stone);
+      LV.lock = true;
     } else if (stones.length) {
       veil('Проверяю, нет ли такого камня…');
       const r = await lvTO(identify(frames[0], t => veil(t)), 60000);
@@ -3627,7 +3653,7 @@ async function liveSave() {
     if (LV.src) {
       // take over the catalog stone: same features, so the catalog copy drops out of search
       const c = LV.src, j = await fsCall(`${BASE}/${COLP}/${c.id}?key=${FS.key}`), pp = fromFs(j.fields);
-      const doc = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: '', created: Date.now(), thumb: c.thumb || LV.a.thumb, g: c.g, G: c.G, hue: c.hue ?? 0, n: c.n });
+      const doc = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: '', created: Date.now(), catalogId: c.id, thumb: c.thumb || LV.a.thumb, g: c.g, G: c.G, hue: c.hue ?? 0, n: c.n });
       id = doc.name.split('/').pop(); made.push([COL, id]);
       await fsReq('POST', `${COLP}?documentId=${id}`, tok, { idx: pp.idx, p: pp.p, sc: pp.sc }); made.push([COLP, id]);
       for (const cb of LV.srcBack || []) {
