@@ -889,7 +889,7 @@ window.JKVoiceDemo = (() => {
         document.querySelectorAll('#voiceDemoBtn, #voiceWizardBtn').forEach(b => b.title = 'Женский голос недоступен');
         return;
       }
-      const text = String(message).replace(/<[^>]*>/g, ' ').replace(/[\\/]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const text = String(message).replace(/<[^>]*>/g, ' ').replace(/[\\/«»„“”"]+/g, ' ').replace(/\s+/g, ' ').trim();
       if (!text) return;
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ru-RU';
@@ -937,7 +937,7 @@ window.JKVoiceDemo = (() => {
       if (!enabled) { try { window.speechSynthesis?.cancel(); } catch (e) {} }
       updateButton();
       if (testMode) updatePreview();
-      if (enabled) say('Голосовые подсказки включены. Нажмите «Оживить камень», чтобы начать.', true);
+      if (enabled) say('Голосовые подсказки включены. Чтобы начать, нажмите кнопку Оживить камень.', true);
     };
     button.onclick = toggle;
     const wizardButton = document.getElementById('voiceWizardBtn');
