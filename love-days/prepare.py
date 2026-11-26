@@ -11,7 +11,11 @@ calendar = json.loads((root / "calendar.json").read_text())
 messages = json.loads((root / "messages.json").read_text())
 tomorrow = datetime.now(timezone(timedelta(hours=3))).date() + timedelta(days=1)
 # Repair a missing current card first, then keep tomorrow available for preview.
-for day in (tomorrow - timedelta(days=1), tomorrow):
+first_collection = os.environ.get("LOVE_FIRST_COLLECTION") == "true"
+days = (tomorrow - timedelta(days=1), tomorrow)
+if first_collection:
+    days = tuple(date(2026, 11, 28) + timedelta(days=i) for i in range(18))
+for day in days:
     if any(row["date"] == day.isoformat() for row in calendar):
         continue
     offset = (day - date(2026, 11, 26)).days
@@ -38,4 +42,6 @@ for day in (tomorrow - timedelta(days=1), tomorrow):
     calendar.append({"date": day.isoformat(), "text": result["text"]})
     calendar.sort(key=lambda r: r["date"])
     (root / "calendar.json").write_text(json.dumps(calendar, ensure_ascii=False, indent=2) + "\n")
-    break
+    print("Saved", day, flush=True)
+    if not first_collection:
+        break
