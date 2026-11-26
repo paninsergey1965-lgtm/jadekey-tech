@@ -332,7 +332,9 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 .rel .row .rel-dots{flex:0 0 auto}
 
 </style>
-</head>
+<style>
+#voiceDemoBtn,#voiceWizardBtn,#voicePreviewBtn,#voiceEmailPreviewBtn{min-height:44px;padding:8px 15px;background:#f4f7f4;color:#375547!important;border:1px solid #cfdbd2!important;border-radius:20px;font:500 14px/1.35 system-ui,sans-serif;letter-spacing:normal;text-transform:none}
+</style></head>
 <body>
 
 <!-- ============ SCAN ============ -->
@@ -850,12 +852,20 @@ window.JKVoiceDemo = (() => {
   let enabled = true;
   try { enabled = localStorage.getItem('jk2_voice_muted') !== '1'; } catch (e) {}
   let registering = false;
+  function guidanceVoice() {
+    const voices = available ? window.speechSynthesis.getVoices().filter(v => /^ru(?:[-_]|$)/i.test(v.lang)) : [];
+    for (const pattern of [/Milena|Милена/i, /Katya|Катя|Katerina|Катерина/i, /Svetlana|Светлана|Irina|Ирина|Tatyana|Татьяна|Elena|Елена/i, /\bfemale\b|женск/i]) {
+      const voice = voices.find(v => pattern.test(v.name));
+      if (voice) return voice;
+    }
+    return null;
+  }
   function updateButton() {
     for (const id of ['voiceDemoBtn', 'voiceWizardBtn']) {
       const button = document.getElementById(id);
       if (!button) continue;
       button.style.display = available ? 'inline-block' : 'none';
-      button.textContent = enabled ? '🔊 Голосовые подсказки включены · выключить' : '🔈 Включить голосовые подсказки';
+      button.textContent = enabled ? 'Голос включён' : 'Включить голос';
       button.setAttribute('aria-pressed', String(enabled));
     }
   }
@@ -868,13 +878,19 @@ window.JKVoiceDemo = (() => {
     if (!available || !enabled || (!registering && !preview)) return;
     try {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(message);
+      const voice = guidanceVoice();
+      if (!voice) {
+        document.querySelectorAll('#voiceDemoBtn, #voiceWizardBtn').forEach(b => b.textContent = 'Женский голос недоступен');
+        return;
+      }
+      const text = String(message).replace(/<[^>]*>/g, ' ').replace(/[\\/]+/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!text) return;
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ru-RU';
       utterance.rate = 0.94;
       utterance.pitch = 0.97;
       utterance.volume = 0.85;
-      const russian = window.speechSynthesis.getVoices().find(v => /^ru[-_]/i.test(v.lang));
-      if (russian) utterance.voice = russian;
+      utterance.voice = voice;
       window.speechSynthesis.speak(utterance);
     } catch (e) { /* Spoken guidance is optional and must never block the scanner. */ }
   }
@@ -904,6 +920,10 @@ window.JKVoiceDemo = (() => {
     const preview = document.getElementById('voicePreviewBtn');
     const emailPreview = document.getElementById('voiceEmailPreviewBtn');
     if (!button || !preview || !emailPreview) return;
+    if (available) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.addEventListener?.('voiceschanged', updateButton);
+    }
     updateButton();
     const toggle = () => {
       enabled = !enabled;
@@ -922,9 +942,9 @@ window.JKVoiceDemo = (() => {
     let emailPreviewIndex = emailStart;
     const updatePreview = () => {
       preview.style.display = enabled ? 'inline-block' : 'none';
-      preview.textContent = '▶ Прослушать: ' + previewItems[previewIndex][0] + ' (' + (previewIndex + 1) + '/' + previewItems.length + ')';
+      preview.textContent = 'Послушать · ' + previewItems[previewIndex][0];
       emailPreview.style.display = enabled ? 'inline-block' : 'none';
-      emailPreview.textContent = '✉ Почта: ' + previewItems[emailPreviewIndex][0] + ' (' + (emailPreviewIndex - emailStart + 1) + '/' + (previewItems.length - emailStart) + ')';
+      emailPreview.textContent = 'Почта · ' + previewItems[emailPreviewIndex][0];
     };
     updatePreview();
     preview.onclick = () => {
