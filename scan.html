@@ -3562,15 +3562,16 @@ async function openLoveCalendar(s, P, chosenDate) {
   let active;
   function render() {
     const cards = savedLoveCards;
-    let index = cards.findIndex(c => c.date > selected) - 1;
-    if (index === -2) index = cards.length-1;
-    index = Math.max(index,0);
+    const next = cards.findIndex(c => c.date > selected);
+    const index = next < 0 ? cards.length-1 : Math.max(0,next-1);
     const card = cards[index];
     const label = new Date(card.date+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
-    const image = card.date === firstLoveCard.date ? './love-days/cards/2026-11-26.jpg' : loveCalendarRoot+'cards/'+card.date+'.jpg';
+    const image = './love-days/cards/'+card.date+'.jpg';
     const nav = isAdmin ? '<div class="btns"><button class="btn" id="lovePrev">Назад</button><button class="btn" id="loveToday">Сегодня</button><button class="btn" id="loveNext">Дальше</button></div>' : '';
     sheet('<div id="loveDaily"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" style="display:block;width:100%;max-height:40svh;object-fit:contain;margin:12px auto;border-radius:14px" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p>'+nav+'<div class="btns"><button class="btn" id="loveRel">Совместимость</button><button class="btn main" id="again">Закрыть</button></div></div>');
     active=$('loveDaily'); $('sheet').classList.add('love');
+    const picture=active.querySelector('img');
+    picture.onerror=()=>{picture.onerror=null;picture.src=loveCalendarRoot+'cards/'+card.date+'.jpg';};
     $('again').onclick=hideSheet;
     $('loveRel').onclick=()=>showRel(s,P);
     if (isAdmin) {
@@ -3585,13 +3586,18 @@ async function openLoveCalendar(s, P, chosenDate) {
   render();
   async function refresh() {
     if (!$('sheet').classList.contains('on') || $('loveDaily')!==active) return;
-    try {
-      const r=await fetch(loveCalendarRoot+'calendar.json',{cache:'no-cache',signal:AbortSignal.timeout(8000)});
+    for(const root of ['./love-days/',loveCalendarRoot]) {
+     try {
+      const r=await fetch(root+'calendar.json',{cache:'no-cache',signal:AbortSignal.timeout(8000)});
       if(r.ok) {
         const rows=await r.json();
-        if(Array.isArray(rows) && rows.length && rows.every(c=>/^\d{4}-\d\d-\d\d$/.test(c.date)&&typeof c.text==='string')) savedLoveCards=rows;
+        if(Array.isArray(rows) && rows.length && rows.every(c=>/^\d{4}-\d\d-\d\d$/.test(c.date)&&typeof c.text==='string')) {
+          if(rows.at(-1).date>=savedLoveCards.at(-1).date) savedLoveCards=rows;
+          if(rows.at(-1).date>loveLocalDate(new Date())) break;
+        }
       }
-    } catch {}
+     } catch {}
+    }
     if (!$('sheet').classList.contains('on') || $('loveDaily')!==active) return;
     if(followToday) selected=loveLocalDate(new Date());
     render();
