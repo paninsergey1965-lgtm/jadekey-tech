@@ -334,6 +334,9 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 </style>
 <style>
 #voiceDemoBtn,#voiceWizardBtn,#voicePreviewBtn,#voiceEmailPreviewBtn{min-height:44px;padding:8px 15px;background:#f4f7f4;color:#375547!important;border:1px solid #cfdbd2!important;border-radius:20px;font:500 14px/1.35 system-ui,sans-serif;letter-spacing:normal;text-transform:none}
+</style><style>
+#voiceDemoBtn,#voiceWizardBtn{box-sizing:border-box;width:60px;height:60px;min-width:60px;padding:0;border-radius:50%;align-items:center;justify-content:center;vertical-align:middle}
+#voiceDemoBtn:focus-visible,#voiceWizardBtn:focus-visible{outline:2px solid #375547;outline-offset:3px}
 </style></head>
 <body>
 
@@ -864,8 +867,11 @@ window.JKVoiceDemo = (() => {
     for (const id of ['voiceDemoBtn', 'voiceWizardBtn']) {
       const button = document.getElementById(id);
       if (!button) continue;
-      button.style.display = available ? 'inline-block' : 'none';
-      button.textContent = enabled ? 'Голос включён' : 'Включить голос';
+      button.style.display = available ? 'inline-flex' : 'none';
+      const marks = enabled ? 'M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14' : 'M3 3l18 18';
+      button.innerHTML = '<svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h4l5-4v14l-5-4H3z"/><path d="' + marks + '"/></svg>';
+      button.title = enabled ? 'Выключить голосовые подсказки' : 'Включить голосовые подсказки';
+      button.setAttribute('aria-label', 'Голосовые подсказки');
       button.setAttribute('aria-pressed', String(enabled));
     }
   }
@@ -880,7 +886,7 @@ window.JKVoiceDemo = (() => {
       window.speechSynthesis.cancel();
       const voice = guidanceVoice();
       if (!voice) {
-        document.querySelectorAll('#voiceDemoBtn, #voiceWizardBtn').forEach(b => b.textContent = 'Женский голос недоступен');
+        document.querySelectorAll('#voiceDemoBtn, #voiceWizardBtn').forEach(b => b.title = 'Женский голос недоступен');
         return;
       }
       const text = String(message).replace(/<[^>]*>/g, ' ').replace(/[\\/]+/g, ' ').replace(/\s+/g, ' ').trim();
