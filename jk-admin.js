@@ -98,6 +98,7 @@ export function initJadeKeyAdmin(ctx) {
   async function open() {
     if (listing || !ctx.isAdmin()) return;
     listing = true;
+    showUnlinked = false;
     ctx.sheet('<div class="sh-name">Клиенты JadeKey</div><p class="sub">Загружаю сведения…</p>');
     try {
       await loadClients();
@@ -111,21 +112,40 @@ export function initJadeKeyAdmin(ctx) {
     } finally { listing = false; }
   }
 
+  let showUnlinked = false;
+  const stoneLabel = g => g.catalog?.jk || g.catalog?.name || details.get(g.main.id) || 'Живой камень';
+  const thumbnail = g => {
+    const src = g.main.thumb || g.catalog?.thumb;
+    return src ? `<img class="cli-thumb" loading="lazy" src="${ctx.esc(src)}" alt="">` : '';
+  };
+
   function render(query = '') {
     const all = rows();
-    const found = q => all.filter(c => !q || [c.uid, c.email, ...c.stones.flatMap(g => [
-      details.get(g.main.id) || '', g.main.id, g.catalog?.jk || ''
-    ])].some(x => safe(x).includes(safe(q).trim())));
-    const listHtml = q => found(q).map(c => `<button class="row" data-uid="${ctx.esc(c.uid)}"><span>
-        <b>${ctx.esc(c.email || c.stones.map(g => details.get(g.main.id)).find(Boolean) || 'Без привязанной почты')}</b>
-        <small>${c.stones.length} камн. · ${ctx.esc(c.uid)}</small></span></button>`).join('') ||
-      (all.length ? '<p class="sub">Ничего не найдено</p>' : '<p class="sub">Клиентов пока нет. После активации камня и привязки почты здесь появится адрес клиента.</p>');
-    ctx.sheet(`<div class="sh-head"><div><div class="sh-state">Администратор</div><div class="sh-name">Клиенты · ${all.length}</div></div></div>
-      <input class="fld" id="cliSearch" placeholder="Почта, имя, JK-номер" value="${ctx.esc(query)}">
-      <p class="sub">Почта доступна только после подтверждения. Пустая почта означает, что клиент ещё не привязал аккаунт.</p>
+    const clientRow = c => {
+      const name = c.email || c.stones.map(g => details.get(g.main.id)).find(Boolean) || 'Без привязанной почты';
+      return `<button class="row cli-row" data-uid="${ctx.esc(c.uid)}"><span><b>${ctx.esc(name)}</b>
+        <small>Камней: ${c.stones.length}</small></span>${c.stones.slice(0, 3).map(thumbnail).join('')}</button>`;
+    };
+    const listHtml = value => {
+      const q = safe(value).trim();
+      const matches = all.filter(c => !q || [c.uid, c.email, ...c.stones.flatMap(g => [
+        details.get(g.main.id), g.main.id, g.catalog?.jk, g.catalog?.name
+      ])].some(x => safe(x).includes(q)));
+      if (!matches.length) return `<p class="sub">${q ? 'Ничего не найдено' : 'Клиентов пока нет'}</p>`;
+      const unlinked = matches.filter(c => !c.email);
+      return matches.filter(c => c.email).map(clientRow).join('') + (unlinked.length ?
+        `<details id="cliUnlinked" ${q || showUnlinked ? 'open' : ''}><summary>Без подтверждённой почты · ${unlinked.length}</summary>
+        <div class="rows">${unlinked.map(clientRow).join('')}</div></details>` : '');
+    };
+    ctx.sheet(`<div class="sh-head"><div class="sh-name">Клиенты · ${all.length}</div></div>
+      <input class="fld" id="cliSearch" aria-label="Поиск клиентов и камней" placeholder="Почта, имя или номер камня" value="${ctx.esc(query)}">
       <div class="rows" id="cliRows">${listHtml(query)}</div>
       <div class="btns"><button class="btn" id="cliClose">Закрыть</button></div>`);
-    const bind = current => document.querySelectorAll('#cliRows [data-uid]').forEach(b => b.onclick = () => openClient(b.dataset.uid, current));
+    const bind = current => {
+      const section = document.getElementById('cliUnlinked');
+      if (section && !current.trim()) section.ontoggle = () => { showUnlinked = section.open; };
+      document.querySelectorAll('#cliRows [data-uid]').forEach(b => b.onclick = () => openClient(b.dataset.uid, current));
+    };
     const input = document.getElementById('cliSearch');
     input.oninput = () => { document.getElementById('cliRows').innerHTML = listHtml(input.value); bind(input.value); };
     bind(query);
@@ -136,10 +156,10 @@ export function initJadeKeyAdmin(ctx) {
     const c = rows().find(x => x.uid === uid);
     if (!c) return;
     ctx.sheet(`<div class="sh-head"><div><div class="sh-state">Клиент</div><div class="sh-name">${ctx.esc(c.email || 'Без почты')}</div></div></div>
-      <p class="sub">UID: ${ctx.esc(uid)}</p>
-      <div class="rows">${c.stones.map(g => `<button class="row" data-stone="${ctx.esc(g.main.id)}"><span>
-        <b>${ctx.esc(details.get(g.main.id) || 'Живой камень')}</b>
-        <small>${ctx.esc(g.catalog?.jk || g.main.id)} · ${ctx.esc(g.main.mode)}</small></span></button>`).join('') || '<p class="sub">Камни не найдены</p>'}</div>
+
+      <div class="rows">${c.stones.map(g => `<button class="row" data-stone="${ctx.esc(g.main.id)}">${thumbnail(g)}<span>
+        <b>${ctx.esc(stoneLabel(g))}</b>
+        <small>${ctx.esc(ctx.modeNames[g.main.mode] || g.main.mode)}</small></span></button>`).join('') || '<p class="sub">Камни не найдены</p>'}</div>
       <button class="btn" id="cliBack">Назад к клиентам</button>`);
     document.querySelectorAll('#sheet [data-stone]').forEach(b => b.onclick = () => openStone(c.stones.find(g => g.main.id === b.dataset.stone), uid, query));
     document.getElementById('cliBack').onclick = () => render(query);

@@ -84,6 +84,11 @@ nav button.on{color:var(--jade)}
 .sh-note{margin:12px 0 0;font-size:14px;color:var(--mute)}
 .rows{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel2);border-radius:14px;text-align:left;width:100%}
+.cli-row{min-height:44px;padding:6px 10px;gap:4px}
+.cli-thumb{width:36px;height:36px;object-fit:cover;border-radius:7px;flex:none}
+#cliRows .cli-row small{letter-spacing:normal;text-transform:none}
+#cliUnlinked summary{padding:12px 4px;cursor:pointer;color:var(--mute)}
+#cliUnlinked .rows{margin-top:0}
 .row small{display:block;color:var(--mute);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
 .row span{flex:1;min-width:0}
 .row b{font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -841,7 +846,7 @@ return new kd(this.curr.time,a,b)};$jscomp.global.Object.defineProperties(H.prot
 </script>
 <script type="module">
 import { initJadeKeyAccounts } from './jk-accounts.js?v=20261126-account-text';
-import { initJadeKeyAdmin } from './jk-admin.js?v=20261124-08';
+import { initJadeKeyAdmin } from './jk-admin.js?v=20261126-clients';
 import { initJadeKeySupport } from './jk-support.js?v=20261124-01';
 import { pipeline, RawImage, env } from './vendor/transformers.min.js';
 
