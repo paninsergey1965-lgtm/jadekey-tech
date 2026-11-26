@@ -8,7 +8,7 @@
   <link rel="canonical" href="https://jadekey.tech/shop/">
   <link rel="icon" href="/icons/icon-180.png">
   <link rel="stylesheet" href="/shop/maison.css?v=20261125-scanner">
-  <script src="/shop/storefront.js?v=2" defer></script>
+  <script src="/shop/storefront.js?v=inventory1" defer></script>
   <title>Магазин живых камней — JadeKey</title>
 <style>
 @font-face{font-family:PTSerif;src:url('/fonts/pt-serif-cyrillic-400-normal.woff2')}@font-face{font-family:ManropeJK;src:url('/fonts/manrope-cyrillic-500-normal.woff2')}body{background:#fff!important;color:#141414!important}.announcement{background:#a5192f!important;color:white!important}.site-header{background:white!important}.brand{letter-spacing:.25em!important}.brand span{color:#3fd8a2!important}.preview-intro{text-align:center;padding:34px 16px 22px;border-bottom:1px solid #e4ded6}.preview-intro p{font:12px ManropeJK,sans-serif;letter-spacing:.2em;color:#a5192f}.preview-intro h1{font:400 38px PTSerif,Georgia,serif;margin:12px 0}.preview-intro span{font:16px PTSerif,Georgia,serif;color:#6f6760}.catalog{padding-top:24px!important}.catalog-heading h2{font:400 27px PTSerif,Georgia,serif!important}.product-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:24px 12px!important}.product-card{border:0!important;border-radius:0!important;box-shadow:none!important;background:white!important;min-width:0}.product-media{border-radius:0!important;aspect-ratio:1!important;background:#f5f2ee!important}.product-media img{width:100%!important;height:100%!important;object-fit:contain!important}.product-details{padding:12px 4px!important}.product-details h3{font:400 21px PTSerif,Georgia,serif!important}.product-desc{display:none!important}.product-actions{display:flex!important;flex-wrap:wrap;gap:8px!important}.quick-add{background:#141414!important;color:white!important;border-radius:0!important;padding:10px!important}.filter-button{border-radius:0!important}.filter-button.selected{background:#a5192f!important;color:white!important}.status{border-radius:0!important}.site-footer,footer{background:#a5192f!important;color:white!important}@media(max-width:650px){.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:22px 8px!important}.catalog{padding-left:12px!important;padding-right:12px!important}.product-details h3{font-size:17px!important}.product-actions{flex-direction:column;align-items:stretch!important}.quick-add{width:100%}.preview-intro h1{font-size:32px}.catalog-heading{display:block!important}.catalog-heading>p{font-size:13px!important}}
@@ -111,86 +111,26 @@ a.scanner-entry:focus-visible{outline:2px solid #305345;outline-offset:-4px}
           <button class="filter-button" type="button" data-filter="order" aria-pressed="false">Под заказ</button>
           <button class="filter-button fav-filter" type="button" data-filter="favorites" aria-pressed="false"><span aria-hidden="true">♡</span> Избранное <span id="favorites-count">0</span></button>
         </div>
-        <p class="results-counter" id="results-counter" role="status" aria-live="polite">6 камней</p>
+        <p class="results-counter" id="results-counter" role="status" aria-live="polite">0 камней</p>
       </div>
 
       <div class="product-grid" id="product-grid">
-        <article class="product-card" data-id="wave-agate" data-name="Агат Розовая волна" data-filter="her" data-stock="available" data-price="2900" data-image="/img/stone-n10.jpg" data-href="/shop/p/wave-agate.html">
-          <div class="product-media">
-            <a class="product-image-link" href="/shop/p/wave-agate.html" aria-label="Подробнее: Агат «Розовая волна»"><img src="/img/stone-n10.jpg" alt="Розово-малиновый срез агата «Розовая волна»" loading="lazy" width="640" height="640"></a>
-            <span class="status status-ready">В наличии</span>
-            <button type="button" class="favorite-button" data-favorite="wave-agate" aria-label="Добавить агат «Розовая волна» в избранное" aria-pressed="false">♡</button>
-          </div>
-          <div class="product-details"><p class="product-category">Агат · около 7 см</p><h3><a href="/shop/p/wave-agate.html">Розовая волна</a></h3><p class="product-desc">Малиновые кольца и нежный свет в сердцевине.</p><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link" href="/shop/p/wave-agate.html">Подробнее <span aria-hidden="true">↗</span></a><button type="button" class="quick-add" data-add="wave-agate">В корзину <span aria-hidden="true">+</span></button></div></div>
-        </article>
-        <article class="product-card" data-id="amber-agate" data-name="Агат Изумрудный янтарь" data-filter="her him" data-stock="available" data-price="2900" data-image="/img/stone-n8.jpg" data-href="/shop/p/amber-agate.html">
-          <div class="product-media">
-            <a class="product-image-link" href="/shop/p/amber-agate.html" aria-label="Подробнее: Агат «Изумрудный янтарь»"><img src="/img/stone-n8.jpg" alt="Агат с изумрудным, золотым и медовым рисунком" loading="lazy" width="640" height="640"></a>
-            <span class="status status-ready">В наличии</span>
-            <button type="button" class="favorite-button" data-favorite="amber-agate" aria-label="Добавить агат «Изумрудный янтарь» в избранное" aria-pressed="false">♡</button>
-          </div>
-          <div class="product-details"><p class="product-category">Агат · около 8 см</p><h3><a href="/shop/p/amber-agate.html">Изумрудный янтарь</a></h3><p class="product-desc">Тёплое золото, молочный белый и глубокий зелёный.</p><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link" href="/shop/p/amber-agate.html">Подробнее <span aria-hidden="true">↗</span></a><button type="button" class="quick-add" data-add="amber-agate">В корзину <span aria-hidden="true">+</span></button></div></div>
-        </article>
-        <article class="product-card" data-id="rose-agate" data-name="Розовый агат" data-filter="her" data-stock="available" data-price="2900" data-image="/img/stone-n1.jpg" data-href="/shop/p/rose-agate.html">
-          <div class="product-media">
-            <a class="product-image-link" href="/shop/p/rose-agate.html" aria-label="Подробнее: Розовый агат"><img src="/img/stone-n1.jpg" alt="Небольшой розовый агат с мягким рисунком" loading="lazy" width="640" height="640"></a>
-            <span class="status status-ready">В наличии</span>
-            <button type="button" class="favorite-button" data-favorite="rose-agate" aria-label="Добавить розовый агат в избранное" aria-pressed="false">♡</button>
-          </div>
-          <div class="product-details"><p class="product-category">Агат · около 6 см</p><h3><a href="/shop/p/rose-agate.html">Розовый агат</a></h3><p class="product-desc">Нежные полосы, созданные природой за тысячи лет.</p><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link" href="/shop/p/rose-agate.html">Подробнее <span aria-hidden="true">↗</span></a><button type="button" class="quick-add" data-add="rose-agate">В корзину <span aria-hidden="true">+</span></button></div></div>
-        </article>
-        <article class="product-card" data-id="graphite-agate" data-name="Агат-кулон Графит" data-filter="him" data-stock="available" data-price="2900" data-image="/img/stone-m3.jpg" data-href="/shop/p/graphite-agate.html">
-          <div class="product-media">
-            <a class="product-image-link" href="/shop/p/graphite-agate.html" aria-label="Подробнее: Агат-кулон «Графит»"><img src="/img/stone-m3.jpg" alt="Тёмный агат-кулон «Графит» с серебристыми линиями" loading="lazy" width="640" height="640"></a>
-            <span class="status status-ready">В наличии</span>
-            <button type="button" class="favorite-button" data-favorite="graphite-agate" aria-label="Добавить кулон «Графит» в избранное" aria-pressed="false">♡</button>
-          </div>
-          <div class="product-details"><p class="product-category">Агат-кулон · крупный срез</p><h3><a href="/shop/p/graphite-agate.html">Графит</a></h3><p class="product-desc">Серебристые линии на глубоком тёмном фоне.</p><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link" href="/shop/p/graphite-agate.html">Подробнее <span aria-hidden="true">↗</span></a><button type="button" class="quick-add" data-add="graphite-agate">В корзину <span aria-hidden="true">+</span></button></div></div>
-        </article>
-        
-        <article class="product-card" data-id="taiga-agate" data-name="Агат Тайга" data-filter="him" data-stock="order" data-price="2900" data-image="/img/stone-m2.jpg" data-href="/shop/p/taiga-agate.html">
-          <div class="product-media">
-            <a class="product-image-link" href="/shop/p/taiga-agate.html" aria-label="Подробнее: Агат «Тайга»"><img src="/img/stone-m2.jpg" alt="Тёмно-зелёный агат «Тайга» с янтарным рисунком" loading="lazy" width="640" height="640"></a>
-            <span class="status status-order">Под заказ · 2–3 дня</span>
-            <button type="button" class="favorite-button" data-favorite="taiga-agate" aria-label="Добавить агат «Тайга» в избранное" aria-pressed="false">♡</button>
-          </div>
-          <div class="product-details"><p class="product-category">Агат · крупный срез</p><h3><a href="/shop/p/taiga-agate.html">Тайга</a></h3><p class="product-desc">Лесная глубина, серебро и тёплый янтарь.</p><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link" href="/shop/p/taiga-agate.html">Подробнее <span aria-hidden="true">↗</span></a><button type="button" class="quick-add" data-add="taiga-agate">В корзину <span aria-hidden="true">+</span></button></div></div>
-        </article>
-        <article class="product-card" data-id="collection-1" data-name="Коллекция номер один премиум огромный живой камень" data-filter="prem" data-stock="order" data-price="24900" data-image="/img/stone-prem.jpg" data-href="/shop/p/collection-1.html">
-          <div class="product-media">
-            <a class="product-image-link" href="/shop/p/collection-1.html" aria-label="Подробнее: Премиальная коллекция №1"><img src="/img/stone-prem.jpg" alt="Коллекционный большой агат в подарочной шкатулке" loading="lazy" width="640" height="640"></a>
-            <span class="status status-order">Под заказ · 2–3 дня</span>
-            <button type="button" class="favorite-button" data-favorite="collection-1" aria-label="Добавить коллекцию №1 в избранное" aria-pressed="false">♡</button>
-          </div>
-          <div class="product-details"><p class="product-category">Коллекционный камень · 1 из 5</p><h3><a href="/shop/p/collection-1.html">Коллекция №1</a></h3><p class="product-desc">Большой агат, шкатулка и особенный статус.</p><p class="product-price">24 900 ₽</p><div class="product-actions"><a class="detail-link" href="/shop/p/collection-1.html">Подробнее <span aria-hidden="true">↗</span></a><button type="button" class="quick-add" data-add="collection-1">В корзину <span aria-hidden="true">+</span></button></div></div>
-        </article>
       </div>
 
       <div class="empty-state" id="empty-state" hidden>
         <span aria-hidden="true">✧</span>
-        <h3>Пока ничего не нашлось</h3>
-        <p>Попробуйте другой запрос или посмотрите всю коллекцию.</p>
+        <h3>Сейчас в продаже нет камней</h3>
+        <p>Новые камни появятся здесь.</p>
         <button type="button" class="button button-outline" id="reset-filters">Показать все камни</button>
       </div>
       <p class="catalog-footnote">Стоимость на карточке указана за базовый режим Love + Печенье. Другие режимы можно выбрать при оформлении.</p>
     </section>
 
 <section class="compact-info section-wrap" id="how">
-<details><summary>Режимы и цены</summary><div class="compact-body"><p>Love + Печенье — от 2 900 ₽</p><p>Луна — от 3 500 ₽</p><p>Талисман — от 4 200 ₽</p><p>Путь — от 5 500 ₽</p></div></details>
+<details><summary>Режимы и цены</summary><div class="compact-body"><p>Love + Печенье — 2 900 ₽</p><p>Луна — 3 500 ₽</p><p>Талисман — 4 200 ₽</p><p>Путь — 5 500 ₽</p></div></details>
 <details><summary>Покупка и доставка</summary><div class="compact-body"><p>Выберите камень и режим. Оплата картой или СБП. Доставка СДЭК или Почтой России включена в цену.</p><a href="/scan.html">Активировать камень</a></div></details>
 <details><summary>Сменить режим камня</summary><div class="compact-body"><p>Доплачиваете только разницу в стоимости режимов.</p><a href="/shop/upgrade.html">Сменить режим</a></div></details>
-<details><summary>Архив проданных камней</summary><div class="compact-body"><div class="sold-grid">
-          <div><a href="/shop/p/night-agate.html"><img loading="lazy" src="/img/stone-m1.jpg" alt="Агат-кулон Ночной шторм"><strong>Ночной шторм</strong></a><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/stone-n9.jpg?v=2" alt="Агат Орхидея"><strong>Орхидея</strong><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/stone-n2.jpg" alt="Розовый агат с жеодой"><strong>Розовый агат с жеодой</strong><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/stone-n3.jpg" alt="Агат-кулон с кристаллами"><strong>Кулон с кристаллами</strong><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/sold-1.jpg" alt="Малахит"><strong>Малахит</strong><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/sold-2.jpg" alt="Дымчатый агат"><strong>Дымчатый агат</strong><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/sold-3.jpg" alt="Агат Фуксия"><strong>Фуксия</strong><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/sold-4.jpg" alt="Синий агат"><strong>Синий агат</strong><small>Продан</small></div>
-          <div><img loading="lazy" src="/img/sold-5.jpg" alt="Сердоликовый агат"><strong>Сердоликовый агат</strong><small>Продан</small></div>
-        </div>
-      </div></details></section>
+<details id="sold-archive" hidden><summary>Купленные камни</summary><div class="compact-body sold-grid" id="sold-grid"></div></details></section>
   </main>
 
   <footer class="site-footer"><div class="footer-inner"><div class="footer-about"><a class="brand" href="/">JADE<span>KEY</span></a><p>Настоящие камни. Новые послания каждый день.</p></div><nav aria-label="Полезные ссылки"><a href="/shop/">Магазин</a><a href="/shop/delivery.html">Доставка и возврат</a><a href="/shop/oferta.html">Оферта</a><a href="/privacy.html">Конфиденциальность</a><a href="/scan.html">Сканер JadeKey</a></nav><div class="footer-contact"><span>На связи</span><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a><a href="/">jadekey.tech</a></div></div><div class="footer-legal"><span>© JadeKey, 2026</span><span>ИП Панин Сергей Николаевич · ИНН 771501067019 · ОГРНИП 324774600501998</span></div></footer>
