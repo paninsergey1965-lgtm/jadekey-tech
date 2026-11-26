@@ -79,8 +79,9 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   <label>Доставка<select name="delivery"><option value="cdek">СДЭК по России — доставка включена</option><option value="post">Почта России — доставка включена</option></select></label>
   <label id="adr">Адрес, индекс или пункт СДЭК<textarea name="address" rows="2" autocomplete="street-address"></textarea></label>
   <label>Комментарий<textarea name="comment" rows="2"></textarea></label>
-  <label class="pdok"><input type="checkbox" name="pd" value="1"><span>Даю <a href="/consent.html" target="_blank">согласие на обработку персональных данных</a> и принимаю <a href="/privacy.html" target="_blank">политику конфиденциальности</a>.</span></label>
-  <p class="agree">Нажимая «Оплатить», вы принимаете условия <a href="/shop/oferta.html">оферты</a> и <a href="/shop/delivery.html">доставки и возврата</a>.</p>
+  <label class="pdok"><input type="checkbox" name="termsAccepted" value="1" required aria-describedby="service-note"><span>Принимаю <a href="/shop/oferta.html#digital-service" target="_blank" rel="noopener">условия покупки и работы сервиса JADEKEY</a>. С <a href="/privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> ознакомлен(а).</span></label>
+  <p class="agree" id="service-note">Для активации камня, сканирования и получения «Ключа дня» нужен интернет. В работе сервиса возможны временные перерывы.</p>
+  <p class="agree"><a href="/shop/delivery.html" target="_blank" rel="noopener">Доставка и возврат</a></p>
   <p class="err" id="err" role="alert"></p>
   <button class="btn" id="go" type="submit">Оплатить</button>
 </form>
@@ -97,7 +98,7 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   f.delivery.onchange = sync; sync();
   f.onsubmit = async (e) => {
     e.preventDefault(); err.textContent = '';
-    if (!f.pd.checked) { err.textContent = 'Отметьте согласие на обработку персональных данных.'; return; }
+    if (!f.termsAccepted.checked) { err.textContent = 'Чтобы перейти к оплате, примите условия покупки и работы сервиса.'; f.termsAccepted.focus(); return; }
     const d = Object.fromEntries(new FormData(f)); d.id = 'graphite-agate:' + mode();
     if (!d.name.trim() || !d.phone.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { err.textContent = 'Заполните имя, телефон и почту — на неё придёт чек.'; return; }
     if (d.delivery !== 'pickup' && !d.address.trim()) { err.textContent = 'Укажите адрес доставки.'; return; }
