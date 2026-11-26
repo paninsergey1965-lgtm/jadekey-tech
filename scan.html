@@ -2316,7 +2316,7 @@ function renderColl() {
   const all = stones.filter(s => !s.of && (window.showSold || !s.consumed));
   const list = all.filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.jk || '').toLowerCase().includes(q));
   $('collSub').textContent = all.length ? `${all.length} ${(n => n % 10 === 1 && n % 100 !== 11 ? 'камень' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'камня' : 'камней')(all.length)} в основном каталоге` : 'В основном каталоге пока нет камней.';
-  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${esc(s.id)}"><img loading="lazy" src="${esc(s.thumb || '')}" alt=""><div><b>${esc(s.name)}</b><span>${s.consumed ? 'продан · ' : ''}${s.mode ? '<i class="tag t-' + s.mode + '">' + MODE_NAMES[s.mode] + '</i>' : esc(s.jk || '')}</span></div></button>`).join('');
+  $('grid').innerHTML = list.map(s => `<button class="card" data-id="${esc(s.id)}"><img loading="lazy" src="${esc(s.thumb || '')}" alt=""><div><b>${esc(s.name)}</b><span>${s.consumed ? 'продан · ' : ''}${s.mode ? '<i class="tag t-' + s.mode + '">' + MODE_NAMES[s.mode] + '</i>' : esc(s.jk || '')}</span>${canPrepareForShop(s) ? '<small>' + (s.shopPreview ? 'Фото подготовлено' : 'Фото не подготовлено') + '</small>' : ''}</div></button>`).join('');
   $('grid').querySelectorAll('.card').forEach(b => b.onclick = () => showInfo(stones.find(s => s.id === b.dataset.id)));
   renderLegacy();
 }
@@ -2364,6 +2364,43 @@ async function openCatalog() {
   loadLegacyStones();
 }
 
+function canPrepareForShop(s) {
+  return isAdmin && !s.of && !s.mode && !s.consumed && catalogChannel(s) === 'shop';
+}
+async function prepareShopPhoto(s, button) {
+  button.disabled = true;
+  try {
+    if (!canPrepareForShop(s) || !(await ownerOk())) return;
+    const image = new Image();
+    image.src = s.thumb;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 300;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f3efe9';
+    ctx.fillRect(0, 0, 300, 300);
+    ctx.save();
+    ctx.translate(150, 140);
+    ctx.rotate(-0.045);
+    ctx.drawImage(image, -114, -114, 228, 228);
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '500 15px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('J A D E K E Y', 150, 155);
+    ctx.fillStyle = '#385046';
+    ctx.font = '15px Georgia, serif';
+    ctx.fillText(s.jk || s.name, 150, 282, 270);
+    const shopPreview = canvas.toDataURL('image/jpeg', 0.88);
+    await fsCall(`${BASE}/${COL}/${s.id}?key=${FS.key}&updateMask.fieldPaths=shopPreview&currentDocument.updateTime=${encodeURIComponent(s.updateTime)}`, {
+      method: 'PATCH', headers: await authHeaders(), body: JSON.stringify(fsFields({ shopPreview }))
+    });
+    s.shopPreview = shopPreview;
+    renderColl();
+    if ($('shopPrep') === button) showInfo(s);
+  } catch (e) { toast('Фото не сохранено: ' + e.message, 5000); }
+  finally { button.disabled = false; }
+}
 function showInfo(s) {
   if (s.mode) {
     const sides = stones.filter(x => x.of === s.id).length + 1;
@@ -2382,8 +2419,12 @@ function showInfo(s) {
   }
   const channel = catalogChannel(s);
   const channelNote = channel ? `<p class="sh-note">Канал продажи: ${channel === 'wb' ? 'Wildberries' : 'Магазин JADEKEY'}</p>` : '';
-  sheet(stoneCard(s, 'info', `${channelNote}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  const preparation = canPrepareForShop(s) ? (s.shopPreview ?
+    `<div class="shot"><img src="${esc(s.shopPreview)}" alt="Фото для магазина"><div><b>Фото подготовлено</b><span>Черновик витрины</span></div></div>` :
+    '<button class="btn main" id="shopPrep">Обработать для магазина</button>') : '';
+  sheet(stoneCard(s, 'info', `${channelNote}${preparation}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
+  if ($('shopPrep')) $('shopPrep').onclick = e => prepareShopPhoto(s, e.currentTarget);
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
   $('del').onclick = async () => {
     if (!(await ownerOk())) return;
