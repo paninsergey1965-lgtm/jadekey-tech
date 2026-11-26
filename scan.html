@@ -366,7 +366,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
   <div class="page">
     <h1>Коллекция</h1>
     <div class="sub" id="collSub">Загружаю…</div>
-    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button> <button class="day-pill" id="supportInboxBtn" type="button" style="margin:6px 0 12px;display:none">Чаты</button>
+    <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="loveCalendarAdmin" type="button" style="display:none">Любовь · календарь</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button> <button class="day-pill" id="supportInboxBtn" type="button" style="margin:6px 0 12px;display:none">Чаты</button>
     <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
     <div class="grid" id="grid"></div>
     <div class="h2" id="legacyTitle">Старый каталог</div>
@@ -1546,6 +1546,8 @@ function setAdmin(on) {
   $('nColl').style.display = isAdmin ? '' : 'none';
   $('nAdd').style.display = isAdmin ? '' : 'none';
   $('catalogAdminBox').style.display = isAdmin ? '' : 'none';
+  $('loveCalendarAdmin').style.display = isAdmin ? '' : 'none';
+  $('loveCalendarAdmin').onclick = () => { if (isAdmin) openLoveCalendar({id:'expert-love'},{}); };
   if ($('clientsBtn')) $('clientsBtn').style.display = isAdmin ? '' : 'none';
   if ($('supportInboxBtn')) $('supportInboxBtn').style.display = isAdmin ? '' : 'none';
   if ($('dsBtn')) { $('dsBtn').onclick = dsSetup; dsCount(0); }
