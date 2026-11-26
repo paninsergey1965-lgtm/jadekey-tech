@@ -2654,7 +2654,7 @@ const MODE_NAMES = Object.assign({}, LIVE_MODES, { mem: 'Память' });
 const LIVE_DESC = {
   path: 'Каждый день — небо дня по Джйотишу: накшатра, лунный день и планета дня, строка из Дао дэ цзин с номером главы и короткая практика. С датой рождения — лично для тебя.',
   fc: 'Печенье с советом дня по «Книге перемен» (И цзин): каждый день — одна из 64 гексаграмм, счастливые числа по китайской традиции и китайское слово дня. Личный расчёт по звезде рождения — в режиме «Путь».',
-  love: 'Совместимость: впиши имя и дату рождения другого человека — камень покажет, как вы сочетаетесь в любви, дружбе и деле. По западной астрологии, китайскому календарю, Ба-цзы и нумерологии.',
+  love: 'Каждый день — новая иллюстрация и тёплая записка. Для совместимости впиши имя и дату рождения другого человека — камень покажет, как вы сочетаетесь в любви, дружбе и деле. По западной астрологии, китайскому календарю, Ба-цзы и нумерологии.',
   luna: 'Лунный календарь: каждый день — лунные сутки с символом, фаза Луны и её знак, что сегодня хорошо делать и что лучше отложить. По дате рождения — твой лунный день рождения.',
   tal: 'Западная астрология: каждый день — планета дня, её камень и цвет, пожелание и совет. По дате рождения — твой знак и твой камень.'
 };
@@ -3550,6 +3550,57 @@ function dayPill() {
   b.onclick = () => showLive(s);
 }
 setInterval(dayPill, 60000);
+const loveCalendarRoot = 'https://raw.githubusercontent.com/paninsergey1965-lgtm/jadekey-tech/main/love-days/';
+const firstLoveCard = {date:'2026-11-26',text:'Доброе утро. У меня к тебе дело на пять минут. Обнять. Возможно, понадобится ещё пять.'};
+let savedLoveCards = [firstLoveCard];
+function loveLocalDate(d) {
+  return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+}
+async function openLoveCalendar(s, P, chosenDate) {
+  let selected = chosenDate || loveLocalDate(new Date());
+  let followToday = !chosenDate;
+  let active;
+  function render() {
+    const cards = savedLoveCards;
+    let index = cards.findIndex(c => c.date > selected) - 1;
+    if (index === -2) index = cards.length-1;
+    index = Math.max(index,0);
+    const card = cards[index];
+    const label = new Date(card.date+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
+    const image = card.date === firstLoveCard.date ? './love-days/cards/2026-11-26.jpg' : loveCalendarRoot+'cards/'+card.date+'.jpg';
+    const nav = isAdmin ? '<div class="btns"><button class="btn" id="lovePrev">Назад</button><button class="btn" id="loveToday">Сегодня</button><button class="btn" id="loveNext">Дальше</button></div>' : '';
+    sheet('<div id="loveDaily"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" style="display:block;width:100%;max-height:40svh;object-fit:contain;margin:12px auto;border-radius:14px" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p>'+nav+'<div class="btns"><button class="btn" id="loveRel">Совместимость</button><button class="btn main" id="again">Закрыть</button></div></div>');
+    active=$('loveDaily'); $('sheet').classList.add('love');
+    $('again').onclick=hideSheet;
+    $('loveRel').onclick=()=>showRel(s,P);
+    if (isAdmin) {
+      $('lovePrev').disabled=index===0;
+      $('loveNext').disabled=index===cards.length-1;
+      $('lovePrev').onclick=()=>{followToday=false;selected=cards[index-1].date;render();};
+      $('loveNext').onclick=()=>{followToday=false;selected=cards[index+1].date;render();};
+      $('loveToday').onclick=()=>{followToday=true;selected=loveLocalDate(new Date());render();};
+    }
+    if(s.mode) liveExtras(s,'love');
+  }
+  render();
+  async function refresh() {
+    if (!$('sheet').classList.contains('on') || $('loveDaily')!==active) return;
+    try {
+      const r=await fetch(loveCalendarRoot+'calendar.json',{cache:'no-cache',signal:AbortSignal.timeout(8000)});
+      if(r.ok) {
+        const rows=await r.json();
+        if(Array.isArray(rows) && rows.length && rows.every(c=>/^\d{4}-\d\d-\d\d$/.test(c.date)&&typeof c.text==='string')) savedLoveCards=rows;
+      }
+    } catch {}
+    if (!$('sheet').classList.contains('on') || $('loveDaily')!==active) return;
+    if(followToday) selected=loveLocalDate(new Date());
+    render();
+    const midnight=new Date();midnight.setHours(24,0,1,0);
+    setTimeout(refresh,midnight.getTime()-Date.now());
+  }
+  refresh();
+}
+
 async function showLive(s, scanned) {
   veil('Открываю…');
   let p = null; try { p = await readPriv(s.id); } catch (e) {}
@@ -3564,7 +3615,7 @@ async function showLive(s, scanned) {
   const tier = s.mode === 'ny' ? 'luna' : s.mode, open = unlockedModes(tier), pick = ls.get('jk2_view_' + s.id);
   const view = open.includes(pick) ? pick : tier;
   const Q = Object.assign({}, P, { name: P.name || P.to || '', to: P.to || P.name || '' });
-  if (view === 'love') { showRel(s, Q); return; }
+  if (view === 'love') { openLoveCalendar(s, Q); return; }
   else if (view === 'luna') showLuna(s, Q);
   else if (view === 'fc') showFortune(s, Q);
   else if (view === 'path') showPath(s, Q);
@@ -4619,7 +4670,7 @@ function expertPanel() {
     talShift = habShift = fcShift = pathShift = loveShift = lunaShift = days;
     const P = { name: E.name, to: E.name, from: E.from, bday: E.bday, btime: E.btime, btz: E.btz, kid: E.kid, tone: 'tender' };
     const st = { id: 'expert-' + (E.name || 'demo'), name: E.name, mode: E.m };
-    if (E.m === 'love') showRel({ id: st.id }, P);
+    if (E.m === 'love') openLoveCalendar({ id: st.id }, P, E.date);
     else if (E.m === 'luna' || E.m === 'ny') showLuna(st, P);
     else if (E.m === 'fc') showFortune(st, P);
     else if (E.m === 'path') showPath(st, P);
