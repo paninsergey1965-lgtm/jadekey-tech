@@ -1852,7 +1852,7 @@ async function identify(cv, status = () => {}) {
 // ---------- sheet ----------
 function openLink(url) { if (/^(tel:|mailto:)/.test(url)) location.href = url; else window.open(url, '_blank'); }
 function sheet(html) { const s = $('sheet'); s.classList.remove('love', 'ny', 'tal', 'path', 'luna', 'fc', 'mem'); s.innerHTML = '<div class="grab"></div>' + html; s.classList.add('on'); s.scrollTop = 0; }
-function hideSheet() { $('sheet').classList.remove('on'); }
+function hideSheet() { if ($('loveDaily')) loveStop(); $('sheet').classList.remove('on'); }
 function contactRows(c) {
   const defs = [['phone', '📞', 'Телефон', v => 'tel:' + v], ['tg', '✈️', 'Telegram', v => 'https://t.me/' + v.replace('@', '')], ['email', '✉️', 'Email', v => 'mailto:' + v], ['site', '🔗', 'Сайт', v => /^https?:/.test(v) ? v : 'https://' + v]];
   return defs.filter(d => c[d[0]]).map(d => `<button class="row" data-url="${esc(d[3](c[d[0]]))}"><span><small>${d[2]}</small><b>${esc(c[d[0]])}</b></span><span style="flex:none;color:var(--mute)">›</span></button>`).join('');
@@ -3556,6 +3556,7 @@ async function openLoveCalendar(s, P, chosenDate) {
   let selected = chosenDate || loveLocalDate(new Date());
   let followToday = !chosenDate;
   let active;
+  let lastTuneDate;
   function render() {
     const cards = savedLoveCards;
     const next = cards.findIndex(c => c.date > selected);
@@ -3564,10 +3565,16 @@ async function openLoveCalendar(s, P, chosenDate) {
     const label = new Date(card.date+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
     const image = './love-days/cards/'+card.date+'.jpg';
     const nav = isAdmin ? '<div class="btns"><button class="btn" id="lovePrev">Назад</button><button class="btn" id="loveToday">Сегодня</button><button class="btn" id="loveNext">Дальше</button></div>' : '';
-    sheet('<div id="loveDaily"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" style="display:block;width:100%;max-height:40svh;object-fit:contain;margin:12px auto;border-radius:14px" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p>'+nav+'<div class="btns"><button class="btn main" id="again">Закрыть</button></div></div>');
+    sheet('<div id="loveDaily"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" style="display:block;width:100%;max-height:40svh;object-fit:contain;margin:12px auto;border-radius:14px" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p>'+nav+'<div class="btns">'+sndBtn()+'<button class="btn main" id="again">Закрыть</button></div></div>');
     active=$('loveDaily'); $('sheet').classList.add('love');
     const picture=active.querySelector('img');
     picture.onerror=()=>{picture.onerror=null;picture.src=loveCalendarRoot+'cards/'+card.date+'.jpg';};
+    const tuneIndex = Math.floor(Date.parse(selected+'T00:00:00Z') / 86400000) % LOVE_TUNES.length;
+    bindSnd(() => loveTune(tuneIndex));
+    if (selected !== lastTuneDate) {
+      lastTuneDate = selected;
+      lovePlay(tuneIndex);
+    }
     $('again').onclick=hideSheet;
     if (isAdmin) {
       $('lovePrev').disabled=index===0;
