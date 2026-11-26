@@ -76,15 +76,17 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   <label>Имя<input name="name" autocomplete="name" required></label>
   <label>Телефон — напишем в Telegram или WhatsApp<input name="phone" type="tel" autocomplete="tel" required></label>
   <label>Эл. почта — для чека<input name="email" type="email" autocomplete="email" required></label>
-  <label>Доставка<select name="delivery"><option value="cdek">СДЭК по России — доставка включена</option><option value="post">Почта России — доставка включена</option></select></label>
-  <label id="adr">Адрес, индекс или пункт СДЭК<textarea name="address" rows="2" autocomplete="street-address"></textarea></label>
-  <label>Комментарий<textarea name="comment" rows="2"></textarea></label>
-  <label class="pdok"><input type="checkbox" name="termsAccepted" value="1" required aria-describedby="service-note"><span>Принимаю <a href="/shop/oferta.html#digital-service" target="_blank" rel="noopener">условия покупки и работы сервиса JADEKEY</a>. С <a href="/privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> ознакомлен(а).</span></label>
+  <label>Доставка<select name="delivery" required><option value="cdek">СДЭК по России — доставка включена</option><option value="post">Почта России — доставка включена</option></select></label>
+  <label id="adr">Адрес, индекс или пункт СДЭК<textarea required name="address" rows="2" autocomplete="street-address"></textarea></label>
+  <label>Комментарий (необязательно)<textarea name="comment" rows="2"></textarea></label>
+  <p class="agree" id="checkout-hint">Чтобы поставить галочку, заполните имя, телефон, электронную почту и адрес доставки или пункт СДЭК.</p>
+  <label class="pdok"><input type="checkbox" name="termsAccepted" value="1" disabled required aria-describedby="service-note"><span>Принимаю <a href="/shop/oferta.html#digital-service" target="_blank" rel="noopener">условия покупки и работы сервиса JADEKEY</a>. С <a href="/privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> ознакомлен(а).</span></label>
   <p class="agree" id="service-note">Для активации камня, сканирования и получения «Ключа дня» нужен интернет. В работе сервиса возможны временные перерывы.</p>
   <p class="agree"><a href="/shop/delivery.html" target="_blank" rel="noopener">Доставка и возврат</a></p>
   <p class="err" id="err" role="alert"></p>
-  <button class="btn" id="go" type="submit">Оплатить</button>
+  <button class="btn" id="go" type="submit" disabled>Оплатить</button>
 </form>
+<script src="/shop/checkout-fields.js"></script>
 <script>
 (() => {
   const f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go'), adr = document.getElementById('adr');
@@ -96,21 +98,22 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   document.getElementById('modes').onchange = upd; upd();
   const sync = () => { adr.style.display = f.delivery.value === 'pickup' ? 'none' : ''; };
   f.delivery.onchange = sync; sync();
+  const checkout = setupCheckoutFields(f, go);
   f.onsubmit = async (e) => {
     e.preventDefault(); err.textContent = '';
-    if (!f.termsAccepted.checked) { err.textContent = 'Чтобы перейти к оплате, примите условия покупки и работы сервиса.'; f.termsAccepted.focus(); return; }
+    if (!checkout.ready()) return;
     const d = Object.fromEntries(new FormData(f)); d.id = 'wave-agate:' + mode();
     if (!d.name.trim() || !d.phone.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { err.textContent = 'Заполните имя, телефон и почту — на неё придёт чек.'; return; }
     if (d.delivery !== 'pickup' && !d.address.trim()) { err.textContent = 'Укажите адрес доставки.'; return; }
     if (d.delivery === 'post') { d.delivery = 'cdek'; d.address = 'Почта России: ' + d.address; }
-    go.disabled = true; go.textContent = 'Переходим к оплате…';
+    checkout.setBusy(true); go.textContent = 'Переходим к оплате…';
     try {
       const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
       const j = await r.json();
       if (j.paymentUrl) { location.href = j.paymentUrl; return; }
       err.textContent = j.message || 'Не удалось создать платёж. Напишите нам: jadekey1965@gmail.com';
     } catch (x) { err.textContent = 'Нет связи с платёжной системой. Попробуйте ещё раз.'; }
-    go.disabled = false; go.textContent = label;
+    checkout.setBusy(false); go.textContent = label;
   };
 })();
 </script></div></section>
