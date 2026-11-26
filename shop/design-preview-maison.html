@@ -60,11 +60,14 @@ body{font:400 15px/1.7 "PT Serif",Georgia,serif!important;-webkit-font-smoothing
 @media(max-width:650px){.product-grid{margin-inline:12px;column-gap:8px!important}.filters{max-width:100%;overflow-x:auto}.product-actions{flex-wrap:wrap}}
 
 </style>
-</head>
-<body><div style="text-align:center;background:#f5f2ee;padding:7px;font:11px sans-serif">Предпросмотр магазина · оформление отключено</div>
+<style>
+a.scanner-entry{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:center;gap:12px;min-height:54px;padding:12px 16px;background:#a5192f;color:white;font:600 19px/1.35 Manrope,sans-serif;text-decoration:none}
+a.scanner-entry:focus-visible{outline:2px solid white;outline-offset:-5px}
+</style></head>
+<body>
   <a class="skip-link" href="#catalog">Перейти к каталогу</a>
   
-  <header class="jk-top"><div class="jk-top-in"><a href="/">Главная</a><a class="jk-mark" href="/">JADE<b>KEY</b></a><div class="jk-gos"><a href="/scan.html">Сканер</a><button id="cart-trigger" type="button" aria-label="Корзина">Корзина <span id="cart-count">0</span></button></div></div></header>
+  <a class="scanner-entry" href="/scan.html"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9V4h5m8 0h5v5m0 6v5h-5M8 20H3v-5M5 12h14"/></svg>Открыть сканер</a>
 
   <main>
     <section class="bleed hero shop-cover" aria-labelledby="cover-title">
