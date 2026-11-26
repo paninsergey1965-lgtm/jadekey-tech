@@ -2327,8 +2327,15 @@ async function showFound(r) {
   if (s.mode) { await showLive(s, !!r.cv); return; }
   const pct = Math.round(r.res.ratio * 100);
   if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
-  sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn main" id="again">Сканировать ещё</button></div>`));
+  const needsActivation = r.state === 'found' && !s.of && !s.consumed && !r.stone.mode && !r.stone.consumed;
+  const instruction = 'Камень JadeKey узнан. Сначала оживите его. Нажмите кнопку Оживить камень и следуйте подсказкам.';
+  const activation = needsActivation ? '<p class="sh-note">' + instruction + '</p><button type="button" class="btn main" id="activateFoundStone">Оживить камень</button>' : '';
+  sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div>${activation}<div class="btns"><button class="btn${needsActivation ? '' : ' main'}" id="again">Сканировать ещё</button></div>`));
   bindRows(); $('again').onclick = hideSheet;
+  if (needsActivation) {
+    $('activateFoundStone').onclick = () => { hideSheet(); tab('live'); $('lvStart').click(); };
+    window.JKVoiceDemo?.say(instruction, true);
+  }
   if (isAdmin) {
     const root = r.stone.of || r.stone.id, fam = stones.filter(x => x.id === root || x.of === root);
     if (!fam.includes(r.stone)) fam.push(r.stone);
