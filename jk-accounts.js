@@ -28,7 +28,6 @@ export function initJadeKeyAccounts(ctx) {
   let pendingChangeEmail = null;
   let lastVerificationAttempt = null;
   const verificationSender = `noreply@${ctx.project}.firebaseapp.com`;
-  const speak = text => { try { window.JKVoiceDemo?.say(text); } catch (_) {} };
 
   async function authCall(endpoint, payload) {
     const response = await fetch(`${API}${endpoint}?key=${encodeURIComponent(ctx.firebaseKey)}`, {
@@ -173,10 +172,7 @@ export function initJadeKeyAccounts(ctx) {
 
   function showForm(mode) {
     formMode = mode;
-    if (mode === 'register') window.JKVoiceDemo?.begin();
     display().then(() => document.getElementById('jkEmailAddress')?.focus());
-    if (mode === 'register') speak('Введите адрес электронной почты. Придумайте пароль не короче восьми символов и повторите его в следующем поле. Затем нажмите Создать аккаунт.');
-    if (mode === 'change') speak('Введите новый адрес электронной почты и пароль от вашего текущего аккаунта JadeKey. Не используйте пароль от новой почты. Затем нажмите Подтвердить новую почту.');
   }
 
   async function requestEmailChange(rawEmail, currentPassword) {
@@ -213,14 +209,12 @@ export function initJadeKeyAccounts(ctx) {
       formMode = null;
       await display();
       ctx.toast('Запрос отправлен. Проверь новую почту (и «Спам»), открой ссылку и вернись сюда.', 8000);
-      speak('Запрос на смену электронной почты отправлен. Откройте письмо в новой почте, нажмите ссылку подтверждения и вернитесь в JadeKey. Затем нажмите Проверить подтверждение. Ваши камни останутся привязаны к тому же аккаунту.');
     } catch (error) { ctx.toast(friendlyError(error), 8000); }
     finally { busy = false; }
   }
 
   async function sendVerification() {
     if (busy) return;
-    window.JKVoiceDemo?.begin();
     busy = true;
     let requestedEmail = null;
     try {
@@ -235,7 +229,6 @@ export function initJadeKeyAccounts(ctx) {
       if (serverEmail && serverEmail !== intendedEmail) throw new Error('Адрес в ответе сервера не совпал с адресом аккаунта.');
       lastVerificationAttempt = { email: intendedEmail, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: true };
       ctx.toast(`Сервер принял запрос для ${intendedEmail}. Проверь почту, включая «Спам».`, 7000);
-      speak('Сервер принял запрос на отправку письма. Откройте почту, проверьте папку Спам и найдите письмо от JadeKey. Нажмите ссылку, затем вернитесь и нажмите Проверить подтверждение.');
     } catch (error) {
       if (requestedEmail) lastVerificationAttempt = { email: requestedEmail, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: false, error: friendlyError(error) };
       ctx.toast(friendlyError(error), 6500);
@@ -245,7 +238,6 @@ export function initJadeKeyAccounts(ctx) {
 
   async function checkVerification(skipBusy = false) {
     if (busy && !skipBusy) return;
-    window.JKVoiceDemo?.begin();
     if (!skipBusy) busy = true;
     try {
       // Refresh cached JWT so Firestore sees updated email_verified claim.
@@ -256,10 +248,8 @@ export function initJadeKeyAccounts(ctx) {
         pendingChangeEmail = null;
         formMode = null;
         ctx.toast('Почта подтверждена. Доступ к камням защищён!', 6500);
-        speak('Почта успешно подтверждена. Теперь ваши камни можно восстановить на другом телефоне по электронной почте и паролю.');
       } else {
         ctx.toast('Пока не подтверждено. Открой ссылку из письма и нажми ещё раз.', 6500);
-        speak('Почта пока не подтверждена. Откройте письмо, нажмите ссылку подтверждения и вернитесь в JadeKey. Затем снова нажмите Проверить подтверждение.');
       }
     } catch (error) { ctx.toast(friendlyError(error), 6500); }
     finally { if (!skipBusy) busy = false; await display(); }
@@ -268,9 +258,9 @@ export function initJadeKeyAccounts(ctx) {
   async function registerEmail(rawEmail, password, repeated) {
     if (busy) return;
     const email = validEmail(rawEmail);
-    if (!email) { ctx.toast('Проверь адрес электронной почты.'); speak('Проверьте адрес электронной почты и попробуйте ещё раз.'); return; }
-    if (!password || password.length < 8) { ctx.toast('Пароль должен содержать минимум 8 символов.'); speak('Пароль должен содержать не менее восьми символов.'); return; }
-    if (password !== repeated) { ctx.toast('Пароли не совпадают.'); speak('Пароли не совпадают. Введите одинаковый пароль в обоих полях.'); return; }
+    if (!email) { ctx.toast('Проверь адрес электронной почты.'); return; }
+    if (!password || password.length < 8) { ctx.toast('Пароль должен содержать минимум 8 символов.'); return; }
+    if (password !== repeated) { ctx.toast('Пароли не совпадают.'); return; }
     busy = true;
     try {
       // An existing anonymous UID owns the stones. Link email/password to it;
@@ -297,16 +287,13 @@ export function initJadeKeyAccounts(ctx) {
         lastVerificationAttempt = { email, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: true };
         await display();
         ctx.toast('Аккаунт создан! Сервер принял запрос на письмо подтверждения.', 7500);
-        speak('Аккаунт создан. Мы отправили на вашу почту письмо со ссылкой подтверждения. Откройте почту, найдите письмо и нажмите ссылку. Если письма нет, проверьте папку Спам. Затем вернитесь в JadeKey и нажмите Проверить подтверждение.');
       } catch (error) {
         lastVerificationAttempt = { email, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), accepted: false, error: friendlyError(error) };
         await display();
         ctx.toast(`Аккаунт создан, но сервер отклонил запрос на письмо: ${friendlyError(error)} Используй «Отправить письмо ещё раз».`, 8000);
-        speak('Аккаунт создан, но письмо не удалось отправить. Нажмите Отправить письмо ещё раз.');
       }
     } catch (error) {
       ctx.toast(friendlyError(error), 7500);
-      speak('Не получилось зарегистрироваться. Проверь введённые данные и сообщение на экране.');
     }
     finally { busy = false; }
   }
@@ -350,8 +337,6 @@ export function initJadeKeyAccounts(ctx) {
   }
 
   async function startLink() {
-    window.JKVoiceDemo?.begin();
-    speak('Сохрани камень по почте, чтобы открыть его на новом телефоне. Сейчас появится форма регистрации.');
     await ctx.liveHome();
     showForm('register');
   }
