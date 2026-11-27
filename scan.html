@@ -2408,14 +2408,77 @@ function shopPhotoFromFrame(source, box) {
     edge = Math.max(320, Math.floor(edge * 0.85));
   }
 }
-async function replaceShopPhoto(s, file) {
-  if (!file || !canPrepareForShop(s) || !(await ownerOk())) return;
-  const url = URL.createObjectURL(file);
+function styleShopFrame(image) {
+  const edge = Math.min(1200, Math.max(image.width, image.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = edge;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = borderColor(image);
+  ctx.fillRect(0, 0, edge, edge);
+  const scale = Math.min(edge / image.width, edge / image.height);
+  ctx.drawImage(image, (edge-image.width*scale)/2, (edge-image.height*scale)/2, image.width*scale, image.height*scale);
+  const pixels = ctx.getImageData(0, 0, edge, edge), d = pixels.data;
+  // Estimate paper colour from corner patches, then trace matching paper inward from the border.
+  const samples = [[], [], []], margin = Math.max(2, Math.floor(edge * .045));
+  for (let y=0; y<edge; y+=2) for (let x=0; x<edge; x+=2) {
+    if ((x>=margin && x<edge-margin) || (y>=margin && y<edge-margin)) continue;
+    for (let c=0;c<3;c++) samples[c].push(d[4*(y*edge+x)+c]);
+  }
+  const paper = samples.map(a=>a.sort((a,b)=>a-b)[Math.floor(a.length/2)]);
+  const paperLight = (paper[0]+paper[1]+paper[2])/3;
+  const affinity = new Uint8Array(edge*edge), seen = new Uint8Array(edge*edge);
+  const queue = new Int32Array(edge*edge);
+  let head=0, tail=0;
+  function visit(p) {
+    if (seen[p]) return;
+    seen[p]=1;
+    const k=4*p;
+    const light=(d[k]+d[k+1]+d[k+2])/3;
+    const delta=light-paperLight;
+    const chroma=Math.max(...paper.map((v,c)=>Math.abs(d[k+c]-v-delta)));
+    const weight=Math.min(1,(32-chroma)/13,(delta+80)/28,(80-delta)/25);
+    if (weight<=0) return;
+    affinity[p]=Math.round(255*weight);
+    queue[tail++]=p;
+  }
+  for (let i=0;i<edge;i++) {visit(i);visit((edge-1)*edge+i);visit(i*edge);visit(i*edge+edge-1);}
+  while (head<tail) {
+    const p=queue[head++], x=p%edge;
+    if(x)visit(p-1); if(x<edge-1)visit(p+1);
+    if(p>=edge)visit(p-edge); if(p<edge*(edge-1))visit(p+edge);
+  }
+  const sage=[206,210,192];
+  for(let p=0;p<affinity.length;p++){
+    const k=4*p, blend=affinity[p]/255;
+    const shade=((d[k]+d[k+1]+d[k+2])/3-paperLight)*.65;
+    for(let c=0;c<3;c++) {
+      const stone=(d[k+c]-110)*1.055+118;
+      d[k+c]=stone*(1-blend)+(sage[c]+shade)*blend;
+    }
+  }
+  ctx.putImageData(pixels,0,0);
+  return canvas;
+}
+
+function makeRegistrationShopPhoto(shot) {
+  const box = shot.box;
+  const span = Math.ceil(box.side * 1.23);
+  const crop = document.createElement('canvas');
+  crop.width = crop.height = Math.min(span, 1440);
+  const ctx = crop.getContext('2d'), scale = crop.width / span;
+  ctx.fillStyle = borderColor(shot.cv);
+  ctx.fillRect(0,0,crop.width,crop.height);
+  ctx.drawImage(shot.cv,(span/2-box.cx)*scale,(span/2-box.cy)*scale,shot.cv.width*scale,shot.cv.height*scale);
+  return shopPhotoFromFrame(styleShopFrame(crop), null);
+}
+async function replaceShopPhoto(s, file, savedPhoto = '') {
+  if (!(file || savedPhoto) || !canPrepareForShop(s) || !(await ownerOk())) return;
+  const url = file ? URL.createObjectURL(file) : savedPhoto;
   try {
     const image = new Image();
     image.src = url;
     await image.decode();
-    const shopPreview = shopPhotoFromFrame(image, null);
+    const shopPreview = shopPhotoFromFrame(styleShopFrame(image), null);
     sheet(`<img style="width:100%;max-height:55vh;object-fit:contain" src="${shopPreview}" alt="Фото для магазина"><div class="btns"><button class="btn" id="shopCancel">Назад</button><button class="btn main" id="shopApply">Сохранить фото</button></div>`);
     $('shopCancel').onclick = () => showInfo(s);
     $('shopApply').onclick = async e => {
@@ -2430,7 +2493,7 @@ async function replaceShopPhoto(s, file) {
       } catch (err) { toast('Фото не сохранено: ' + err.message); button.disabled = false; }
     };
   } catch (e) { toast('Не удалось открыть фото: ' + e.message); }
-  finally { URL.revokeObjectURL(url); }
+  finally { if (file) URL.revokeObjectURL(url); }
 }
 function showInfo(s) {
   if (s.mode) {
@@ -2455,11 +2518,12 @@ function showInfo(s) {
   const photoPicker = '<label class="btn pick">Выбрать фото для магазина<input type="file" id="shopFile" accept="image/*"></label>';
   const shopPhoto = availableShopPhoto(s);
   const preparation = canPrepareForShop(s) ? (shopPhoto ?
-    `<div class="shot"><img src="${esc(shopPhoto)}" alt="Фото для магазина"><div><b>${shopStatusLabel(s)}</b></div></div>${s.shopState ? '' : '<button class="btn main" id="shopPublish">Опубликовать в магазине</button>'}` : '') + photoPicker : '';
+    `<div class="shot"><img src="${esc(shopPhoto)}" alt="Фото для магазина"><div><b>${shopStatusLabel(s)}</b></div></div>${s.shopPreview && !s.shopState ? '<button class="btn main" id="shopPublish">Опубликовать в магазине</button>' : ''}${s.thumb && (!s.shopPreview || s.shopPreview === s.thumb) ? '<button class="btn main" id="styleShop">Обработать фото сканера</button>' : ''}` : '') + photoPicker : '';
   sheet(stoneCard(s, 'info', `${channelNote}${reverseButton}${preparation}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
   if ($('shopPublish')) $('shopPublish').onclick = e => publishStone(s,e.currentTarget);
   if ($('addReverse')) $('addReverse').onclick = () => openAdd({ reverse: s });
+  if ($('styleShop')) $('styleShop').onclick = () => replaceShopPhoto(s, null, s.thumb);
   if ($('shopFile')) $('shopFile').onchange = e => replaceShopPhoto(s, e.target.files[0]);
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
   $('del').onclick = async () => {
@@ -2681,7 +2745,7 @@ $('btnSave').onclick = async () => {
       }
       const enc = encodePatches(addShot.f);
       const g = f32B64(gvecOf(addShot.f));
-      const shopFields = catalogChannel({ name, jk }) === 'shop' ? { shopPreview: shopPhotoFromFrame(addShot.cv, addShot.box) } : {};
+      const shopFields = catalogChannel({ name, jk }) === 'shop' ? { shopPreview: makeRegistrationShopPhoto(addShot) } : {};
       const doc = await fsCreate(COL, { ...shopFields, name, jk, buy, contacts: JSON.stringify(contacts), love, created: Date.now(), thumb: addShot.thumb, g, G: addShot.f.G, hue: addShot.hue ?? 0, n: enc.n, from: addCtx.legacy ? addCtx.legacy.id : '' });
       const id = doc.name.split('/').pop();
       dsSave(addShot.cv, { kind: 'reg', stone: id, side: 'A', name });
