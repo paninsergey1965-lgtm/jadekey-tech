@@ -100,6 +100,12 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
       const {readStone} = await import('/shop/inventory-v3.js');
       const stone = await readStone(sid);
       if (!stone || stone.state !== 'available') { status.textContent='Камень сейчас недоступен для покупки.'; return; }
+      if (sid === '0DjjwkaR2kflqOIyD4b7') {
+        const {lovePrice} = await import('/shop/stone-price.js');
+        PR.love = await lovePrice(sid);
+        document.querySelector('#modes input[value="love"]').closest('label').querySelector('i').textContent = fmt(PR.love) + ' ₽';
+        upd();
+      }
       document.getElementById('title').textContent='Камень '+stone.name;
       document.getElementById('photo').src=stone.photo;
       document.querySelector('.prod').style.display=''; status.hidden=true;
@@ -116,7 +122,7 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   f.onsubmit = async (e) => {
     e.preventDefault(); err.textContent = '';
     if (!checkout.ready()) return;
-    const d = Object.fromEntries(new FormData(f)); d.id = 'catalog-stone'; d.sid = sid; d.mode = mode();
+    const d = Object.fromEntries(new FormData(f)); d.id = 'catalog-stone'; d.sid = sid; d.mode = mode(); d.displayedPrice = PR[d.mode];
     const storageKey = 'jk-shop-attempt:' + sid;
     let attempt = sessionStorage.getItem(storageKey);
     if (!attempt) { attempt = crypto.randomUUID(); sessionStorage.setItem(storageKey,attempt); }

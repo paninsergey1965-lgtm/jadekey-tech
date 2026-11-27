@@ -42,6 +42,13 @@
       card.querySelector('.favorite-button').dataset.favorite=stone.id;
       card.querySelector('.add-button').dataset.add=stone.id;
       grid.append(card);
+      if (stone.id === '0DjjwkaR2kflqOIyD4b7') {
+        import('/shop/stone-price.js').then(module => module.lovePrice(stone.id)).then(price => {
+          card.dataset.price = String(price);
+          card.querySelector('.product-price').textContent = 'от ' + rub(price);
+          if (cartId === stone.id) renderCart();
+        }).catch(()=>{});
+      }
     }
   } catch (_) { loadFailed=true; }
   const cards = [...grid.querySelectorAll('.product-card')];
