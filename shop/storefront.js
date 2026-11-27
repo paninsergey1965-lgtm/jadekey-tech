@@ -6,16 +6,25 @@
   const grid = document.getElementById('product-grid');
   if (!grid) return;
 
-  const service = 'https://functions.yandexcloud.net/d4eif8g25o2652dmff0v';
   let loadFailed = false;
   try {
-    const response = await fetch(service + '?inventory=1', {cache:'no-store'});
-    if (!response.ok) throw new Error('catalog');
-    const result = await response.json();
-    for (const stone of result.stones || []) {
-      if (!/^[a-zA-Z0-9]{20}$/.test(stone.id) || !/^L[ -]?\d+$/i.test(stone.name) ||
-          !stone.photo?.startsWith('data:image/jpeg;base64,')) continue;
-      const img = new Image(); img.src = stone.photo; img.alt = 'Камень ' + stone.name;
+    const {readStock,readStone} = await import('/shop/inventory-v3.js');
+    const stock = await readStock();
+    // Reserved orders are rechecked by the payment service during its inventory request.
+    if (stock.some(stone => stone.state === 'reserved')) {
+      fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v?inventory=1',{cache:'no-store'}).catch(()=>{});
+    }
+    for (const stone of stock) {
+      if (!/^[a-zA-Z0-9]{20}$/.test(stone.id) || !/^L[ -]?\d+$/i.test(stone.name) || stone.state === 'reserved') continue;
+      const img = new Image(); img.alt = 'Камень ' + stone.name;
+      readStone(stone.id).then(current=>{
+        if (!current?.photo.startsWith('data:image/jpeg;base64,')) return;
+        img.src=current.photo;
+        const card=img.closest('.product-card');
+        if (card) card.dataset.image=current.photo;
+        const cartImage=document.getElementById('cart-content')?.querySelector('img');
+        if (cartImage?.alt===img.alt) cartImage.src=current.photo;
+      }).catch(()=>{});
       if (stone.state === 'sold') {
         const tile = document.createElement('div'), label = document.createElement('strong');
         label.textContent = stone.name + ' · Продан'; tile.append(img,label);

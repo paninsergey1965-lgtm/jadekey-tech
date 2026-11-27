@@ -97,9 +97,8 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   async function load() {
     try {
       if (!/^[A-Za-z0-9]{20}$/.test(sid || '')) throw new Error();
-      const response = await fetch(service + '?inventory=1',{cache:'no-store'});
-      if (!response.ok) throw new Error();
-      const data = await response.json(), stone = (data.stones || []).find(x=>x.id === sid);
+      const {readStone} = await import('/shop/inventory-v3.js');
+      const stone = await readStone(sid);
       if (!stone || stone.state !== 'available') { status.textContent='Камень сейчас недоступен для покупки.'; return; }
       document.getElementById('title').textContent='Камень '+stone.name;
       document.getElementById('photo').src=stone.photo;

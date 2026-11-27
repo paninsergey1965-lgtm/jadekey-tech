@@ -2394,8 +2394,8 @@ async function openCatalog() {
 
 const shopStatusLabel = s => ({available:'В магазине', reserved:'Зарезервирован', sold:'Куплен'})[s.shopState] || (s.shopPreview ? 'Фото подготовлено' : availableShopPhoto(s) ? 'Есть фото сканера' : 'Фото не подготовлено');
 async function shopReady() {
-  const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v?inventory=1', {cache:'no-store'});
-  return r.ok && (await r.json()).version === 1;
+  const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v', {cache:'no-store'});
+  return r.ok && (await r.json()).inventoryVersion === 1;
 }
 function availableShopPhoto(s) {
   return s.shopPreview || (/^data:image\/jpeg;base64,/.test(s.thumb || '') ? s.thumb : '');
