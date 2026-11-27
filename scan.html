@@ -2360,20 +2360,26 @@ async function openCatalog() {
   loadLegacyStones();
 }
 
-const shopStatusLabel = s => ({available:'В магазине', reserved:'Зарезервирован', sold:'Куплен'})[s.shopState] || (s.shopPreview ? 'Фото подготовлено' : 'Фото не подготовлено');
+const shopStatusLabel = s => ({available:'В магазине', reserved:'Зарезервирован', sold:'Куплен'})[s.shopState] || (s.shopPreview ? 'Фото подготовлено' : availableShopPhoto(s) ? 'Есть фото сканера' : 'Фото не подготовлено');
 async function shopReady() {
   const r = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v?inventory=1', {cache:'no-store'});
   return r.ok && (await r.json()).version === 1;
 }
+function availableShopPhoto(s) {
+  return s.shopPreview || (/^data:image\/jpeg;base64,/.test(s.thumb || '') ? s.thumb : '');
+}
 async function publishStone(s,button) {
   button.disabled=true;
   try {
-    if (!canPrepareForShop(s) || s.shopState || !s.shopPreview || !(await ownerOk())) return;
+    if (!canPrepareForShop(s) || s.shopState || !availableShopPhoto(s) || !(await ownerOk())) return;
     if (!stones.some(x=>x.of === s.id && !x.mode)) throw new Error('Для магазина нужны снимки обеих сторон.');
-    if (!(await shopReady())) throw new Error('Приём заказов на новые камни ещё не подключён. Фото сохранено.');
-    const updated = await fsCall(`${BASE}/${COL}/${s.id}?key=${FS.key}&updateMask.fieldPaths=shopState&currentDocument.updateTime=${encodeURIComponent(s.updateTime)}`,{
-      method:'PATCH',headers:await authHeaders(),body:JSON.stringify(fsFields({shopState:'available'}))});
-    s.shopState='available'; s.updateTime=updated.updateTime;
+    if (!(await shopReady())) throw new Error('Магазин временно недоступен. Попробуй ещё раз.');
+    const fields = {shopState:'available'};
+    if (!s.shopPreview) fields.shopPreview = availableShopPhoto(s);
+    const mask = Object.keys(fields).map(key => 'updateMask.fieldPaths=' + key).join('&');
+    const updated = await fsCall(`${BASE}/${COL}/${s.id}?key=${FS.key}&${mask}&currentDocument.updateTime=${encodeURIComponent(s.updateTime)}`,{
+      method:'PATCH',headers:await authHeaders(),body:JSON.stringify(fsFields(fields))});
+    Object.assign(s, fields); s.updateTime=updated.updateTime;
     renderColl(); if ($('shopPublish')===button) showInfo(s);
   } catch(e) { toast(e.message,6500); }
   finally { button.disabled=false; }
@@ -2445,8 +2451,9 @@ function showInfo(s) {
   const channel = catalogChannel(s);
   const channelNote = channel ? `<p class="sh-note">Канал продажи: ${channel === 'wb' ? 'Wildberries' : 'Магазин JADEKEY'}</p>` : '';
   const photoPicker = '<label class="btn pick">Выбрать фото для магазина<input type="file" id="shopFile" accept="image/*"></label>';
-  const preparation = canPrepareForShop(s) ? (s.shopPreview ?
-    `<div class="shot"><img src="${esc(s.shopPreview)}" alt="Фото для магазина"><div><b>${shopStatusLabel(s)}</b></div></div>${s.shopState ? '' : '<button class="btn main" id="shopPublish">Опубликовать в магазине</button>'}` : '') + photoPicker : '';
+  const shopPhoto = availableShopPhoto(s);
+  const preparation = canPrepareForShop(s) ? (shopPhoto ?
+    `<div class="shot"><img src="${esc(shopPhoto)}" alt="Фото для магазина"><div><b>${shopStatusLabel(s)}</b></div></div>${s.shopState ? '' : '<button class="btn main" id="shopPublish">Опубликовать в магазине</button>'}` : '') + photoPicker : '';
   sheet(stoneCard(s, 'info', `${channelNote}${preparation}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
   if ($('shopPublish')) $('shopPublish').onclick = e => publishStone(s,e.currentTarget);
