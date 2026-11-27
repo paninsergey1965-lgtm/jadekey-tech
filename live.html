@@ -70,6 +70,9 @@ nav button.on{color:var(--jade)}
 /* sheet */
 .sheet{position:fixed;left:0;right:0;bottom:calc(var(--nav) + env(safe-area-inset-bottom));max-height:78vh;overflow-y:auto;background:var(--panel);border-radius:22px 22px 0 0;border-top:1px solid var(--line);padding:10px 20px 24px;transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:15;box-shadow:0 -20px 50px #0009}
 .sheet.on{transform:none}
+#sheet.on.love:has(#loveDaily){inset:0;max-height:none;border-radius:0;z-index:45;overscroll-behavior:contain;padding-top:max(14px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
+#sheet.on.love:has(#loveDaily)>.grab{display:none}
+
 .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
 .sh-head{display:flex;gap:14px;align-items:center}
 .sh-thumb{width:84px;height:84px;border-radius:14px;object-fit:cover;background:#0006;flex:none;border:1px solid var(--line)}
