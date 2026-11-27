@@ -3289,7 +3289,7 @@ async function openLoveCalendar(s, P, chosenDate) {
     const label = new Date(card.date+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
     const image = './love-days/cards/'+card.date+'.jpg?v=manga1';
     const nav = isAdmin ? '<div class="btns"><button class="btn" id="lovePrev">Назад</button><button class="btn" id="loveToday">Сегодня</button><button class="btn" id="loveNext">Дальше</button></div>' : '';
-    sheet('<div id="loveDaily"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" style="display:block;width:100%;max-height:40svh;object-fit:contain;margin:12px auto;border-radius:14px" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p>'+nav+'<div class="btns">'+sndBtn()+'<button class="btn main" id="again">Закрыть</button></div></div>');
+    sheet('<div id="loveDaily"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" style="display:block;width:100%;height:auto;margin:12px auto" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p>'+nav+'<div class="btns">'+sndBtn()+'<button class="btn main" id="again">Закрыть</button></div></div>');
     active=$('loveDaily'); $('sheet').classList.add('love');
     const picture=active.querySelector('img');
     picture.onerror=()=>{picture.onerror=null;picture.src=loveCalendarRoot+'cards/'+card.date+'.jpg?v=manga1';};
