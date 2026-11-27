@@ -142,7 +142,8 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
 @media(max-width:620px){.swap{margin:36px 18px 0}}
 .ph{flex:0 0 64%;max-width:250px;scroll-snap-align:center;text-align:left}
 .ph .fr{background:#0d0d0f;border-radius:30px;padding:7px;box-shadow:0 18px 40px -22px #0007}
-.ph img{width:100%;aspect-ratio:390/700;object-fit:cover;object-position:top;border-radius:24px}
+.ph .fr > img,.ph .fr > .love-example{width:100%;aspect-ratio:390/700;min-height:0}
+.ph .fr > img{object-fit:cover;object-position:top;border-radius:24px}
 .ph h3{margin:18px 4px 0}
 .ph p{margin:6px 4px 0;color:var(--mute);font-size:14px;line-height:1.55}
 .ui .hint{margin-top:22px;font:500 11px/1 var(--cap);letter-spacing:.14em;text-transform:uppercase;color:#9a918a}
@@ -165,7 +166,7 @@ footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
 .film-box{position:relative;width:100%;max-width:380px;border-radius:26px;overflow:hidden;box-shadow:0 24px 60px -30px #000}
 .film video{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;background:#111}
 .film-snd{position:absolute;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:0;background:#0009;color:#fff;font-size:20px;cursor:pointer;backdrop-filter:blur(6px)}
-.love-example{background:#351627;color:#fff3f5;border-radius:23px;padding:12px;display:grid;gap:10px}.love-example b{color:#ffc3d6;letter-spacing:.08em}.love-example p{margin:0;color:inherit;font:inherit}.love-example img[data-ui]{width:100%;height:auto;object-fit:contain;border-radius:12px}.love-full .love-example{max-width:460px;margin:auto;text-align:center}.love-full .love-example img{max-height:calc(100dvh - 215px);object-fit:contain}</style>
+.love-example{background:#351627;color:#fff3f5;border-radius:23px;padding:12px;display:grid;gap:10px}.love-example b{color:#ffc3d6;letter-spacing:.08em}.love-example p{margin:0;color:inherit;font:inherit}.love-example img[data-ui]{width:100%;height:auto;object-fit:contain;border-radius:12px}.ph .love-example{grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}.ph .love-example img[data-ui]{height:100%;min-height:0;object-position:center bottom}.love-full .love-example{max-width:460px;margin:auto;text-align:center}.love-full .love-example img{max-height:calc(100dvh - 215px);object-fit:contain}</style>
 </head>
 <body>
 <header class="top"><div class="top-in">
