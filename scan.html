@@ -2450,13 +2450,16 @@ function showInfo(s) {
   }
   const channel = catalogChannel(s);
   const channelNote = channel ? `<p class="sh-note">Канал продажи: ${channel === 'wb' ? 'Wildberries' : 'Магазин JADEKEY'}</p>` : '';
+  const needsReverse = canPrepareForShop(s) && !stones.some(x => x.of === s.id && !x.mode);
+  const reverseButton = needsReverse ? '<button class="btn" id="addReverse">Добавить обратную сторону</button>' : '';
   const photoPicker = '<label class="btn pick">Выбрать фото для магазина<input type="file" id="shopFile" accept="image/*"></label>';
   const shopPhoto = availableShopPhoto(s);
   const preparation = canPrepareForShop(s) ? (shopPhoto ?
     `<div class="shot"><img src="${esc(shopPhoto)}" alt="Фото для магазина"><div><b>${shopStatusLabel(s)}</b></div></div>${s.shopState ? '' : '<button class="btn main" id="shopPublish">Опубликовать в магазине</button>'}` : '') + photoPicker : '';
-  sheet(stoneCard(s, 'info', `${channelNote}${preparation}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  sheet(stoneCard(s, 'info', `${channelNote}${reverseButton}${preparation}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
   if ($('shopPublish')) $('shopPublish').onclick = e => publishStone(s,e.currentTarget);
+  if ($('addReverse')) $('addReverse').onclick = () => openAdd({ reverse: s });
   if ($('shopFile')) $('shopFile').onchange = e => replaceShopPhoto(s, e.target.files[0]);
   $('edit').onclick = async () => { if (await ownerOk()) { hideSheet(); openAdd({ edit: s }); } };
   $('del').onclick = async () => {
@@ -2521,6 +2524,11 @@ async function openAdd(ctx = {}) {
   updateCatalogPackage();
   $('addTitle').textContent = ctx.edit ? 'Изменить' : ctx.legacy ? 'Переснять камень' : 'Новый камень';
   tab('add');
+  if (ctx.reverse) {
+    $('addTitle').textContent = ctx.reverse.name + ' · обратная сторона';
+    setAddMode('cam');
+    return;
+  }
   if (ctx.edit) { setAddMode('form'); $('shotPart').style.display = 'none'; $('btnSave').textContent = 'Сохранить'; return; }
   $('btnSave').textContent = 'Сохранить в коллекцию';
   if (ctx.fromCv) { await processShot(ctx.fromCv); return; }
@@ -2563,6 +2571,36 @@ function dsSetup() {
   };
   $('dsOff').onclick = () => { ls.set('jk2_ds_tok', ''); dsCount(0); hideSheet(); toast('Датасет отключён'); };
 }
+function reviewReverse(stone, shot) {
+  sheet(`<div class="sh-name">${esc(stone.name)} · проверь стороны</div><div class="shot"><img src="${esc(stone.thumb)}" alt=""><b>Лицевая</b></div><div class="shot"><img src="${esc(shot.thumb)}" alt=""><b>Обратная</b></div><div class="btns"><button class="btn" id="retryReverse">Переснять</button><button class="btn main" id="saveReverse">Сохранить обратную сторону</button></div>`);
+  $('retryReverse').onclick = hideSheet;
+  $('saveReverse').onclick = async e => {
+    const button = e.currentTarget;
+    button.disabled = true;
+    try {
+      if (!canPrepareForShop(stone) || !(await ownerOk())) return;
+      const enc = encodePatches(shot.f);
+      const side = { name: stone.name, jk: stone.jk || '', buy: stone.buy || 'love',
+        contacts: JSON.stringify(stone.contacts || {}), love: stone.love ? JSON.stringify(stone.love) : '',
+        created: Date.now(), thumb: shot.thumb, g: f32B64(gvecOf(shot.f)), G: shot.f.G,
+        hue: shot.hue ?? 0, n: enc.n, of: stone.id };
+      const prefix = BASE.slice('https://firestore.googleapis.com/v1/'.length);
+      const sideId = stone.id + '_B';
+      const create = (col, data) => ({ update: { name: prefix + '/' + col + '/' + sideId, ...fsFields(data) }, currentDocument: { exists: false } });
+      await fsCall(BASE + ':commit?key=' + FS.key, { method: 'POST', headers: await authHeaders(),
+        body: JSON.stringify({ writes: [
+          { update: { name: prefix + '/' + COL + '/' + stone.id, ...fsFields({ name: stone.name }) }, updateMask: { fieldPaths: ['name'] }, currentDocument: { updateTime: stone.updateTime } },
+          create(COL, side), create(COLP, { idx: enc.idx, p: enc.p, sc: enc.sc })
+        ] }) });
+      dsSave(shot.cv, { kind: 'reg', stone: stone.id, side: 'B', name: stone.name });
+      addCtx = {}; tab('coll'); await loadStones();
+      const saved = stones.find(x => x.id === stone.id);
+      if (saved) showInfo(saved);
+      toast('Обратная сторона сохранена');
+    } catch (err) { toast('Проверь карточку камня: ' + err.message, 5500); }
+    finally { button.disabled = false; }
+  };
+}
 async function processShot(cv) {
   if (!extractor) { toast('Модель ещё загружается'); setAddMode('cam'); return; }
   veil('Запоминаю камень…'); await tick();
@@ -2572,8 +2610,16 @@ async function processShot(cv) {
     const n = r.f.mask.filter(Boolean).length;
     const t = document.createElement('canvas'); t.width = t.height = 240; t.getContext('2d').drawImage(r.f.cv, 0, 0, 240, 240);
     const shot = { cv, box: r.b, f: r.f, thumb: t.toDataURL('image/jpeg', 0.8), n, hue: r.b.hue };
+    if (addCtx.reverse) {
+      veil();
+      reviewReverse(addCtx.reverse, shot);
+      return;
+    }
     if (addSide === 2) {
-      if (verdictOf(scoreAgainst(addShot.f, r.f)) === 'yes') { veil(); toast('Это та же сторона. Переверни камень и сними снова', 4500); addSide = 0; setAddMode('form'); return; }
+      if (verdictOf(scoreAgainst(addShot.f, r.f)) === 'yes' &&
+          !confirm('Рисунок похож на первую сторону. Ты перевернул камень? ОК — сохранить как обратную, Отмена — переснять.')) {
+        veil(); setAddMode('cam'); return;
+      }
       addShot2 = shot; addSide = 0; drawSide2(); setAddMode('form'); veil(); return;
     }
     addShot = shot;
