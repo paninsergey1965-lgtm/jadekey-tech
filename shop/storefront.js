@@ -8,7 +8,7 @@
 
   let loadFailed = false;
   try {
-    const {readStock,readStone} = await import('/shop/inventory-v3.js');
+    const {readStock,readStone} = await import('/shop/inventory-v3.js?v=4');
     const stock = await readStock();
     // Reserved orders are rechecked by the payment service during its inventory request.
     if (stock.some(stone => stone.state === 'reserved')) {
@@ -113,7 +113,9 @@
     empty.hidden = visible !== 0;
     empty.querySelector('h3').textContent = cards.length ? 'Ничего не найдено' : loadFailed ? 'Не удалось загрузить каталог' : 'Сейчас в продаже нет камней';
     empty.querySelector('p').textContent = cards.length ? 'Попробуйте другой запрос.' : loadFailed ? 'Обновите страницу.' : 'Новые камни появятся здесь.';
-    document.getElementById('reset-filters').hidden = !cards.length;
+    const reset = document.getElementById('reset-filters');
+    reset.hidden = !cards.length && !loadFailed;
+    reset.textContent = loadFailed ? 'Повторить загрузку' : 'Показать все камни';
     count.textContent = visible + ' ' + (visible % 10 === 1 && visible % 100 !== 11 ? 'камень' : visible % 10 >= 2 && visible % 10 <= 4 && (visible % 100 < 12 || visible % 100 > 14) ? 'камня' : 'камней');
   }
 
@@ -184,6 +186,7 @@
   search.addEventListener('input', renderProducts);
   sort.addEventListener('change', renderProducts);
   document.getElementById('reset-filters').addEventListener('click', () => {
+    if (loadFailed) { location.reload(); return; }
     search.value = '';
     sort.value = 'featured';
     setFilter('all');

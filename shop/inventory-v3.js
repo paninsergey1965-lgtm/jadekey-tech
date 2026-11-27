@@ -14,10 +14,33 @@ export async function readStone(id) {
   if (!response.ok) throw new Error('Stone unavailable');
   return stoneFromDoc(await response.json());
 }
-export async function readStock() {
+async function queryStock() {
   const query = {from:[{collectionId:collection}],select:{fields:[{fieldPath:'name'},{fieldPath:'shopState'}]},
     where:{fieldFilter:{field:{fieldPath:'shopState'},op:'IN',value:{arrayValue:{values:states.map(stringValue=>({stringValue}))}}}}};
   const response = await fetch(documents+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:query}),cache:'no-store'});
   if (!response.ok) throw new Error('Inventory unavailable');
   return (await response.json()).filter(row=>row.document).map(row=>stoneFromDoc(row.document));
+}
+
+export async function readStock() {
+  try {
+    return await queryStock();
+  } catch (error) {
+    const stock = [];
+    let token = '';
+    do {
+      const params = new URLSearchParams({pageSize:'300'});
+      for (const field of ['name','shopState']) params.append('mask.fieldPaths',field);
+      if (token) params.set('pageToken',token);
+      const response = await fetch(documents+'/'+collection+'?'+params,{cache:'no-store'});
+      if (!response.ok) throw error;
+      const page = await response.json();
+      for (const doc of page.documents || []) {
+        const stone = stoneFromDoc(doc);
+        if (states.includes(stone.state)) stock.push(stone);
+      }
+      token = page.nextPageToken;
+    } while (token);
+    return stock;
+  }
 }
