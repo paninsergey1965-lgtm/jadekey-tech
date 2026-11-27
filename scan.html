@@ -358,7 +358,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
 <section class="view" id="vColl">
   <div class="page">
     <h1>Коллекция</h1>
-    <div class="sub" id="collSub">Загружаю…</div>
+    <button class="btn main" id="novPhotos" style="display:none">Опубликовать партию L10–L25</button><div class="sub" id="collSub">Загружаю…</div>
     <button class="day-pill" id="dsBtn" type="button" style="margin:6px 0 12px;display:inline-block">Датасет: подключить</button> <button class="day-pill" id="soldBtn" type="button" style="margin:6px 0 12px;display:inline-block">Проданные: показать</button> <button class="day-pill" id="loveCalendarAdmin" type="button" style="display:none">Любовь · календарь</button> <button class="day-pill" id="clientsBtn" type="button" style="margin:6px 0 12px;display:none">Клиенты</button> <button class="day-pill" id="supportInboxBtn" type="button" style="margin:6px 0 12px;display:none">Чаты</button>
     <input class="search" id="search" placeholder="Поиск по названию или JK-номеру" autocomplete="off">
     <div class="grid" id="grid"></div>
@@ -2347,10 +2347,42 @@ function showLegacyStone(s) {
   $('again').onclick = hideSheet;
 }
 
+async function publishNovemberPhotos() {
+  if (!(await ownerOk()) || FS.project !== 'jadekey-46f37') return;
+  const batch = {"L10":"C77jjyHgW3iCHUQRQOZT","L11":"gelyqCEvZT3onhCeKqb6","L12":"xPzQdsQbiA9kCWmzUD7h","L13":"l4z7oj6fyyEtNk4CRMgE","L14":"wvJJTjW2CxvD5tVloFGU","L15":"QGxSzyAZwyoKHfQiHzzt","L16":"iZGZfBmSveU6y0tLpGny","L17":"8j5KvME8z19ynQDKakLd","L18":"AzYP3bu47zuP0daBLc2C","L19":"mzRzfmSK6QGvKIkcNXcl","L20":"uBiKCGljH9la1CIomdbH","L21":"HAcjUo7JnqizrAYK0fR1","L22":"iyVsIjCPNzJBeC9HZKzf","L23":"gVXrbW1ndsNPbVQt0Bzw","L24":"XLAU6KTj2CBfv0t15Ssc","L25":"0DjjwkaR2kflqOIyD4b7"};
+  veil('Готовлю фотографии…');
+  try {
+    await loadStones();
+    if (!(await shopReady())) throw new Error('Магазин временно недоступен');
+    const writes = [];
+    for (const [name, id] of Object.entries(batch)) {
+      const stone = stones.find(x => x.id === id && x.name === name);
+      if (!stone) throw new Error('Не найдена карточка ' + name);
+      if (!canPrepareForShop(stone) || (stone.shopState && stone.shopState !== 'available')) continue;
+      if (!stones.some(x => x.of === id && !x.mode)) throw new Error('Нет оборота у ' + name);
+      const r = await fetch('/shop/photos/20261127/' + name + '.jpg');
+      if (!r.ok) throw new Error('Не удалось загрузить фото ' + name);
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      if (bytes[0] !== 255 || bytes[1] !== 216) throw new Error('Не удалось прочитать ' + name);
+      const photo = 'data:image/jpeg;base64,' + bytesB64(bytes);
+      if (stone.shopPreview === photo && stone.shopState === 'available') continue;
+      writes.push({update:{name:BASE.slice('https://firestore.googleapis.com/v1/'.length)+'/'+COL+'/'+id,
+        ...fsFields({shopPreview:photo,shopState:'available'})},
+        updateMask:{fieldPaths:['shopPreview','shopState']},currentDocument:{updateTime:stone.updateTime}});
+    }
+    if (writes.length) await fsCall(BASE+':commit?key='+FS.key,{method:'POST',headers:await authHeaders(),body:JSON.stringify({writes})});
+    await loadStones(); toast('Фотографии в магазине. Обновлено карточек: '+writes.length,6000);
+  } catch(e) { toast('Публикация: '+e.message,7000); }
+  finally { veil(); }
+}
 async function openCatalog() {
   if (!isAdmin || !(await authToken())) {
     await adminLogin();
     if (!isAdmin) return;
+  }
+  if (new URLSearchParams(location.search).get('photos') === '20261127') {
+    $('novPhotos').style.display = '';
+    $('novPhotos').onclick = publishNovemberPhotos;
   }
   window.showSold = true;
   updateSoldBtn();
@@ -5130,6 +5162,7 @@ function liveInit() {
   }
   const g = new URLSearchParams(location.search).get('g');
   if (g && /^[\w-]+\.[a-z0-9]+$/.test(g)) { const [id, claim] = g.split('.'); openGift(id, claim); }
+  else if (new URLSearchParams(location.search).get('photos') === '20261127') openCatalog();
   else if (new URLSearchParams(location.search).has('live')) { tab('live'); liveHome(); }
 }
 </script>
