@@ -2347,9 +2347,11 @@ function showLegacyStone(s) {
   $('again').onclick = hideSheet;
 }
 
+const shopPhotoBatch = new URLSearchParams(location.search).get('photos');
 async function publishNovemberPhotos() {
   if (!(await ownerOk()) || FS.project !== 'jadekey-46f37') return;
-  const batch = {"L10":"C77jjyHgW3iCHUQRQOZT","L11":"gelyqCEvZT3onhCeKqb6","L12":"xPzQdsQbiA9kCWmzUD7h","L13":"l4z7oj6fyyEtNk4CRMgE","L14":"wvJJTjW2CxvD5tVloFGU","L15":"QGxSzyAZwyoKHfQiHzzt","L16":"iZGZfBmSveU6y0tLpGny","L17":"8j5KvME8z19ynQDKakLd","L18":"AzYP3bu47zuP0daBLc2C","L19":"mzRzfmSK6QGvKIkcNXcl","L20":"uBiKCGljH9la1CIomdbH","L21":"HAcjUo7JnqizrAYK0fR1","L22":"iyVsIjCPNzJBeC9HZKzf","L23":"gVXrbW1ndsNPbVQt0Bzw","L24":"XLAU6KTj2CBfv0t15Ssc","L25":"0DjjwkaR2kflqOIyD4b7"};
+  const replacePhotos = shopPhotoBatch === 'first7';
+  const batch = replacePhotos ? {"L1":"6ozRQLieVv9XjYh7kiPB","L3":"Gd5iTfP8rbgh9FpjRmiy","L4":"UlIQw56VST6zV6iDawXw","L5":"qf63wZ94MoD18B7fGhgq","L6":"xqDAT8MuRt06ApZecUbY","L7":"guHZpEnh8bmEx88ByhA7","L9":"dRwlhKqTIcTQpgfNPhZ2"} : {"L10":"C77jjyHgW3iCHUQRQOZT","L11":"gelyqCEvZT3onhCeKqb6","L12":"xPzQdsQbiA9kCWmzUD7h","L13":"l4z7oj6fyyEtNk4CRMgE","L14":"wvJJTjW2CxvD5tVloFGU","L15":"QGxSzyAZwyoKHfQiHzzt","L16":"iZGZfBmSveU6y0tLpGny","L17":"8j5KvME8z19ynQDKakLd","L18":"AzYP3bu47zuP0daBLc2C","L19":"mzRzfmSK6QGvKIkcNXcl","L20":"uBiKCGljH9la1CIomdbH","L21":"HAcjUo7JnqizrAYK0fR1","L22":"iyVsIjCPNzJBeC9HZKzf","L23":"gVXrbW1ndsNPbVQt0Bzw","L24":"XLAU6KTj2CBfv0t15Ssc","L25":"0DjjwkaR2kflqOIyD4b7"};
   veil('Готовлю фотографии…');
   try {
     await loadStones();
@@ -2358,8 +2360,9 @@ async function publishNovemberPhotos() {
     for (const [name, id] of Object.entries(batch)) {
       const stone = stones.find(x => x.id === id && x.name === name);
       if (!stone) throw new Error('Не найдена карточка ' + name);
-      if (!canPrepareForShop(stone) || (stone.shopState && stone.shopState !== 'available')) continue;
-      if (!stones.some(x => x.of === id && !x.mode)) throw new Error('Нет оборота у ' + name);
+      if (replacePhotos && stone.shopState !== 'available') continue;
+      if (!replacePhotos && (!canPrepareForShop(stone) || (stone.shopState && stone.shopState !== 'available'))) continue;
+      if (!replacePhotos && !stones.some(x => x.of === id && !x.mode)) throw new Error('Нет оборота у ' + name);
       const r = await fetch('/shop/photos/20261127/' + name + '.jpg');
       if (!r.ok) throw new Error('Не удалось загрузить фото ' + name);
       const bytes = new Uint8Array(await r.arrayBuffer());
@@ -2367,8 +2370,8 @@ async function publishNovemberPhotos() {
       const photo = 'data:image/jpeg;base64,' + bytesB64(bytes);
       if (stone.shopPreview === photo && stone.shopState === 'available') continue;
       writes.push({update:{name:BASE.slice('https://firestore.googleapis.com/v1/'.length)+'/'+COL+'/'+id,
-        ...fsFields({shopPreview:photo,shopState:'available'})},
-        updateMask:{fieldPaths:['shopPreview','shopState']},currentDocument:{updateTime:stone.updateTime}});
+         ...fsFields(replacePhotos ? {shopPreview:photo} : {shopPreview:photo,shopState:'available'})},
+        updateMask:{fieldPaths:replacePhotos ? ['shopPreview'] : ['shopPreview','shopState']},currentDocument:{updateTime:stone.updateTime}});
     }
     if (writes.length) await fsCall(BASE+':commit?key='+FS.key,{method:'POST',headers:await authHeaders(),body:JSON.stringify({writes})});
     await loadStones(); toast('Фотографии в магазине. Обновлено карточек: '+writes.length,6000);
@@ -2380,8 +2383,9 @@ async function openCatalog() {
     await adminLogin();
     if (!isAdmin) return;
   }
-  if (new URLSearchParams(location.search).get('photos') === '20261127') {
+  if (['20261127','first7'].includes(shopPhotoBatch)) {
     $('novPhotos').style.display = '';
+    if (shopPhotoBatch === 'first7') $('novPhotos').textContent = 'Заменить 7 фото в магазине';
     $('novPhotos').onclick = publishNovemberPhotos;
   }
   window.showSold = true;
@@ -5162,7 +5166,7 @@ function liveInit() {
   }
   const g = new URLSearchParams(location.search).get('g');
   if (g && /^[\w-]+\.[a-z0-9]+$/.test(g)) { const [id, claim] = g.split('.'); openGift(id, claim); }
-  else if (new URLSearchParams(location.search).get('photos') === '20261127') openCatalog();
+  else if (['20261127','first7'].includes(shopPhotoBatch)) openCatalog();
   else if (new URLSearchParams(location.search).has('live')) { tab('live'); liveHome(); }
 }
 </script>
