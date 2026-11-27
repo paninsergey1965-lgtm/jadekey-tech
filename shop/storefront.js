@@ -34,7 +34,7 @@
       if (stone.state !== 'available') continue;
       const card = document.createElement('article'), href='/shop/stone.html?s='+stone.id;
       card.className='product-card';
-      Object.assign(card.dataset,{id:stone.id,name:stone.name,filter:'her him',stock:'available',price:String(Math.min(...Object.values(stone.prices))),image:stone.photo,href});
+      Object.assign(card.dataset,{id:stone.id,name:stone.name,filter:'',stock:'available',price:String(Math.min(...Object.values(stone.prices))),image:stone.photo,href});
       card.innerHTML='<div class="product-media"><a class="product-image-link"></a><button type="button" class="favorite-button">♡</button></div><div class="product-details"><h3><a></a></h3><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link">Подробнее</a><button type="button" class="add-button">В корзину</button></div></div>';
       card.querySelectorAll('a').forEach(a=>a.href=href);
       card.querySelector('.product-image-link').append(img);
@@ -77,7 +77,7 @@
   const favorites = new Set(Array.isArray(savedFavorites) ? savedFavorites.filter(id => byId.has(id)) : []);
   let cartId = read(cartKey);
   if (!byId.has(cartId)) cartId = null;
-  let activeFilter = ['her', 'him', 'prem', 'order'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'all';
+  let activeFilter = ['prem', 'order'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'all';
   let returnFocus = null;
 
   function setFilter(next) {
