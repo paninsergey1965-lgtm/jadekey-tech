@@ -2531,6 +2531,38 @@ async function replaceShopPhoto(s, file, savedPhoto = '') {
   } catch (e) { toast('Не удалось открыть фото: ' + e.message); }
   finally { if (file) URL.revokeObjectURL(url); }
 }
+async function editShopPrices(s) {
+  if (!(await ownerOk()) || !canPrepareForShop(s) || ['reserved','sold'].includes(s.shopState)) return;
+  try {
+    const {stonePrices} = await import('/shop/prices.js?v=1');
+    const prices = stonePrices(s.shopPrices);
+    const names = {love:'Love + Печенье', luna:'Луна', tal:'Талисман', path:'Путь'};
+    const inputs = Object.entries(prices).map(([mode,price]) =>
+      `<label class="field">${names[mode]}, ₽<input name="${mode}" type="number" min="1" step="1" inputmode="numeric" required value="${price}"></label>`).join('');
+    sheet(`<form id="priceEditor"><h2>Цены · ${esc(s.name)}</h2>${inputs}<div class="btns"><button type="button" class="btn" id="priceCancel">Назад</button><button class="btn main" type="submit">Сохранить</button></div></form>`);
+    $('priceCancel').onclick = () => showInfo(s);
+    $('priceEditor').onsubmit = async event => {
+      event.preventDefault();
+      const form = event.currentTarget, button = form.querySelector('[type=submit]');
+      button.disabled = true;
+      try {
+        const service = await fetch('https://functions.yandexcloud.net/d4eif8g25o2652dmff0v?pricing=1', {cache:'no-store'});
+        if (!service.ok || (await service.json()).stonePricing !== 1) throw new Error('Платёжная функция ещё не подключена к ценам магазина.');
+        const values = Object.fromEntries(Object.keys(prices).map(mode => [mode, Number(form.elements[mode].value)]));
+        const shopPrices = JSON.stringify(values);
+        stonePrices(shopPrices);
+        const updated = await fsCall(BASE+'/'+COL+'/'+s.id+'?key='+FS.key+'&updateMask.fieldPaths=shopPrices&currentDocument.updateTime='+encodeURIComponent(s.updateTime), {
+          method:'PATCH', headers:await authHeaders(), body:JSON.stringify(fsFields({shopPrices}))
+        });
+        s.shopPrices = shopPrices;
+        s.updateTime = updated.updateTime;
+        showInfo(s);
+        toast('Цены сохранены');
+      } catch (e) { toast('Цены не сохранены. '+e.message,7000); }
+      finally { button.disabled = false; }
+    };
+  } catch(e) { toast(e.message,6000); }
+}
 function showInfo(s) {
   if (s.mode) {
     const sides = stones.filter(x => x.of === s.id).length + 1;
@@ -2555,8 +2587,9 @@ function showInfo(s) {
   const shopPhoto = availableShopPhoto(s);
   const preparation = canPrepareForShop(s) ? (shopPhoto ?
     `<div class="shot"><img src="${esc(shopPhoto)}" alt="Фото для магазина"><div><b>${shopStatusLabel(s)}</b></div></div>${s.shopPreview && !s.shopState ? '<button class="btn main" id="shopPublish">Опубликовать в магазине</button>' : ''}${s.thumb && (!s.shopPreview || s.shopPreview === s.thumb) ? '<button class="btn main" id="styleShop">Обработать фото сканера</button>' : ''}` : '') + photoPicker : '';
-  sheet(stoneCard(s, 'info', `${channelNote}${reverseButton}${preparation}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
+  sheet(stoneCard(s, 'info', `${channelNote}${reverseButton}${preparation}${canPrepareForShop(s) && !["reserved","sold"].includes(s.shopState) ? '<button class="btn" id="shopPricesBtn">Цены в магазине</button>' : ''}<div class="rows">${contactRows(s.contacts)}</div><div class="btns"><button class="btn" id="edit">Изменить</button><button class="btn danger" id="del">Удалить</button></div>`));
   bindRows();
+  if ($('shopPricesBtn')) $('shopPricesBtn').onclick = () => editShopPrices(s);
   if ($('shopPublish')) $('shopPublish').onclick = e => publishStone(s,e.currentTarget);
   if ($('addReverse')) $('addReverse').onclick = () => openAdd({ reverse: s });
   if ($('styleShop')) $('styleShop').onclick = () => replaceShopPhoto(s, null, s.thumb);

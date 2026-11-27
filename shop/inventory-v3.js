@@ -1,21 +1,22 @@
 const documents = 'https://firestore.googleapis.com/v1/projects/jadekey-46f37/databases/(default)/documents';
 const collection = 'jk2_stones';
 const states = ['available','reserved','sold'];
+import {stonePrices} from './prices.js?v=1';
 function stoneFromDoc(doc) {
   const fields = doc.fields || {};
   return {id:doc.name.split('/').pop(), name:fields.name?.stringValue || '',
-    state:fields.shopState?.stringValue || '', photo:fields.shopPreview?.stringValue || ''};
+    prices:stonePrices(fields.shopPrices?.stringValue), state:fields.shopState?.stringValue || '', photo:fields.shopPreview?.stringValue || ''};
 }
 export async function readStone(id) {
   if (!/^[A-Za-z0-9]{20}$/.test(id)) throw new Error('Invalid stone');
-  const url = documents+'/'+collection+'/'+id+'?mask.fieldPaths=name&mask.fieldPaths=shopState&mask.fieldPaths=shopPreview';
+  const url = documents+'/'+collection+'/'+id+'?mask.fieldPaths=name&mask.fieldPaths=shopState&mask.fieldPaths=shopPreview&mask.fieldPaths=shopPrices';
   const response = await fetch(url,{cache:'no-store'});
   if (response.status===404) return null;
   if (!response.ok) throw new Error('Stone unavailable');
   return stoneFromDoc(await response.json());
 }
 async function queryStock() {
-  const query = {from:[{collectionId:collection}],select:{fields:[{fieldPath:'name'},{fieldPath:'shopState'}]},
+  const query = {from:[{collectionId:collection}],select:{fields:[{fieldPath:'name'},{fieldPath:'shopState'},{fieldPath:'shopPrices'}]},
     where:{fieldFilter:{field:{fieldPath:'shopState'},op:'IN',value:{arrayValue:{values:states.map(stringValue=>({stringValue}))}}}}};
   const response = await fetch(documents+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:query}),cache:'no-store'});
   if (!response.ok) throw new Error('Inventory unavailable');
@@ -30,7 +31,7 @@ export async function readStock() {
     let token = '';
     do {
       const params = new URLSearchParams({pageSize:'300'});
-      for (const field of ['name','shopState']) params.append('mask.fieldPaths',field);
+      for (const field of ['name','shopState','shopPrices']) params.append('mask.fieldPaths',field);
       if (token) params.set('pageToken',token);
       const response = await fetch(documents+'/'+collection+'?'+params,{cache:'no-store'});
       if (!response.ok) throw error;
@@ -44,3 +45,4 @@ export async function readStock() {
     return stock;
   }
 }
+

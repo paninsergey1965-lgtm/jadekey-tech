@@ -97,15 +97,14 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
   async function load() {
     try {
       if (!/^[A-Za-z0-9]{20}$/.test(sid || '')) throw new Error();
-      const {readStone} = await import('/shop/inventory-v3.js');
+      const {readStone} = await import('/shop/inventory-v3.js?v=prices1');
       const stone = await readStone(sid);
       if (!stone || stone.state !== 'available') { status.textContent='Камень сейчас недоступен для покупки.'; return; }
-      if (sid === '0DjjwkaR2kflqOIyD4b7') {
-        const {lovePrice} = await import('/shop/stone-price.js');
-        PR.love = await lovePrice(sid);
-        document.querySelector('#modes input[value="love"]').closest('label').querySelector('i').textContent = fmt(PR.love) + ' ₽';
-        upd();
+      Object.assign(PR, stone.prices);
+      for (const input of document.querySelectorAll('#modes input')) {
+        input.closest('label').querySelector('i').textContent = fmt(PR[input.value]) + ' ₽';
       }
+      upd();
       document.getElementById('title').textContent='Камень '+stone.name;
       document.getElementById('photo').src=stone.photo;
       document.querySelector('.prod').style.display=''; status.hidden=true;
@@ -145,3 +144,4 @@ footer small{display:block;max-width:1100px;margin:18px auto 0;font:400 12px/1.6
 <footer><div><a href="/shop/?v=inventory4#catalog">Каталог</a><a href="/shop/delivery.html">Доставка и возврат</a><a href="/shop/oferta.html">Оферта</a><a href="/privacy.html">Конфиденциальность</a><a href="https://jadekey.tech">jadekey.tech</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></div>
 <small>ИП Панин Сергей Николаевич · ИНН 771501067019, ОГРНИП 324774600501998</small></footer>
 </body></html>
+

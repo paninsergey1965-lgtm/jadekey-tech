@@ -48,7 +48,7 @@ async function settleStone(payment) {
   if (payment.status === 'canceled') {
     await updateInventory(doc, { shopState: 'available', shopReserve: '', shopPayment: '' });
   } else if (payment.status === 'succeeded' && payment.amount?.currency === 'RUB' &&
-             Number(payment.amount.value) === STONE_PRICES[stoneMode]) {
+             Number(payment.amount.value) === Number(field(doc,'shopReservedPrice') || STONE_PRICES[stoneMode])) {
     await updateInventory(doc, { shopState: 'sold', buy: stoneMode, shopPayment: payment.id });
   }
 }
@@ -63,17 +63,23 @@ async function payStone(b) {
   }
   let doc = await fs('GET', '/jk2_stones/' + sid);
   const code = [field(doc,'jk'),field(doc,'name')].find(x => /^L[ -]?\d+$/i.test(x.trim()));
-  const price = STONE_PRICES[mode];
+  const configured = JSON.parse(field(doc,'shopPrices') || '{}');
+  const price = field(doc,'shopState') === 'reserved'
+    ? Number(field(doc,'shopReservedPrice') || STONE_PRICES[mode])
+    : (configured[mode] ?? STONE_PRICES[mode]);
+  if (!Number.isSafeInteger(price) || price < 1) return [409,{message:'Цена недоступна.'}];
   if (!code || field(doc,'owner') || field(doc,'mode') || field(doc,'of')) return [400,{message:'Камень не продаётся.'}];
   const key = digest(JSON.stringify([sid, mode, attempt, s(b.name,80),s(b.phone,30),s(b.email,100),b.delivery,s(b.address,200),s(b.comment,200)]));
   const reserve = digest(key);
   if (!field(doc,'shopPreview')) return [409,{message:'Камень не опубликован.'}];
   const state = field(doc,'shopState');
   if (state === 'available') {
-    try { await updateInventory(doc, { shopState:'reserved', shopReserve:reserve, shopPayment:'', shopReservedAt:String(Date.now()) }); }
+    const shown = b.displayedPrice ?? STONE_PRICES[mode];
+    if (shown !== price) return [409,{message:'Цена изменилась. Обновите карточку камня перед оплатой.'}];
+    try { await updateInventory(doc, { shopState:'reserved', shopReserve:reserve, shopPayment:'', shopReservedPrice:String(price), shopReservedAt:String(Date.now()) }); }
     catch (e) {
       doc = await fs('GET','/jk2_stones/' + sid);
-      if (field(doc,'shopState') !== 'reserved' || field(doc,'shopReserve') !== reserve) return [409,{message:'Этот камень больше недоступен.'}];
+      if (field(doc,'shopState') !== 'reserved' || field(doc,'shopReserve') !== reserve || Number(field(doc,'shopReservedPrice') || STONE_PRICES[mode]) !== price) return [409,{message:'Данные изменились. Обновите карточку камня.'}];
     }
   } else if (state !== 'reserved' || field(doc,'shopReserve') !== reserve) {
     return [409,{message:'Этот камень уже куплен или зарезервирован.'}];
@@ -151,6 +157,7 @@ function SA() {
   if (_sa) return _sa;
   const raw = process.env.FIREBASE_SA.trim();
   _sa = JSON.parse(raw.startsWith('{') ? raw : Buffer.from(raw, 'base64').toString());
+  if (_sa.project_id !== "jadekey-46f37") { _sa = null; throw new Error("wrong-project"); }
   return _sa;
 }
 async function gToken() {
@@ -250,10 +257,20 @@ module.exports.handler = async (event) => {
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json; charset=utf-8',
   };
+  if (event.httpMethod === 'GET' && event.queryStringParameters?.pricing === '1') return {statusCode:200,headers:{...cors,'Cache-Control':'no-store'},body:JSON.stringify({stonePricing:1})};
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: cors, body: '' };
   if (event.httpMethod === 'GET' && event.queryStringParameters?.inventory === '1' && process.env.FIREBASE_SA) {
     try { return {statusCode:200,headers:{...cors,'Cache-Control':'no-store'},body:JSON.stringify({version:1,stones:await shopInventory()})}; }
-    catch (e) { return {statusCode:503,headers:cors,body:JSON.stringify({message:'Каталог временно недоступен.'})}; }
+    catch (e) {
+      let reason = 'internal';
+      if (e instanceof SyntaxError) reason = 'json';
+      else if (e.message === 'wrong-project') reason = 'project';
+      else if (/^база [0-9]{3}/.test(e.message)) reason = 'firestore-' + e.message.slice(5,8);
+      else if (e.message.startsWith('Google не выдал доступ')) reason = 'google-auth';
+      else if (e.message === 'fetch failed') reason = 'network';
+      else if (e.code?.startsWith('ERR_OSSL') || e.code === 'ERR_INVALID_ARG_TYPE') reason = 'signing';
+      return {statusCode:503,headers:cors,body:JSON.stringify({message:'Каталог временно недоступен.',reason})};
+    }
   }
   if (event.httpMethod !== 'POST') return { statusCode: 200, headers: cors, body: JSON.stringify({ ok: true, service: 'jadekey-shop', inventoryVersion: process.env.FIREBASE_SA ? 1 : 0 }) };
   let b = {};

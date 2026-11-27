@@ -60,3 +60,17 @@ test('only the verified current cancellation releases the physical stone',async(
   await context.webhook({event:'payment.canceled',object:{id:payment.id}});
   assert.equal(doc.fields.shopState.stringValue,'reserved');
 });
+
+test('custom quote is checked, reserved and settled at its original price', async()=>{
+  const {context,order,doc,payments}=fixture();
+  doc.fields.shopPrices={stringValue:'{"love":100}'};
+  assert.equal((await context.pay({...order,displayedPrice:2900}))[0],409);
+  assert.equal(payments.size,0);
+  assert.equal((await context.pay({...order,displayedPrice:100}))[0],200);
+  const [payment]=payments.values();
+  assert.equal(payment.amount.value,'100.00');
+  doc.fields.shopPrices={stringValue:'{"love":200}'};
+  payment.status='succeeded';
+  await context.webhook({event:'payment.succeeded',object:{id:payment.id}});
+  assert.equal(doc.fields.shopState.stringValue,'sold');
+});

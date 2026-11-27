@@ -8,7 +8,7 @@
 
   let loadFailed = false;
   try {
-    const {readStock,readStone} = await import('/shop/inventory-v3.js?v=4');
+    const {readStock,readStone} = await import('/shop/inventory-v3.js?v=prices1');
     const stock = await readStock();
     // Reserved orders are rechecked by the payment service during its inventory request.
     if (stock.some(stone => stone.state === 'reserved')) {
@@ -34,21 +34,16 @@
       if (stone.state !== 'available') continue;
       const card = document.createElement('article'), href='/shop/stone.html?s='+stone.id;
       card.className='product-card';
-      Object.assign(card.dataset,{id:stone.id,name:stone.name,filter:'her him',stock:'available',price:'2900',image:stone.photo,href});
+      Object.assign(card.dataset,{id:stone.id,name:stone.name,filter:'her him',stock:'available',price:String(Math.min(...Object.values(stone.prices))),image:stone.photo,href});
       card.innerHTML='<div class="product-media"><a class="product-image-link"></a><button type="button" class="favorite-button">♡</button></div><div class="product-details"><h3><a></a></h3><p class="product-price">от 2 900 ₽</p><div class="product-actions"><a class="detail-link">Подробнее</a><button type="button" class="add-button">В корзину</button></div></div>';
       card.querySelectorAll('a').forEach(a=>a.href=href);
       card.querySelector('.product-image-link').append(img);
       card.querySelector('h3 a').textContent='Камень '+stone.name;
       card.querySelector('.favorite-button').dataset.favorite=stone.id;
       card.querySelector('.add-button').dataset.add=stone.id;
+      card.querySelector('.product-price').textContent = 'от ' + Number(card.dataset.price).toLocaleString('ru-RU') + ' ₽';
       grid.append(card);
-      if (stone.id === '0DjjwkaR2kflqOIyD4b7') {
-        import('/shop/stone-price.js').then(module => module.lovePrice(stone.id)).then(price => {
-          card.dataset.price = String(price);
-          card.querySelector('.product-price').textContent = 'от ' + rub(price);
-          if (cartId === stone.id) renderCart();
-        }).catch(()=>{});
-      }
+
     }
   } catch (_) { loadFailed=true; }
   const cards = [...grid.querySelectorAll('.product-card')];
@@ -245,3 +240,4 @@
   renderCart();
   setFilter(activeFilter);
 })();
+
