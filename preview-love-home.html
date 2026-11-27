@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="yandex-verification" content="d8a76d1d0e0e7937">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JadeKey — живые камни</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="/icons/icon-180.png">
+<link rel="alternate" hreflang="ru" href="https://jadekey.tech/?lang=ru">
+<link rel="alternate" hreflang="en" href="https://jadekey.tech/?lang=en">
+<link rel="alternate" hreflang="zh" href="https://jadekey.tech/?lang=zh">
+<link rel="canonical" href="https://jadekey.tech/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"JadeKey","url":"https://jadekey.tech/","logo":"https://jadekey.tech/icons/icon-512.png","email":"jadekey1965@gmail.com"}</script>
+<meta name="description" content="JadeKey — природный камень, который каждый день открывает послание от того, кто его подарил. Камень узнаётся по рисунку, как отпечаток пальца.">
+<meta property="og:title" content="JadeKey — живые камни">
+<meta property="og:description" content="Камень, который каждый день открывает послание от того, кто его подарил.">
+<meta property="og:image" content="https://jadekey.tech/img/hero-gift-box.jpg">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<style>
+@font-face{font-family:"PT Serif";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/pt-serif-cyrillic-400-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"PT Serif";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/pt-serif-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:"PT Serif";font-weight:400;font-style:italic;font-display:swap;src:url(/fonts/pt-serif-cyrillic-400-italic.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"PT Serif";font-weight:400;font-style:italic;font-display:swap;src:url(/fonts/pt-serif-latin-400-italic.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:Manrope;font-weight:500;font-display:swap;src:url(/fonts/manrope-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Manrope;font-weight:500;font-display:swap;src:url(/fonts/manrope-latin-500-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:Manrope;font-weight:600;font-display:swap;src:url(/fonts/manrope-cyrillic-600-normal.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Manrope;font-weight:600;font-display:swap;src:url(/fonts/manrope-latin-600-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2122,U+2212}
+@font-face{font-family:"Cormorant Garamond";font-weight:400;font-style:normal;font-display:swap;src:url(/fonts/cormorant-garamond-latin-400-normal.woff2) format("woff2");unicode-range:U+0000-00FF}
+:root{
+  --paper:#fff; --stone:#f5f2ee; --ink:#141414; --mute:#6f6760; --line:#e4ded6;
+  --red:#a5192f; --jade:#3fd8a2;
+  --serif:"PT Serif",Georgia,"Songti SC","Noto Serif CJK SC","Noto Serif SC",serif;
+  --cap:Manrope,-apple-system,"PingFang SC","Noto Sans CJK SC","Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font:400 15px/1.7 var(--serif);-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:1.5px solid var(--red);outline-offset:3px}
+
+/* caps type — Maison style */
+.cap{font:500 15px/1.35 var(--cap);letter-spacing:.14em;text-transform:uppercase}
+.cap-l{font:500 clamp(17px,2vw,22px)/1.35 var(--cap);letter-spacing:.16em;text-transform:uppercase}
+html[lang=zh] .cap,html[lang=zh] .cap-l{letter-spacing:.3em}
+.ul{display:inline-block;font:400 14px/1 var(--serif);border-bottom:1px solid currentColor;padding-bottom:3px}
+.txt{max-width:46ch;margin:14px auto 0;color:var(--mute)}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.top-in{height:58px;padding:0 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;max-width:1280px;margin:auto}
+.langs{display:flex;gap:12px;font:500 12px/1 var(--cap);letter-spacing:.08em;color:var(--mute)}
+.langs button{all:unset;cursor:pointer;padding:6px 0}
+.langs button[aria-pressed=true]{color:var(--ink);border-bottom:1px solid var(--ink)}
+.mark{font:400 21px/1 "Cormorant Garamond",var(--serif);letter-spacing:.36em;padding-left:.36em}
+.mark b{font-weight:400;color:var(--jade)}
+.gos{justify-self:end;display:flex;gap:16px}
+@media(max-width:440px){.top-in{padding:0 12px}.top .langs{gap:8px;font-size:10.5px}.mark{font-size:17px;letter-spacing:.22em;padding-left:.22em}.gos{gap:10px}.gos .go+.go{display:none}.top .go{font-size:10.5px;letter-spacing:.08em}.langs button{white-space:nowrap}}
+.top .go{justify-self:end;font:500 12px/1 var(--cap);letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+
+/* full-bleed image with text on it */
+.bleed{position:relative;color:#fff;overflow:hidden;background:#111}
+.bleed>img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.bleed::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.55) 65%,rgba(0,0,0,.78) 100%)}
+.bleed .on{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;min-height:inherit;padding:0 24px 46px}
+.bleed .txt{color:rgba(255,255,255,.88)}
+.btn-o{display:inline-block;margin-top:24px;border:1px solid #fff;color:#fff;font:500 12px/1 var(--cap);letter-spacing:.14em;text-transform:uppercase;padding:15px 26px;transition:background .2s,color .2s}
+.btn-o:hover{background:#fff;color:var(--ink)}
+.btn-s{display:inline-block;margin-top:26px;background:var(--ink);color:#fff;font:500 12px/1 var(--cap);letter-spacing:.14em;text-transform:uppercase;padding:16px 28px}
+
+.hero{min-height:calc(100svh - 58px);background:#0b1530}
+.hero>img{object-fit:contain;object-position:center}
+.hero .wm{position:absolute;z-index:1;left:0;right:0;top:9%;text-align:center;font:400 clamp(28px,6vw,58px)/1 "Cormorant Garamond",var(--serif);letter-spacing:.42em;padding-left:.42em;color:#f4f1ea;text-shadow:0 2px 24px rgba(0,0,0,.45)}
+.hero .wm b{font-weight:400;color:var(--jade)}
+.tall{min-height:min(118vw,860px)}
+
+/* caption block under an image */
+.cap-block{text-align:center;padding:34px 24px 52px}
+.pic{aspect-ratio:1;overflow:hidden;background:#0d0d0d}
+.pic img{width:100%;height:100%;object-fit:cover}
+.pair{display:grid}
+@media(min-width:900px){
+  .pair{grid-template-columns:1fr 1fr}
+  .pair .bleed{min-height:auto}
+  .tall{min-height:720px}
+}
+
+.intro{text-align:center;padding:72px 24px}
+.intro .txt{margin-top:18px}
+.intro .ul{margin-top:22px}
+.mf .txt{max-width:640px;margin:16px auto 0}
+.mf .mf-end{margin-top:32px;font-size:20px;letter-spacing:.04em}
+.mf-mark{display:block;margin-bottom:10px;font:400 30px/1 "Cormorant Garamond",var(--serif);letter-spacing:.36em;padding-left:.36em}
+.mf-mark b{font-weight:400;color:var(--jade)}
+
+/* product row */
+.row{padding:56px 0 64px;border-top:1px solid var(--line)}
+.row h2{text-align:center;padding:0 24px}
+.rail{display:flex;gap:2px;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:30px;scrollbar-width:none;padding:0 0 4px}
+.rail::-webkit-scrollbar{display:none}
+.item{flex:0 0 46%;max-width:300px;scroll-snap-align:start;text-align:center}
+.item .pic{background:#1a1a1c}
+.item .pic img{object-fit:contain}
+.item h3{font:500 12px/1.4 var(--cap);letter-spacing:.12em;text-transform:uppercase;margin:16px 10px 4px}
+.item .price{color:var(--ink);margin-top:2px}
+.item p{font-size:13.5px;color:var(--mute);padding:0 10px}
+@media(min-width:900px){.rail{justify-content:center}.item{flex-basis:19%}}
+
+/* steps */
+.steps{padding:72px 24px;background:var(--stone);text-align:center}
+.steps ol{list-style:none;display:grid;gap:34px;margin:40px auto 0;max-width:1000px}
+.steps li h3{margin-bottom:8px}
+.steps li .n{display:block;font:400 26px/1 "Cormorant Garamond",var(--serif);color:var(--red);margin-bottom:12px}
+.steps li p{color:var(--mute);max-width:34ch;margin:auto}
+@media(min-width:900px){.steps ol{grid-template-columns:repeat(3,1fr)}}
+
+.center{text-align:center;padding:72px 24px;border-top:1px solid var(--line)}
+.howto{max-width:420px;margin:44px auto 0;text-align:left;border-top:1px solid var(--line);padding-top:26px}
+.howto h3{text-align:center;margin-bottom:16px;font-size:12px}
+.howto ol{list-style:none;counter-reset:h}
+.howto li{counter-increment:h;display:grid;grid-template-columns:26px 1fr;gap:8px;padding:7px 0;color:var(--mute);font-size:14px}
+.howto li::before{content:counter(h);font:400 20px/1.1 "Cormorant Garamond",var(--serif);color:var(--red)}
+
+footer{background:var(--red);color:#fff;padding:44px 24px calc(48px + env(safe-area-inset-bottom))}
+footer .in{max-width:1100px;margin:auto;display:grid;gap:22px}
+footer nav{display:flex;flex-wrap:wrap;gap:12px 26px;font:500 12px/1.4 var(--cap);letter-spacing:.12em;text-transform:uppercase}
+footer small{font:500 11px/1.4 var(--cap);letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+footer .langs{color:rgba(255,255,255,.7)}
+footer .langs button[aria-pressed=true]{color:#fff;border-color:#fff}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* what the stone opens — sample screens */
+.ui{padding:72px 0 64px;text-align:center;background:var(--stone)}
+.ui .txt{padding:0 24px}
+.phones{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:34px 24px 6px;margin-top:6px}
+.phones::-webkit-scrollbar{display:none}
+.swap{max-width:560px;margin:40px auto 0;background:none;border:0;padding:10px 22px 6px;text-align:center}
+.swap h3{font:500 26px/1.2 "Cormorant Garamond",var(--serif);margin:0 0 10px;color:var(--ink);letter-spacing:0;text-transform:none}
+.swap p{color:var(--mute);max-width:44ch;margin:0 auto 20px}
+.swap a.go{display:inline-block;background:var(--red);color:#fff;font:600 13px/1 Manrope,-apple-system,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:18px 30px;text-decoration:none}
+@media(max-width:620px){.swap{margin:36px 18px 0}}
+.ph{flex:0 0 64%;max-width:250px;scroll-snap-align:center;text-align:left}
+.ph .fr{background:#0d0d0f;border-radius:30px;padding:7px;box-shadow:0 18px 40px -22px #0007}
+.ph img{width:100%;aspect-ratio:390/700;object-fit:cover;object-position:top;border-radius:24px}
+.ph h3{margin:18px 4px 0}
+.ph p{margin:6px 4px 0;color:var(--mute);font-size:14px;line-height:1.55}
+.ui .hint{margin-top:22px;font:500 11px/1 var(--cap);letter-spacing:.14em;text-transform:uppercase;color:#9a918a}
+@media(min-width:900px){.phones{justify-content:center;overflow:visible}.ph{flex:0 0 200px}.ui .hint{display:none}}
+
+.ph .fr{cursor:zoom-in}
+.lb{position:fixed;inset:0;z-index:100;background:#0b0c12;display:none}
+.lb.on{display:block}
+.lb-row{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.lb-row::-webkit-scrollbar{display:none}
+.lb-sl{flex:0 0 100%;height:100%;overflow-y:auto;scroll-snap-align:center;padding:calc(env(safe-area-inset-top) + 58px) 14px 40px;-webkit-overflow-scrolling:touch}
+.lb-sl img{width:100%;max-width:460px;margin:0 auto;border-radius:22px}
+.lb-x{position:absolute;top:calc(env(safe-area-inset-top) + 10px);right:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:#ffffff1f;color:#fff;font:400 26px/42px var(--cap);cursor:pointer}
+.lb-m{position:absolute;top:calc(env(safe-area-inset-top) + 10px);left:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:#ffffff1f;color:#fff;font:400 18px/42px var(--cap);cursor:pointer}
+.lb-dots{position:absolute;top:calc(env(safe-area-inset-top) + 26px);left:0;right:0;display:flex;gap:7px;justify-content:center;pointer-events:none}
+.lb-dots i{width:6px;height:6px;border-radius:50%;background:#ffffff40}.lb-dots i.on{background:#fff}
+
+/* gift film */
+.film{background:#0d1210;padding:56px 20px;display:flex;justify-content:center}
+.film-box{position:relative;width:100%;max-width:380px;border-radius:26px;overflow:hidden;box-shadow:0 24px 60px -30px #000}
+.film video{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;background:#111}
+.film-snd{position:absolute;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;border:0;background:#0009;color:#fff;font-size:20px;cursor:pointer;backdrop-filter:blur(6px)}
+.love-example{background:#351627;color:#fff3f5;border-radius:23px;padding:12px;display:grid;gap:10px}.love-example b{color:#ffc3d6;letter-spacing:.08em}.love-example p{margin:0;color:inherit;font:inherit}.love-example img[data-ui]{width:100%;height:auto;object-fit:contain;border-radius:12px}.love-full .love-example{max-width:460px;margin:auto;text-align:center}.love-full .love-example img{max-height:calc(100dvh - 215px);object-fit:contain}</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="langs" role="group" aria-label="Language"><button data-l="ru">RU</button><button data-l="en">EN</button><button data-l="zh">中文</button></div>
+  <a class="mark" href="/">JADE<b>KEY</b></a>
+  <div class="gos"><a class="go" href="/shop/" data-t="shop">Магазин</a><a class="go" href="/scan.html" data-t="scanner">Сканер</a></div>
+</div></header>
+
+<main>
+<section class="bleed hero">
+  <img src="/img/hero-gift-box.jpg" alt="" data-ta="heroAlt" fetchpriority="high">
+  <div class="wm" aria-hidden="true">JADE<b>KEY</b></div>
+  <div class="on">
+    <h1 class="cap-l" data-t="heroT">Живой камень</h1>
+    <p class="txt" data-t="heroP">Камень, который помнит тебя. Каждый день он открывает новое послание от того, кто его подарил.</p>
+    <a class="btn-o" href="/shop/" data-t="revive">Выбрать камень</a>
+  </div>
+</section>
+
+<section class="intro">
+  <h2 class="cap-l" data-t="introT">Подарок, который не заканчивается</h2>
+  <p class="txt" data-t="introP">Открытку читают один раз. Живой камень каждый день открывает новое послание — и только в руках того, кому его подарили. Рисунок камня складывался миллионы лет, второго такого нет.</p>
+  <a class="ul" href="#how" data-t="howLink">Как это работает</a>
+</section>
+
+<section class="film" aria-label="JadeKey">
+  <div class="film-box">
+    <video id="film" src="/video/jadekey-gift.mp4?v=2" poster="/video/jadekey-gift.jpg" autoplay muted loop playsinline preload="metadata"></video>
+    <button class="film-snd" id="filmSnd" aria-label="Звук">🔇</button>
+  </div>
+</section>
+<section class="intro mf" id="about">
+  <h2 class="cap-l" data-t="mfT">Природа создала его единственным. Мы открыли его возможности.</h2>
+  <p class="txt" data-t="mf1">Один уникальный камень. Тысячелетия знаний. Твой личный путь.</p>
+  <p class="txt" data-t="mf2">Мы потратили годы на создание технологии, которая объединяет неповторимый рисунок природного камня, современные методы распознавания и великие системы знаний Востока и Запада.</p>
+  <p class="txt" data-t="mf3">Китайская «Книга перемен». Индийская Джйотиш. Западная астрология. Лунные календари. Древняя философия.</p>
+  <p class="txt" data-t="mf4">За каждым режимом JadeKey стоят собственные алгоритмы, астрономические вычисления и правила традиционных систем.</p>
+  <p class="txt" data-t="mf5">Там, где это предусмотрено методикой, расчёты учитывают дату, точное время и место твоего рождения.</p>
+  <p class="txt" data-t="mf6">Это не набор случайных предсказаний. Это персональный инструмент, созданный на пересечении древних традиций и современных технологий.</p>
+  <p class="txt" data-t="mf7">Каждый день твой камень открывает новое послание, новый символ, новый взгляд на сегодняшний день.</p>
+  <p class="mf-end"><span class="mf-mark">JADE<b>KEY</b></span><span data-t="mf8">Уникален, как ты.</span></p>
+</section>
+
+<section class="ui" id="screens">
+  <h2 class="cap-l" data-t="uiT">Что откроет твой камень</h2>
+  <p class="txt" data-t="uiP">Так выглядят послания. В твоём камне будут твои имена и твой день.</p>
+  <div class="phones">
+    <figure class="ph"><div class="fr"><img src="/img/ui/path-ru.jpg" data-ui="path" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_pathT">Путь</h3><p data-t="ui_pathP">Индийская астрология джйотиш: накшатра и лунный день, твоя звезда рождения и строка «Дао дэ цзин» на день.</p></figure>
+    <figure class="ph"><div class="fr"><img src="/img/ui/tal-ru.jpg" data-ui="tal" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_talT">Талисман</h3><p data-t="ui_talP">Западная астрология: планета дня, её камень и цвет, пожелание и совет. По дате рождения — твой знак зодиака и твой камень.</p></figure>
+    <figure class="ph"><div class="fr"><img src="/img/ui/fc-ru.jpg" data-ui="fc" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_fcT">Печенье</h3><p data-t="ui_fcP">Китайская «Книга перемен»: гексаграмма дня с советом, счастливые числа и китайское слово дня.</p></figure>
+    <figure class="ph"><div class="fr"><img src="/img/ui/luna-ru.jpg" data-ui="luna" alt="" loading="lazy"></div><h3 class="cap" data-t="ui_nyT">Луна</h3><p data-t="ui_nyP">Лунный календарь: лунные сутки и их символ, фаза и знак Луны, что делать и что отложить. По дате рождения — твой лунный день.</p></figure>
+    <figure class="ph"><div class="fr"><div class="love-example"><b data-t="ui_loveT">Любовь</b><img src="/love-days/cards/2026-11-27.jpg" data-ui="love" alt="" loading="lazy"><p data-t="loveLine">Поедем на следующем?</p></div></div><h3 class="cap" data-t="ui_loveT">Любовь</h3><p data-t="ui_loveP">Каждый день — новая иллюстрация и короткое послание о любви.</p></figure>
+  </div>
+  <p class="hint" data-t="uiH">Листай →</p>
+  <div class="swap" id="swap"><h3 data-t="swapT">Уже есть камень? Смените режим</h3><p data-t="swapP">Камень остаётся тот же — меняется то, что он говорит. Доплачиваете только разницу в цене.</p><a class="go" href="/shop/upgrade.html" data-t="swapB">Сменить режим</a></div>
+</section>
+
+<div class="pair">
+  <section class="bleed tall">
+    <img src="/img/stone-n1.jpg" alt="" loading="lazy">
+    <div class="on">
+      <h2 class="cap-l">Love</h2>
+      <p class="txt" data-t="loveP">Каждый день — послание от любимого человека: ваши имена, счётчик дней вместе и мелодия.</p>
+      <a class="btn-o" href="/shop/" data-t="revive">Выбрать камень</a>
+    </div>
+  </section>
+  <section>
+    <div class="pic"><img src="/img/stone-n4.jpg" alt="" loading="lazy"></div>
+    <div class="cap-block">
+      <h2 class="cap" data-t="nyT">Луна</h2>
+      <p class="txt" data-t="nyP">Лунный календарь на каждый день: лунные сутки с символом, фаза Луны и её знак, что сегодня хорошо делать и что лучше отложить. По дате рождения — твой лунный день рождения.</p>
+      <a class="ul" href="/shop/" data-t="revive2" style="margin-top:18px">Выбрать камень</a>
+    </div>
+  </section>
+</div>
+<div class="pair">
+  <section>
+    <div class="pic"><img src="/img/stone-n5.jpg" alt="" loading="lazy"></div>
+    <div class="cap-block">
+      <h2 class="cap" data-t="talT">Талисман</h2>
+      <p class="txt" data-t="talP">Для себя или в подарок. Западная астрология: каждый день — планета дня, её камень и цвет, пожелание и совет. По дате рождения — твой знак, его планета и твой камень. В день рождения — особое поздравление.</p>
+      <a class="ul" href="/shop/" data-t="revive2" style="margin-top:18px">Выбрать камень</a>
+    </div>
+  </section>
+  <section class="bleed tall">
+    <img src="/img/stone-n6.jpg" alt="" loading="lazy">
+    <div class="on">
+      <h2 class="cap-l" data-t="fcT">Печенье с предсказанием</h2>
+      <p class="txt" data-t="fcP">Раз в день печенье ломается: гексаграмма «Книги перемен» с советом, счастливые числа и китайское слово дня.</p>
+      <a class="btn-o" href="/shop/" data-t="revive">Выбрать камень</a>
+    </div>
+  </section>
+</div>
+
+<section class="row" id="collection">
+  <h2 class="cap-l" data-t="collT">Коллекция</h2>
+  <p class="txt" style="text-align:center;padding:0 24px" data-t="collP">Каждый минерал — как отпечаток пальца.</p>
+  <p style="text-align:center;margin-top:34px"><a class="btn-s" href="/shop/" data-t="shopB">Все камни в магазине</a></p>
+</section>
+
+<section class="steps" id="how">
+  <h2 class="cap-l" data-t="howT">Как это работает</h2>
+  <ol>
+    <li><span class="n">I</span><h3 class="cap" data-t="st1T">Выберите камень</h3><p data-t="st1P">В магазине JadeKey: агаты, бирюза, малахит. У каждого камня свой рисунок — второго такого нет.</p></li>
+    <li><span class="n">II</span><h3 class="cap" data-t="st2T">Наведите телефон</h3><p data-t="st2P">Откройте JadeKey и наведите камеру на камень: он узнает себя. Выберите послания и впишите имена.</p></li>
+    <li><span class="n">III</span><h3 class="cap" data-t="st3T">Отправьте ссылку</h3><p data-t="st3P">Послания откроются только у получателя и только с этим камнем в руках.</p></li>
+  </ol>
+</section>
+
+<section class="bleed tall">
+  <img src="/img/hero-gift-burgundy.jpg" alt="" loading="lazy" style="object-position:30% 50%">
+  <div class="on">
+    <h2 class="cap-l" data-t="shopT">Для магазинов</h2>
+    <p class="txt" data-t="shopP">Продаёте камни? Мы внесём ваши камни в JadeKey — покупатель оживит камень сам и уйдёт с подарком, а не с сувениром.</p>
+    <a class="btn-o" href="mailto:jadekey1965@gmail.com?subject=JadeKey" data-t="write">Написать нам</a>
+  </div>
+</section>
+
+<section class="center">
+  <h2 class="cap-l" data-t="techT">Технология</h2>
+  <p class="txt" data-t="techP">Нейросеть узнаёт камень по природному рисунку, как отпечаток пальца. Как это устроено, что уже работает и куда движется проект.</p>
+  <a class="btn-s" href="/tech.html" data-t="techB">Технология и инвесторам</a>
+</section>
+
+<section class="center">
+  <h2 class="cap-l" data-t="getT">На любом телефоне</h2>
+  <p class="txt" data-t="getP">iPhone — приложение JadeKey в App Store. Android — сканер прямо в браузере. Бесплатно.</p>
+  <a class="btn-s" href="https://apps.apple.com/app/id6769250226" data-t="appB">Скачать в App Store</a><br>
+  <a class="ul" href="/scan.html" style="margin-top:20px" data-t="webB">Открыть сканер в браузере</a>
+  <div class="howto">
+    <h3 class="cap" data-t="andT">Android: сканер как приложение</h3>
+    <ol>
+      <li data-t="and1">Откройте сканер в Chrome.</li>
+      <li data-t="and2">Меню ⋮ → «Добавить на главный экран».</li>
+      <li data-t="and3">Появится значок JadeKey — открывайте сканер с него.</li>
+    </ol>
+  </div>
+</section>
+</main>
+<div class="lb" id="lb" aria-hidden="true"><button class="lb-m" id="lbM" aria-label="Звук">🔊</button><button class="lb-x" id="lbX" aria-label="Закрыть">×</button><div class="lb-dots" id="lbD"></div><div class="lb-row" id="lbR"></div></div>
+
+
+<footer><div class="in">
+  <nav><a href="/scan.html" data-t="scanner">Сканер</a><a href="/tech.html" data-t="techT">Технология</a><a href="https://apps.apple.com/app/id6769250226">App Store</a><a href="/privacy.html" data-t="priv">Конфиденциальность</a><a href="mailto:jadekey1965@gmail.com">jadekey1965@gmail.com</a></nav>
+  <div class="langs" role="group" aria-label="Language"><button data-l="ru">RU</button><button data-l="en">EN</button><button data-l="zh">中文</button></div>
+  <small data-t="copy">© 2026 ИП Панин С. Н.</small>
+</div></footer>
+
+<script>
+(() => {
+  const T = {"uiT": {"en": "What your stone will open", "zh": "你的石头会打开什么"}, "uiP": {"en": "This is how the messages look. Your stone will carry your names and your day.", "zh": "消息就是这样的。你的石头里会是你们的名字和你的日子。"}, "uiH": {"en": "Swipe →", "zh": "滑动 →"}, "swapT": {"en": "Already have a stone? Change its mode", "zh": "已经有石头了？换一个模式"}, "swapP": {"en": "The stone stays the same — only what it tells you changes. You pay just the price difference.", "zh": "石头不变，改变的是它对你说的话。只需补付差价。"}, "swapB": {"en": "Change mode", "zh": "更换模式"}, "ui_pathT": {"en": "Path", "zh": "道路"}, "ui_pathP": {"en": "Indian astrology, Jyotish: the nakshatra and lunar day, your birth star and a line of the Tao Te Ching for the day.", "zh": "印度占星（吠陀占星）：今日月宿与太阴日、你的本命星，以及当天的一句《道德经》。"}, "ui_talT": {"en": "Talisman", "zh": "护身符"}, "ui_talP": {"en": "Western astrology: the planet of the day, its stone and colour, a wish and a tip. From your birthday — your zodiac sign and your stone.", "zh": "西方占星：今日行星及其宝石与颜色、祝愿和建议。根据生日——你的星座和你的守护石。"}, "ui_fcT": {"en": "Fortune cookie", "zh": "幸运饼干"}, "ui_fcP": {"en": "The Chinese Book of Changes (I Ching): the hexagram of the day with advice, lucky numbers and a Chinese word of the day.", "zh": "中国《易经》：每日一卦及建议、幸运数字和每日汉字。"}, "ui_nyT": {"en": "Moon", "zh": "月亮"}, "ui_nyP": {"en": "Lunar calendar: the lunar day and its symbol, the Moon’s phase and sign, what to do and what to postpone. With your birth date — your own lunar day.", "zh": "月历：太阴日及其象征、月相与月亮星座、宜做与宜缓之事。填写生日，即可得到你自己的太阴日。"}, "loveLine":{"en":"Shall we catch the next one?","zh":"我们坐下一班好吗？"}, "ui_loveT": {"en": "Love", "zh": "Love"}, "ui_loveP": {"en": "A new illustration and a short love note every day.", "zh": "每天一幅插画，一句爱的留言。"}, "_title": {"en": "JadeKey — living stones", "zh": "JadeKey — 会说话的石头"}, "scanner": {"en": "Scanner", "zh": "扫描"}, "heroT": {"en": "Living stone", "zh": "会说话的石头"}, "heroP": {"en": "A stone that remembers you. Every day it reveals a new message from the one who gave it.", "zh": "一块记得你的石头。每天，它都会打开送礼人留下的一条新消息。"}, "revive": {"en": "Choose a stone", "zh": "挑选石头"}, "revive2": {"en": "Choose a stone", "zh": "挑选石头"}, "introT": {"en": "A gift that never ends", "zh": "不会结束的礼物"}, "introP": {"en": "A card is read once. A living stone reveals a new message every day — and only in the hands of the person it was given to. Its pattern took millions of years to form; there is no other like it.", "zh": "贺卡只读一次。会说话的石头每天都会打开一条新消息，而且只在收礼人手中才能打开。石头的纹理经过数百万年形成，世上独一无二。"}, "howLink": {"en": "How it works", "zh": "如何使用"}, "loveP": {"en": "A message from your loved one every day: your names, a count of your days together and a melody.", "zh": "每天一条来自爱人的消息：你们的名字、在一起的天数，还有一段旋律。"}, "nyT": {"en": "Moon", "zh": "月亮"}, "nyP": {"en": "A lunar calendar for every day: the lunar day with its symbol, the Moon’s phase and sign, what is good to do today and what is better to postpone. With your birth date — your lunar birthday.", "zh": "每日月历：太阴日及其象征、月相与月亮星座、今天宜做与宜缓之事。填写生日，即可得到你的太阴生日。"}, "talT": {"en": "Talisman", "zh": "护身符"}, "talP": {"en": "For yourself or as a gift. Western astrology: every day — the planet of the day, its stone and colour, a wish and a tip. From your birthday — your sign, its planet and your stone. On your birthday — a special greeting.", "zh": "送给自己或他人。西方占星：每天的行星及其宝石与颜色、祝愿和建议。根据生日——你的星座、守护行星和你的守护石。生日当天还有特别的祝福。"}, "fcT": {"en": "Fortune cookie", "zh": "幸运饼干"}, "fcP": {"en": "Once a day the cookie cracks open: a hexagram of the Book of Changes with advice, lucky numbers and a Chinese word of the day.", "zh": "每天饼干裂开一次：一卦《易经》及建议、幸运数字和每日汉字。"}, "collT": {"en": "Collection", "zh": "收藏"}, "collP": {"en": "Every mineral is like a fingerprint.", "zh": "每一块矿石都像指纹一样独特。"}, "s1": {"en": "Pink agate", "zh": "粉色玛瑙"}, "s2": {"en": "Geode agate", "zh": "晶洞玛瑙"}, "s3": {"en": "Lapis lazuli", "zh": "青金石"}, "s4": {"en": "Fire agate pendant", "zh": "火玛瑙吊坠"}, "s5": {"en": "White-pink agate", "zh": "粉白玛瑙"}, "s6": {"en": "Crystal agate pendant", "zh": "水晶玛瑙吊坠"}, "howT": {"en": "How it works", "zh": "如何使用"}, "st1T": {"en": "Choose a stone", "zh": "挑选石头"}, "st1P": {"en": "In the JadeKey shop: agates, turquoise, malachite. Every stone has its own pattern — there is no second one like it.", "zh": "在 JadeKey 商店：玛瑙、绿松石、孔雀石。每块石头都有独一无二的纹理。"}, "st2T": {"en": "Point your phone", "zh": "用手机对准"}, "st2P": {"en": "Open JadeKey and point the camera at the stone: it recognises itself. Choose the messages and enter the names.", "zh": "打开 JadeKey，把相机对准石头：它会认出自己。选择讯息并填写名字。"}, "st3T": {"en": "Send the link", "zh": "发送链接"}, "st3P": {"en": "The messages open only for the recipient, and only with this stone in hand.", "zh": "消息只会为收礼人打开，而且必须手持这块石头。"}, "shopT": {"en": "For shops", "zh": "商家合作"}, "shopP": {"en": "Sell stones? We will add your stones to JadeKey — the buyer brings the stone to life and leaves with a gift, not a souvenir.", "zh": "您卖石头吗？我们会把您的石头加入 JadeKey——顾客自己激活石头，带走的是礼物，而不是纪念品。"}, "write": {"en": "Contact us", "zh": "联系我们"}, "techT": {"en": "Technology", "zh": "技术"}, "techP": {"en": "A neural network recognises the stone by its natural pattern, like a fingerprint. How it works, what already works today and where the project is heading.", "zh": "神经网络通过石头的天然纹理识别它，就像识别指纹。了解它的原理、已实现的功能以及项目的发展方向。"}, "techB": {"en": "Technology & investors", "zh": "技术与投资者"}, "getT": {"en": "On any phone", "zh": "任何手机都能用"}, "getP": {"en": "iPhone — the JadeKey app on the App Store. Android — the scanner right in the browser. Free.", "zh": "iPhone：在 App Store 下载 JadeKey。安卓：直接在浏览器中使用扫描器。免费。"}, "appB": {"en": "Download on the App Store", "zh": "在 App Store 下载"}, "webB": {"en": "Open the scanner in your browser", "zh": "在浏览器中打开扫描器"}, "andT": {"en": "Android: scanner as an app", "zh": "安卓：把扫描器装成应用"}, "and1": {"en": "Open the scanner in Chrome.", "zh": "在 Chrome 中打开扫描器。"}, "and2": {"en": "Menu ⋮ → “Add to Home screen”.", "zh": "菜单 ⋮ →“添加到主屏幕”。"}, "and3": {"en": "A JadeKey icon appears — open the scanner from it.", "zh": "主屏幕上会出现 JadeKey 图标，之后从这里打开扫描器。"}, "priv": {"en": "Privacy", "zh": "隐私"}, "copy": {"en": "© 2026 IE Panin S. N.", "zh": "© 2026 IE Panin S. N."}, "shop": {"en": "Shop", "zh": "商店"}, "shopB": {"en": "All stones in the shop", "zh": "商店里的全部石头"}, "mfT": {"en": "Nature made it one of a kind. We unlocked what it can do.", "zh": "大自然让它独一无二。我们开启了它的可能。"}, "mf1": {"en": "One unique stone. Millennia of knowledge. Your personal path.", "zh": "一块独一无二的石头。千年的智慧。属于你的道路。"}, "mf2": {"en": "We spent years creating a technology that unites the unrepeatable pattern of a natural stone, modern recognition methods and the great knowledge systems of East and West.", "zh": "我们花了多年时间打造一项技术，将天然石头独一无二的纹理、现代识别方法与东西方伟大的知识体系融为一体。"}, "mf3": {"en": "The Chinese Book of Changes. Indian Jyotish. Western astrology. Lunar calendars. Ancient philosophy.", "zh": "中国《易经》。印度吠陀占星。西方占星。月历。古代哲学。"}, "mf4": {"en": "Behind every JadeKey mode are our own algorithms, astronomical calculations and the rules of traditional systems.", "zh": "JadeKey 的每个模式背后，都有我们自己的算法、天文计算和传统体系的规则。"}, "mf5": {"en": "Where the method calls for it, the calculations take into account your date, exact time and place of birth.", "zh": "在方法需要时，计算会考虑你的出生日期、准确时间和出生地点。"}, "mf6": {"en": "This is not a set of random predictions. It is a personal tool created where ancient traditions meet modern technology.", "zh": "这不是一堆随机的预言。这是诞生于古老传统与现代科技交汇处的个人工具。"}, "mf7": {"en": "Every day your stone opens a new message, a new symbol, a new look at the day.", "zh": "每一天，你的石头都会打开一条新消息、一个新象征、一种看待今天的新视角。"}, "mf8": {"en": "Unique, like you.", "zh": "和你一样独一无二。"}, "from": {"en": "from 2,900 ₽", "zh": "2 900 ₽ 起"}};
+  const L = ['ru','en','zh'];
+  let lang = 'ru';
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (L.includes(q)) localStorage.setItem('jk2_lang', q);
+    const nl = (navigator.language || 'ru').toLowerCase();
+    lang = localStorage.getItem('jk2_lang') || (/^(ru|uk|be|kk)/.test(nl) ? 'ru' : /^zh/.test(nl) ? 'zh' : 'en');
+  } catch (e) {}
+  if (!L.includes(lang)) lang = 'ru';
+  const ru = new Map();
+  document.querySelectorAll('[data-t]').forEach(e => ru.set(e, e.innerHTML));
+  function apply(l) {
+    document.documentElement.lang = l;
+    document.querySelectorAll('img[data-ui]:not([data-ui="love"])').forEach(e => { e.src = `/img/ui/${e.dataset.ui}-${l}.jpg`; });
+    document.querySelectorAll('[data-t]').forEach(e => {
+      const k = e.dataset.t, v = l === 'ru' ? ru.get(e) : (T[k] && T[k][l]);
+      if (v) e.innerHTML = v;
+    });
+    if (T._title) document.title = l === 'ru' ? 'JadeKey — живые камни' : T._title[l];
+    document.querySelectorAll('.langs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l === l));
+    // pass language on to the scanner
+    document.querySelectorAll('a[href^="/scan.html"]').forEach(a => {
+      const u = new URL(a.getAttribute('href'), location.origin); u.searchParams.set('lang', l);
+      a.setAttribute('href', u.pathname + u.search);
+    });
+  }
+  document.querySelectorAll('.langs button').forEach(b => b.onclick = () => {
+    lang = b.dataset.l; try { localStorage.setItem('jk2_lang', lang); } catch (e) {} apply(lang);
+  });
+  apply(lang);
+})();
+</script>
+
+<script>
+(() => {
+  const lb = document.getElementById('lb'), row = document.getElementById('lbR'), dots = document.getElementById('lbD');
+  const phs = [...document.querySelectorAll('.ph img[data-ui]')];
+  const lang = () => document.documentElement.lang || 'ru';
+  const SND = { path: 'path', tal: 'tal', fc: 'fc', luna: 'luna', love: 'love-strings' }, au = new Audio();
+  let muted = false, cur = -1;
+  function play(k) { au.pause(); if (muted) return; au.src = `/snd/${SND[phs[k].dataset.ui]}.mp3`; au.currentTime = 0; const p = au.play(); if (p && p.catch) p.catch(() => {}); }
+  document.getElementById('lbM').onclick = e => { muted = !muted; e.currentTarget.textContent = muted ? '🔇' : '🔊'; if (muted) au.pause(); else play(cur); };
+  function open(i) {
+    row.innerHTML = phs.map(p => p.dataset.ui === "love" ? `<div class="lb-sl love-full">${p.parentElement.outerHTML}</div>` : `<div class="lb-sl"><img src="/img/ui/${p.dataset.ui}-${lang()}-full.jpg" alt=""></div>`).join('');
+    dots.innerHTML = phs.map(() => '<i></i>').join('');
+    lb.classList.add('on'); lb.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+    cur = i; play(i); requestAnimationFrame(() => { row.scrollLeft = i * row.clientWidth; mark(); });
+  }
+  function close() { au.pause(); lb.classList.remove('on'); lb.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+  function mark() { const k = Math.round(row.scrollLeft / row.clientWidth); [...dots.children].forEach((d, j) => d.classList.toggle('on', j === k)); if (k !== cur && lb.classList.contains('on')) { cur = k; play(k); } }
+  phs.forEach((p, i) => p.closest('.fr').addEventListener('click', () => open(i)));
+  row.addEventListener('scroll', mark, { passive: true });
+  row.addEventListener('click', e => { if (e.target.classList.contains('lb-sl')) close(); });
+  document.getElementById('lbX').onclick = close;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+</script>
+
+<script>
+(() => {
+  const v = document.getElementById('film'), b = document.getElementById('filmSnd');
+  if (!v || !b) return;
+  const mute = () => { v.muted = true; v.loop = true; b.textContent = '🔇'; v.play().catch(() => {}); };
+  b.onclick = () => {
+    if (!v.muted) { mute(); return; }
+    v.muted = false; v.loop = false; b.textContent = '🔊'; v.currentTime = 0; v.play().catch(() => {});
+  };
+  v.addEventListener('ended', mute);                 // со звуком ролик играет один раз, дальше снова тихо по кругу
+  if ('IntersectionObserver' in window) new IntersectionObserver(es => { es.forEach(e => { if (!e.isIntersecting && !v.muted) mute(); }); }, { threshold: 0.3 }).observe(v);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !v.muted) mute(); });
+})();
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PBJZ1WQNN8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-PBJZ1WQNN8");</script>
+</body>
+</html>
