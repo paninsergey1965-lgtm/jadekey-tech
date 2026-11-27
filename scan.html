@@ -75,6 +75,10 @@ nav button.on{color:var(--jade)}
 .sheet.on{transform:none}
 #sheet.on.love:has(#loveDaily){inset:0;max-height:none;border-radius:0;z-index:45;overscroll-behavior:contain;padding-top:max(14px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
 #sheet.on.love:has(#loveDaily)>.grab{display:none}
+#loveDaily .love-frame{display:grid;height:calc(100svh - max(14px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)) - 16px);grid-template-rows:auto minmax(0,1fr) auto;gap:8px}
+#loveDaily .love-frame img{display:block;width:100%;height:100%;object-fit:contain}
+#loveDaily .love-frame .lv-msg{margin:0}
+
 body.admin-view .sheet.on:is(.fc,.love,.luna,.tal,.path,.ny,.mem){
   inset:0;max-height:none;z-index:21;border:0;border-radius:0;
   padding:calc(env(safe-area-inset-top) + 16px) max(20px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 24px) max(20px,env(safe-area-inset-left));
@@ -3750,7 +3754,7 @@ async function openLoveCalendar(s, P, chosenDate) {
     const label = new Date(card.date+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});
     const image = './love-days/cards/'+card.date+'.jpg?v=manga1';
     const nav = isAdmin ? '<div class="btns"><button class="btn" id="lovePrev">Назад</button><button class="btn" id="loveToday">Сегодня</button><button class="btn" id="loveNext">Дальше</button></div>' : '';
-    sheet('<div id="loveDaily"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" style="display:block;width:100%;height:auto;margin:12px auto" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p>'+nav+'<div class="btns">'+sndBtn()+'<button class="btn main" id="again">Закрыть</button></div></div>');
+    sheet('<div id="loveDaily"><div class="love-frame"><div class="sh-state">♥ Любовь · '+esc(label)+'</div><img alt="Иллюстрация к посланию" src="'+image+'"><p class="lv-msg">'+esc(card.text)+'</p></div>'+nav+'<div class="btns">'+sndBtn()+'<button class="btn main" id="again">Закрыть</button></div></div>');
     active=$('loveDaily'); $('sheet').classList.add('love');
     const picture=active.querySelector('img');
     picture.onerror=()=>{picture.onerror=null;picture.src=loveCalendarRoot+'cards/'+card.date+'.jpg?v=manga1';};
