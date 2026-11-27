@@ -20,14 +20,14 @@ export default {
       if (typeof text !== 'string' || text.length > 700 || typeof reference !== 'string' || reference.length > 32000) return new Response('',{status:400});
       let message = text;
       if (!message) {
-        const r = await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{...headers(),'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:160,messages:[{role:'system',content:'Напиши одну оригинальную русскую любовную записку от первого лица любимому человеку. 1–3 коротких предложения, нежная бытовая деталь и лёгкий юмор, без клише, названий и кавычек. Сцена должна легко иллюстрироваться. Не повторяй недавние записки.'},{role:'user',content:JSON.stringify(recent).slice(-3500)}]})});
+        const r = await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{...headers(),'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:160,messages:[{role:'system',content:'Придумай одну короткую естественную реплику для кадра романтической манги. Двое взрослых героев в городе, лёгкий флирт в конкретной ситуации. Реплика одного героя другому, до 12 слов. Не обращайся к читателю, не предполагай совместного быта. Ответ только репликой, без кавычек. Не повторяй недавние сюжеты.'},{role:'user',content:JSON.stringify(recent).slice(-3500)}]})});
         if (!r.ok) throw Error('Text API HTTP '+r.status);
         message=(await r.json()).choices?.[0]?.message?.content?.trim();
         if (!message || message.length>700) throw Error('Invalid message');
       }
       const form=new FormData();
-      for(const [k,v] of Object.entries({model:'gpt-image-1-mini',quality:'medium',size:'1024x1024',n:'1',output_format:'jpeg',output_compression:'72',prompt:'Paint one new square watercolor scene illustrating this Russian love note: '+message+' . Use the supplied reference for the same two striped agate characters: pink and green stones with tiny limbs, their distinctive faces and watercolor texture. Build a new location, gesture and props specific to the note. No text or letters.'})) form.append(k,v);
-      form.append('image',new Blob([Buffer.from(reference,'base64')],{type:'image/jpeg'}),'agate.jpg');
+      for(const [k,v] of Object.entries({model:'gpt-image-1-mini',quality:'medium',size:'1024x1024',n:'1',output_format:'jpeg',output_compression:'72',prompt:'Draw a cinematic full-color romantic manga panel with the two adults in the reference. Keep her black bob and jade barrette, his auburn curls and freckles, warm vintage ink and fine print grain. Invent a fresh setting and physical action that makes this line of dialogue meaningful: '+message+'. Art only, no captions or lettering.'})) form.append(k,v);
+      form.append('image',new Blob([Buffer.from(reference,'base64')],{type:'image/jpeg'}),'couple.jpg');
       const result=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:headers(),body:form,signal:AbortSignal.timeout(200000)});
       if(!result.ok) throw Error('Image API HTTP '+result.status);
       const img=(await result.json()).data?.[0]?.b64_json;

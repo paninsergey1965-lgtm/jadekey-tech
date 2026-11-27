@@ -9,12 +9,8 @@ from urllib.request import Request, urlopen
 root = Path(__file__).resolve().parent
 calendar = json.loads((root / "calendar.json").read_text())
 messages = json.loads((root / "messages.json").read_text())
-tomorrow = datetime.now(timezone(timedelta(hours=3))).date() + timedelta(days=1)
-# Repair a missing current card first, then keep tomorrow available for preview.
-first_collection = os.environ.get("LOVE_FIRST_COLLECTION") == "true"
-days = (tomorrow - timedelta(days=1), tomorrow)
-if first_collection:
-    days = tuple(date(2026, 11, 28) + timedelta(days=i) for i in range(18))
+today = datetime.now(timezone(timedelta(hours=3))).date()
+days = (today + timedelta(days=i) for i in range(4))
 for day in days:
     if any(row["date"] == day.isoformat() for row in calendar):
         continue
@@ -43,5 +39,4 @@ for day in days:
     calendar.sort(key=lambda r: r["date"])
     (root / "calendar.json").write_text(json.dumps(calendar, ensure_ascii=False, indent=2) + "\n")
     print("Saved", day, flush=True)
-    if not first_collection:
-        break
+    break
