@@ -844,7 +844,7 @@ H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Uranus].r,1.292024916781969E-8
 return new kd(this.curr.time,a,b)};$jscomp.global.Object.defineProperties(H.prototype,{OriginBody:{configurable:!0,enumerable:!0,get:function(){return this.originBody}},Time:{configurable:!0,enumerable:!0,get:function(){return this.curr.time}}});e.GravitySimulator=H;var kd=function(a,b,c){this.time=a;this.gravitators=b;this.bodies=c}},{}]},{},[1])(1)});
 </script>
 <script type="module">
-import { initJadeKeyAccounts } from './jk-accounts.js?v=20261126-account-text';
+import { initJadeKeyAccounts } from './jk-accounts.js?v=20261128-verified-activation';
 import { initJadeKeyAdmin } from './jk-admin.js?v=20261126-clients';
 import { initJadeKeySupport } from './jk-support.js?v=20261124-01';
 import { pipeline, RawImage, env } from './vendor/transformers.min.js';
@@ -4009,9 +4009,20 @@ async function liveSave() {
   const pubName = m === 'tal' || m === 'path' || m === 'luna' || m === 'love' ? P.name : P.to;
   LV.busy = true; lvNav(); veil('Оживляю камень…');
   const made = [];
+  let tok;
   try {
-    const tok = await anonToken(), uid = myUid();
-    if (!isAdmin && stones.filter(s => s.owner === uid && !s.of).length >= 3) throw new Error('на одном телефоне можно оживить до трёх камней');
+    let uid;
+    if (inApp) {
+      tok = await anonToken();
+      uid = myUid();
+    } else {
+      const session = await accountRecovery.verifiedActivationSession();
+      if (!session || session.uid !== LV.activationUid) {
+        throw new Error('Открой «Живой», войди с подтверждённой почтой и начни снова.');
+      }
+      ({ token: tok, uid } = session);
+    }
+    if (!isAdmin && stones.filter(s => s.owner === uid && !s.of).length >= 3) throw new Error('в одном аккаунте можно оживить до трёх камней');
     const side = async (S, of) => {
       const enc = encodePatches(S.f);
       const doc = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: of || '', created: Date.now(), thumb: S.thumb, g: f32B64(gvecOf(S.f)), G: S.f.G, hue: S.hue ?? 0, n: enc.n });
@@ -4041,7 +4052,7 @@ async function liveSave() {
     await loadStones();
     LV.step = 3; LV.busy = false; liveRender(); liveDone();
   } catch (e) {
-    for (const [c, id] of made.reverse()) { try { await fsReq('DELETE', `${c}/${id}`, await anonToken()); } catch (x) {} }
+    for (const [c, id] of made.reverse()) { try { await fsReq('DELETE', `${c}/${id}`, tok); } catch (x) {} }
     toast('Не получилось оживить: ' + e.message, 6000);
   } finally { veil(); LV.busy = false; lvNav(); }
 }
@@ -4062,7 +4073,7 @@ function shareButtons(link, text) {
 }
 function giftText(mode, name) { return mode === 'fc' ? `${name}, тебе подарили камень с печеньем предсказаний. Открой ссылку и наведи телефон на камень.` : mode === 'path' ? `${name}, это твой камень пути. Открой ссылку и наведи телефон на камень.` : mode === 'tal' ? `${name}, это твой талисман. Открой ссылку и наведи телефон на камень.` : `${name}, тебе подарили живой камень. Открой ссылку и наведи телефон на камень.`; }
 function liveDone() {
-  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён и теперь твой. Каждый день открывай «Сканер» и наводи телефон на камень.</p><div class="btns"><button class="btn main" id="lvHome">Готово</button><button class="btn" id="lvLinkEmail">Сохранить камень по почте</button></div>`;
+  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён и теперь твой. Каждый день открывай «Сканер» и наводи телефон на камень.</p><div class="btns"><button class="btn main" id="lvHome">Готово</button>${inApp ? '<button class="btn" id="lvLinkEmail">Сохранить камень по почте</button>' : ''}</div>`;
   $('lvHome').onclick = liveHome;
   if ($('lvLinkEmail')) $('lvLinkEmail').onclick = () => accountRecovery.startLink();
 }
@@ -4134,10 +4145,19 @@ $('lvPaste').onclick = () => {
   const m = v && /[?&]g=([\w-]+)\.([a-z0-9]+)/.exec(v);
   if (m) openGift(m[1], m[2]); else if (v) toast('Это не ссылка-подарок');
 };
-$('lvStart').onclick = () => {
-  Object.assign(LV, { step: 0, a: null, b: null, src: null, srcBack: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
+function startLiveWizard(activationUid = null) {
+  Object.assign(LV, { activationUid, step: 0, a: null, b: null, src: null, srcBack: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
   $('lvHomeBox').style.display = 'none'; $('lvWiz').style.display = '';
   liveRender();
+}
+$('lvStart').onclick = () => {
+  if (inApp) return startLiveWizard();
+  if (buyerPreviewActive()) {
+    previewAccountForm('register');
+    $('pvForm').scrollIntoView({ block: 'start' });
+    return;
+  }
+  accountRecovery.requestActivation().catch(() => toast('Не удалось проверить почту. Попробуй ещё раз.'));
 };
 $('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
 $('lvHidden').onclick = () => { if (LV.busy || LV.src?.shopState) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
@@ -4973,7 +4993,6 @@ function previewAccountForm(mode) {
     <p class="sub">Это безопасный просмотр. Поля здесь неактивны, письма не отправляются. Настоящую регистрацию проверяем на отдельном устройстве.</p>
     <label>Электронная почта</label><input type="email" disabled placeholder="name@example.com">
     ${needPassword ? '<label>Пароль (не менее 8 символов)</label><input type="password" disabled placeholder="••••••••">' : ''}
-    ${mode === 'register' ? '<label>Повтори пароль</label><input type="password" disabled placeholder="••••••••">' : ''}
     <button class="btn" id="pvFormClose" type="button">Закрыть пример</button>`;
   $('pvFormClose').onclick = () => { $('pvForm').style.display = 'none'; };
 }
@@ -5170,6 +5189,11 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 const accountRecovery = initJadeKeyAccounts({
   firebaseKey: FS.key, project: FS.project, anonToken, myUid, fsReq, esc, toast, loadStones, liveHome,
   getStones: () => stones, isNative: inApp, showLiveTab: () => tab('live'),
+  resumeActivation: inApp ? null : uid => {
+    if (!$('vLive').classList.contains('on')) return false;
+    startLiveWizard(uid);
+    return true;
+  },
   setSession(result) {
     ANON.id = result.idToken;
     ANON.exp = Date.now() + (Number(result.expiresIn || 3600) - 120) * 1000;

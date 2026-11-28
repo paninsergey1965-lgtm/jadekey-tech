@@ -27,7 +27,10 @@ export function initJadeKeyAccounts(ctx) {
   let formMode = null;
   let pendingChangeEmail = null;
   let lastVerificationAttempt = null;
-  const verificationSender = `noreply@${ctx.project}.firebaseapp.com`;
+  let activationPending = false;
+  let waitingForVerification = false;
+  let refreshingOnReturn = false;
+  let displaySequence = 0;
 
   async function authCall(endpoint, payload) {
     const response = await fetch(`${API}${endpoint}?key=${encodeURIComponent(ctx.firebaseKey)}`, {
@@ -46,11 +49,19 @@ export function initJadeKeyAccounts(ctx) {
     return ctx.getStones().some(s => s.mode && !s.of && s.owner === ctx.myUid());
   }
 
-  async function currentAccount() {
-    const idToken = await ctx.anonToken(false);
+  async function currentAccount(idToken = null) {
+    idToken ||= await ctx.anonToken(false);
     if (!idToken) return null;
     const result = await authCall('accounts:lookup', { idToken });
     return result.users?.[0] || null;
+  }
+
+  async function verifiedActivationSession() {
+    const token = await ctx.anonToken(false);
+    if (!token) return null;
+    const user = await currentAccount(token);
+    if (!user?.email || !user.emailVerified || user.localId !== ctx.myUid()) return null;
+    return { token, uid: user.localId };
   }
 
   async function ensureClientRecord(user) {
@@ -82,13 +93,11 @@ export function initJadeKeyAccounts(ctx) {
     const register = formMode === 'register';
     const reset = formMode === 'reset';
     const caption = register ? 'Создать аккаунт' : reset ? 'Отправить письмо' : 'Войти';
-    root.insertAdjacentHTML('beforeend', `<form id="jkEmailForm" style="margin-top:12px">
+    root.querySelector('#jkEmailForms').insertAdjacentHTML('beforeend', `<form id="jkEmailForm" style="margin-top:12px">
       <label class="sub" for="jkEmailAddress">Электронная почта</label>
       <input id="jkEmailAddress" type="email" inputmode="email" autocomplete="email" required maxlength="255" placeholder="name@example.com" style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">
       ${reset ? '' : `<label class="sub" for="jkEmailPassword">Пароль (не менее 8 символов)</label>
       <input id="jkEmailPassword" type="password" autocomplete="${register ? 'new-password' : 'current-password'}" required ${register ? 'minlength="8"' : ''} style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">`}
-      ${register ? `<label class="sub" for="jkEmailPasswordRepeat">Повтори пароль</label>
-      <input id="jkEmailPasswordRepeat" type="password" autocomplete="new-password" required minlength="8" style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">` : ''}
       <div class="btns"><button class="btn main" type="submit">${caption}</button><button class="btn" type="button" id="jkEmailCancel">Отмена</button></div>
     </form>`);
     root.querySelector('#jkEmailCancel').onclick = () => { formMode = null; display(); };
@@ -96,14 +105,14 @@ export function initJadeKeyAccounts(ctx) {
       event.preventDefault();
       const email = root.querySelector('#jkEmailAddress').value;
       const password = root.querySelector('#jkEmailPassword')?.value;
-      if (register) registerEmail(email, password, root.querySelector('#jkEmailPasswordRepeat').value);
+      if (register) registerEmail(email, password);
       else if (reset) resetPassword(email);
       else signIn(email, password);
     };
   }
 
   function renderEmailChangeForm(root) {
-    root.insertAdjacentHTML('beforeend', `<form id="jkEmailChangeForm" style="margin-top:12px">
+    root.querySelector('#jkEmailForms').insertAdjacentHTML('beforeend', `<form id="jkEmailChangeForm" style="margin-top:12px">
       <label class="sub" for="jkEmailAddress">Новая электронная почта</label>
       <input id="jkEmailAddress" type="email" inputmode="email" autocomplete="email" required maxlength="255" placeholder="name@example.com" style="width:100%;padding:12px;margin:5px 0 12px;border-radius:10px">
       <label class="sub" for="jkEmailCurrentPassword">Пароль текущего аккаунта JadeKey</label>
@@ -119,6 +128,7 @@ export function initJadeKeyAccounts(ctx) {
   }
 
   async function display() {
+    const sequence = ++displaySequence;
     const root = document.getElementById('jkAccount');
     if (!root) return;
     let user = null, offline = false;
@@ -137,24 +147,32 @@ export function initJadeKeyAccounts(ctx) {
     // Do not offer registration when Firebase lookup failed or a previously
     // stored owner UID exists but its session could not be verified.
     const accountUnknown = !user && (offline || Boolean(ctx.myUid()));
+    if (sequence !== displaySequence) return;
     const email = user?.email ? ctx.esc(user.email) : '';
+    if (!accountUnknown) waitingForVerification = Boolean(ctx.resumeActivation && email && !user.emailVerified);
+    if (email && formMode === 'register') formMode = null;
+    if (activationPending && user?.emailVerified && user.localId === ctx.myUid()) {
+      if (ctx.resumeActivation(user.localId)) activationPending = false;
+    }
     root.innerHTML = `<div class="h2">Аккаунт и сохранность камней</div>
+      ${activationPending && !user?.emailVerified ? '<p class="sub"><b>Чтобы оживить камень, сначала подтверди почту.</b></p>' : ''}
       ${accountUnknown
         ? `<p class="sub">Не удалось проверить, привязана ли почта к этому аккаунту. Камни остаются на месте. Пока не создавай новый аккаунт — сначала повтори проверку соединения.</p>
            <button class="btn main" id="jkEmailRetry">Повторить проверку</button>`
         : email && user.emailVerified
         ? `<p class="sub">Почта подтверждена: <b>${email}</b>. Камни можно восстановить на другом телефоне по почте и паролю.</p>`
         : email
-          ? `<p class="sub">Почта <b>${email}</b> привязана, но ещё не подтверждена. Открой письмо от <b>${ctx.esc(verificationSender)}</b>, нажми ссылку подтверждения, вернись сюда и нажми «Проверить подтверждение». Если письма нет, проверь «Спам».</p>
+          ? `<p class="sub">Открой письмо JadeKey на <b>${email}</b>, нажми ссылку и вернись сюда.${ctx.resumeActivation ? ' Мы проверим подтверждение автоматически.' : ' Нажми «Проверить подтверждение».'} Если письма нет, проверь «Спам».</p>
              ${lastVerificationAttempt?.email === user.email.toLowerCase() ? `<p class="sub" role="status">Последняя попытка в ${ctx.esc(lastVerificationAttempt.time)}: ${lastVerificationAttempt.accepted ? 'сервер принял запрос на отправку письма, но доставку не подтвердил' : `сервер отклонил запрос — ${ctx.esc(lastVerificationAttempt.error)}`}.</p>` : ''}
-             <button class="btn main" id="jkEmailVerify">Проверить подтверждение</button>
+             ${ctx.resumeActivation ? '' : '<button class="btn main" id="jkEmailVerify">Проверить подтверждение</button>'}
              <button class="btn" id="jkEmailResend">Отправить письмо ещё раз</button>`
           : `<p class="sub">${hasOwnedStones() ? 'Твои камни пока привязаны к этому устройству. ' : ''}Зарегистрируй почту, чтобы восстановить доступ при смене телефона.</p>
-             <button class="btn main" id="jkEmailRegister">Зарегистрироваться</button>`}
+             ${formMode === 'register' ? '' : '<button class="btn main" id="jkEmailRegister">Зарегистрироваться</button>'}`}
       ${!accountUnknown && email ? `<button class="btn" id="jkEmailChange" style="margin-top:8px">Изменить почту</button>` : ''}
       ${email && pendingChangeEmail && !user?.emailVerified
         ? `<p class="sub">Ожидается подтверждение нового адреса <b>${ctx.esc(pendingChangeEmail)}</b>. Открой письмо на этой почте и затем нажми «Проверить подтверждение».</p>` : ''}
-      ${accountUnknown ? '' : `<button class="btn" id="jkEmailLogin" style="margin-top:8px">Войти на другом устройстве</button>
+      <div id="jkEmailForms"></div>
+      ${accountUnknown ? '' : `<button class="btn" id="jkEmailLogin" style="margin-top:8px">${activationPending ? 'Уже есть аккаунт? Войти' : 'Войти на другом устройстве'}</button>
       <button class="btn" id="jkEmailReset" style="margin-top:8px">Забыли пароль?</button>`}
       ${offline && !accountUnknown ? '<p class="sub">Не удалось синхронизировать профиль с сервером. Повтори попытку позже.</p>' : ''}`;
     root.querySelector('#jkEmailRetry')?.addEventListener('click', () => display());
@@ -255,12 +273,11 @@ export function initJadeKeyAccounts(ctx) {
     finally { if (!skipBusy) busy = false; await display(); }
   }
 
-  async function registerEmail(rawEmail, password, repeated) {
+  async function registerEmail(rawEmail, password) {
     if (busy) return;
     const email = validEmail(rawEmail);
     if (!email) { ctx.toast('Проверь адрес электронной почты.'); return; }
     if (!password || password.length < 8) { ctx.toast('Пароль должен содержать минимум 8 символов.'); return; }
-    if (password !== repeated) { ctx.toast('Пароли не совпадают.'); return; }
     busy = true;
     try {
       // An existing anonymous UID owns the stones. Link email/password to it;
@@ -341,7 +358,28 @@ export function initJadeKeyAccounts(ctx) {
     showForm('register');
   }
 
+  async function requestActivation() {
+    activationPending = true;
+    formMode = 'register';
+    await display();
+    if (activationPending) {
+      document.getElementById('jkAccount')?.scrollIntoView({ block: 'start' });
+    }
+  }
+
+  async function refreshOnReturn() {
+    if (document.hidden || busy || refreshingOnReturn || !waitingForVerification || formMode) return;
+    refreshingOnReturn = true;
+    try { await display(); }
+    finally { refreshingOnReturn = false; }
+  }
+  if (ctx.resumeActivation) {
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    window.addEventListener('focus', refreshOnReturn);
+    window.addEventListener('pageshow', refreshOnReturn);
+  }
+
   // No one-time email sign-in URL is needed for email/password accounts.
-  return { display, handleEmailReturn: async () => false, startLink,
+  return { display, handleEmailReturn: async () => false, startLink, requestActivation, verifiedActivationSession,
     registerEmail, signIn, resetPassword, checkVerification, sendVerification, requestEmailChange };
 }
