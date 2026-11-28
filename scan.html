@@ -427,7 +427,7 @@ select.fld{-webkit-appearance:none;appearance:none;background-image:linear-gradi
       <div id="pvNotice" class="preview-notice"><b>Тест нового покупателя</b>Так выглядит приложение на новом телефоне. Твои камни и почта здесь скрыты, но сохранены. В тесте ничего не регистрируется и не привязывается.</div>
       <h1>Живой камень</h1>
       <div class="sub">Купил камень JadeKey? Наведи на него телефон, выбери режим и имя — и камень будет каждый день открывать послание. Оживить можно только камни из магазина JadeKey.</div>
-      <button class="btn main" id="lvStart">Оживить камень</button>
+      <button class="btn main" id="lvStart">Найти камень</button>
       <button class="btn" id="lvPaste" style="display:none;margin-top:10px">🎁 У меня есть ссылка-подарок</button>
       <button class="btn" id="lvInstall" style="display:none;margin-top:10px">📲 Установить на телефон</button>
       <div class="h2">Мои камни</div>
@@ -844,7 +844,7 @@ H.AddAcceleration(b.a,b.r,this.curr.gravitators[m.Uranus].r,1.292024916781969E-8
 return new kd(this.curr.time,a,b)};$jscomp.global.Object.defineProperties(H.prototype,{OriginBody:{configurable:!0,enumerable:!0,get:function(){return this.originBody}},Time:{configurable:!0,enumerable:!0,get:function(){return this.curr.time}}});e.GravitySimulator=H;var kd=function(a,b,c){this.time=a;this.gravitators=b;this.bodies=c}},{}]},{},[1])(1)});
 </script>
 <script type="module">
-import { initJadeKeyAccounts } from './jk-accounts.js?v=20261126-account-text';
+import { initJadeKeyAccounts } from './jk-accounts.js?v=20261128-verified-activation';
 import { initJadeKeyAdmin } from './jk-admin.js?v=20261126-clients';
 import { initJadeKeySupport } from './jk-support.js?v=20261124-01';
 import { pipeline, RawImage, env } from './vendor/transformers.min.js';
@@ -2234,12 +2234,18 @@ async function showFound(r) {
   const pct = Math.round(r.res.ratio * 100);
   if (s.love && s.love.to) { loveShift = 0; showLove(s); return; }
   const needsActivation = r.state === 'found' && !s.of && !s.consumed && !r.stone.mode && !r.stone.consumed && (!s.shopState || s.shopState === 'sold');
-  const instruction = 'Камень JadeKey узнан. Сначала оживите его. Нажмите кнопку Оживить камень и следуйте подсказкам.';
+  const instruction = 'Камень найден. Оживи его, чтобы получать послания.';
   const activation = needsActivation ? '<p class="sh-note">' + instruction + '</p><button type="button" class="btn main" id="activateFoundStone">Оживить камень</button>' : '';
   sheet(stoneCard(s, 'found', `<div class="sh-meta">Совпало ${r.res.inl.length} участков рисунка (${pct}% камня)</div><div id="ownerLn"></div><div class="rows">${contactRows(s.contacts)}</div>${activation}<div class="btns"><button class="btn${needsActivation ? '' : ' main'}" id="again">Сканировать ещё</button></div>`));
   bindRows(); $('again').onclick = hideSheet;
   if (needsActivation) {
-    $('activateFoundStone').onclick = () => { hideSheet(); tab('live'); $('lvStart').click(); };
+    $('activateFoundStone').onclick = () => {
+      tab('live');
+      if (inApp) return $('lvStart').click();
+      activationMatch = { id: r.stone.id, catalogId: s.id, g: r.stone.g };
+      liveHome().catch(() => {});
+      requestWebActivation();
+    };
   }
   if (isAdmin) {
     const root = r.stone.of || r.stone.id, fam = stones.filter(x => x.id === root || x.of === root);
@@ -3956,18 +3962,19 @@ function lvNav() {
   $('lvNavBox').style.display = st === 3 ? 'none' : '';
   sh.textContent = LV.busy ? 'Стоп' : ((st === 0 ? LV.a : LV.b) ? 'Переснять' : 'Снять');
   nx.disabled = LV.busy || (st === 0 && !LV.a) || (st === 1 && !LV.b && !LV.hidden);
-  nx.textContent = st === 2 ? 'Оживить камень' : 'Далее';
+  nx.textContent = st === 2 ? (LV.recognized ? 'Сохранить' : 'Оживить камень') : 'Далее';
   $('lvBack').disabled = LV.busy;
 }
 function liveRender() {
   const st = LV.step;
+  $('lvSteps').style.display = LV.recognized ? 'none' : '';
   $('lvSteps').innerHTML = [0, 1, 2, 3].map(i => `<i class="${i <= st ? 'on' : ''}"></i>`).join('');
   $('lvCam').style.display = st <= 1 ? '' : 'none';
   $('lvForm').style.display = st === 2 ? '' : 'none';
   $('lvDone').style.display = st === 3 ? '' : 'none';
   $('lvHiddenBox').style.display = st === 1 && !LV.src?.shopState ? '' : 'none';
-  $('lvH').textContent = ['Сторона А', 'Переверни камень', 'Кому и чем станет камень', 'Камень ожил'][st];
-  $('lvSub').textContent = ['Положи камень на белый лист бумаги. Не сканируй под лампой сверху — от неё блик: лучше у окна днём или с лампой сбоку. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', 'Режим можно будет поменять позже.', ''][st];
+  $('lvH').textContent = ['Сторона А', 'Переверни камень', LV.recognized ? 'Твой камень' : 'Кому и чем станет камень', 'Камень ожил'][st];
+  $('lvSub').textContent = ['Положи камень на белый лист бумаги. Не сканируй под лампой сверху — от неё блик: лучше у окна днём или с лампой сбоку. Нажми «Снять» и держи телефон над камнем: сканер сам сделает два кадра и проверит их.', 'Теперь так же сними вторую сторону. Тогда камень узнается, как его ни положи.', LV.recognized ? '' : 'Режим можно будет поменять позже.', ''][st];
   lvQ(null); lvVerdict('', '');
   if (st === 0 && LV.a) lvVerdict('ok', LV.srcBack && LV.srcBack.length && !LV.src?.shopState ? 'Камень JadeKey узнан, обе стороны уже есть в магазине. Жми «Далее».' : 'Сторона А готова. Теперь переверни камень.');
   if (st === 1 && LV.b) lvVerdict('ok', 'Обе стороны готовы.');
@@ -3985,18 +3992,34 @@ function liveForm() {
   const m = LV.mode, P = LV.p;
   let f = '';
   if (m === 'tal' || m === 'luna') f = fld('lvName', m === 'luna' ? 'Как к тебе обращаться' : 'Имя владельца', P.name) + fld('lvBday', 'День рождения, по желанию', P.bday, 'date');
-  else if (m === 'path') f = fld('lvName', 'Как к тебе обращаться', P.name) + fld('lvBday', 'Дата рождения, по желанию', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect('lvBtz', P.btz) + '<p class="sub" style="margin:6px 0 0">С датой рождения послания считаются по твоей Луне рождения.</p>' + fld('lvFrom', 'От кого, если это подарок', P.from);
+  else if (m === 'path') f = fld('lvName', 'Как к тебе обращаться', P.name) + fld('lvBday', 'Дата рождения, по желанию', P.bday, 'date') + fld('lvBtime', 'Время рождения, если знаешь', P.btime, 'time') + tzSelect('lvBtz', P.btz) + '<p class="sub" style="margin:6px 0 0">С датой рождения послания считаются по твоей Луне рождения.</p>' + (LV.recognized ? '' : fld('lvFrom', 'От кого, если это подарок', P.from));
   else {
     if (m === 'love') f = fld('lvName', 'Как к тебе обращаться', P.name);
-    else f = fld('lvTo', 'Кому (имя)', P.to) + fld('lvFrom', 'От кого (имя)', P.from);
+    else f = fld('lvTo', LV.recognized ? 'Как к тебе обращаться' : 'Кому (имя)', P.to) + (LV.recognized ? '' : fld('lvFrom', 'От кого (имя)', P.from));
   }
   const modes = LV.lock ? [[m, LIVE_MODES[m]]] : Object.entries(LIVE_MODES);
-  $('lvForm').innerHTML = `<div class="seg" id="lvMode">${modes.map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${LV.lock ? '<p class="sub" style="margin:6px 0 0">Этот режим куплен вместе с камнем. Другой режим можно открыть потом на сайте jadekey.tech.</p>' : ''}${f}
+  const modeSummary = LV.recognized ? `<p class="sub">Режим: <b>${LIVE_MODES[m]}</b></p>` : `<div class="seg" id="lvMode">${modes.map(([k, n]) => `<button class="${k === m ? 'on' : ''}" data-m="${k}">${n}</button>`).join('')}</div><p class="sub" style="margin:8px 0 0">${LIVE_DESC[m]}</p>${LV.lock ? '<p class="sub" style="margin:6px 0 0">Этот режим куплен вместе с камнем. Другой режим можно открыть потом на сайте jadekey.tech.</p>' : ''}`;
+  $('lvForm').innerHTML = `${modeSummary}${f}
     <label class="sub" style="display:flex;align-items:flex-start;gap:10px;margin-top:16px"><input type="checkbox" id="lvConsent" ${P.consented ? 'checked' : ''} style="width:22px;height:22px;flex-shrink:0"><span>Согласен на обработку ${m === 'love' ? 'имени' : 'имени и даты рождения'} для персональных посланий JadeKey. <a href="/privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>.</span></label>`;
   $('lvForm').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { liveCollect(); LV.mode = b.dataset.m; liveForm(); });
   $('lvForm').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { liveCollect(); P.tone = b.dataset.t; liveForm(); });
   $('lvForm').querySelectorAll('[data-k]').forEach(b => b.onclick = () => { liveCollect(); P.kid = b.dataset.k === '1'; liveForm(); });
 }
+function catalogActivation(match) {
+  const source = stones.find(x => x.id === match.catalogId);
+  const side = stones.find(x => x.id === match.id);
+  if (!source || !side || (side.of || side.id) !== source.id || side.g !== match.g || source.of) {
+    throw new Error('Камень больше не найден. Открой «Сканер» и попробуй ещё раз.');
+  }
+  if (source.mode || source.consumed || side.mode || side.consumed || stones.some(x => x.mode && x.catalogId === source.id)) {
+    throw new Error('Этот камень уже ожил. Проверь «Мои камни».');
+  }
+  if (source.shopState && source.shopState !== 'sold') {
+    throw new Error('Оживление этого камня откроется после оплаты.');
+  }
+  return { source, side, otherSides: stones.filter(x => x.of === source.id && !x.mode && !x.consumed) };
+}
+
 async function liveSave() {
   if (buyerPreviewActive()) return toast('Это тест нового покупателя. Активация и сохранение камня отключены.', 6500);
   liveCollect();
@@ -4009,9 +4032,27 @@ async function liveSave() {
   const pubName = m === 'tal' || m === 'path' || m === 'luna' || m === 'love' ? P.name : P.to;
   LV.busy = true; lvNav(); veil('Оживляю камень…');
   const made = [];
+  let tok;
   try {
-    const tok = await anonToken(), uid = myUid();
-    if (!isAdmin && stones.filter(s => s.owner === uid && !s.of).length >= 3) throw new Error('на одном телефоне можно оживить до трёх камней');
+    let uid;
+    if (inApp) {
+      tok = await anonToken();
+      uid = myUid();
+    } else {
+      const session = await accountRecovery.verifiedActivationSession();
+      if (!session || session.uid !== LV.activationUid) {
+        throw new Error('Открой «Живой», войди с подтверждённой почтой и начни снова.');
+      }
+      ({ token: tok, uid } = session);
+    }
+    if (LV.recognized) {
+      await loadStones();
+      const { source, side, otherSides } = catalogActivation(LV.recognized);
+      if (activationMode(source, side) !== m) throw new Error('Режим камня изменился. Найди камень снова.');
+      LV.src = source;
+      LV.srcBack = otherSides;
+    }
+    if (!isAdmin && stones.filter(s => s.owner === uid && !s.of).length >= 3) throw new Error('в одном аккаунте можно оживить до трёх камней');
     const side = async (S, of) => {
       const enc = encodePatches(S.f);
       const doc = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: of || '', created: Date.now(), thumb: S.thumb, g: f32B64(gvecOf(S.f)), G: S.f.G, hue: S.hue ?? 0, n: enc.n });
@@ -4023,7 +4064,8 @@ async function liveSave() {
     if (LV.src) {
       // take over the catalog stone: same features, so the catalog copy drops out of search
       const c = LV.src, j = await fsCall(`${BASE}/${COLP}/${c.id}?key=${FS.key}`), pp = fromFs(j.fields);
-      const doc = await fsReq('POST', COL, tok, { name: 'Живой камень', mode: m, owner: uid, of: '', created: Date.now(), catalogId: c.id, thumb: c.thumb || LV.a.thumb, g: c.g, G: c.G, hue: c.hue ?? 0, n: c.n });
+      const path = LV.recognized ? `${COL}?documentId=${encodeURIComponent('live_' + c.id)}` : COL;
+      const doc = await fsReq('POST', path, tok, { name: 'Живой камень', mode: m, owner: uid, of: '', created: Date.now(), catalogId: c.id, thumb: c.thumb || LV.a.thumb, g: c.g, G: c.G, hue: c.hue ?? 0, n: c.n });
       id = doc.name.split('/').pop(); made.push([COL, id]);
       await fsReq('POST', `${COLP}?documentId=${id}`, tok, { idx: pp.idx, p: pp.p, sc: pp.sc }); made.push([COLP, id]);
       for (const cb of LV.srcBack || []) {
@@ -4036,12 +4078,13 @@ async function liveSave() {
     if (LV.b && !LV.hidden && !LV.srcBack?.length) await side(LV.b, id);
     const claim = rnd(14);
     await fsReq('POST', `${COLV}?documentId=${id}`, tok, { owner: uid, recipient: '', claim, claimTry: '', share: false, profile: JSON.stringify(prof), created: Date.now() });
+    made.push([COLV, id]);
     remember(id, 'own');
     Object.assign(LV, { link: giftLink(id, claim), id, toName: pubName });
     await loadStones();
     LV.step = 3; LV.busy = false; liveRender(); liveDone();
   } catch (e) {
-    for (const [c, id] of made.reverse()) { try { await fsReq('DELETE', `${c}/${id}`, await anonToken()); } catch (x) {} }
+    for (const [c, id] of made.reverse()) { try { await fsReq('DELETE', `${c}/${id}`, tok); } catch (x) {} }
     toast('Не получилось оживить: ' + e.message, 6000);
   } finally { veil(); LV.busy = false; lvNav(); }
 }
@@ -4062,7 +4105,7 @@ function shareButtons(link, text) {
 }
 function giftText(mode, name) { return mode === 'fc' ? `${name}, тебе подарили камень с печеньем предсказаний. Открой ссылку и наведи телефон на камень.` : mode === 'path' ? `${name}, это твой камень пути. Открой ссылку и наведи телефон на камень.` : mode === 'tal' ? `${name}, это твой талисман. Открой ссылку и наведи телефон на камень.` : `${name}, тебе подарили живой камень. Открой ссылку и наведи телефон на камень.`; }
 function liveDone() {
-  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён и теперь твой. Каждый день открывай «Сканер» и наводи телефон на камень.</p><div class="btns"><button class="btn main" id="lvHome">Готово</button><button class="btn" id="lvLinkEmail">Сохранить камень по почте</button></div>`;
+  $('lvDone').innerHTML = `<div class="shot"><img src="${LV.a.thumb}" alt=""><div><b>${esc(LV.toName)}</b><span>${LIVE_MODES[LV.mode]}${LV.b && !LV.hidden ? ' · две стороны' : ''}</span></div></div><p class="sub" style="margin-top:14px">Камень оживлён и теперь твой. Каждый день открывай «Сканер» и наводи телефон на камень.</p><div class="btns"><button class="btn main" id="lvHome">${LV.recognized ? 'К моим камням' : 'Готово'}</button>${inApp ? '<button class="btn" id="lvLinkEmail">Сохранить камень по почте</button>' : ''}</div>`;
   $('lvHome').onclick = liveHome;
   if ($('lvLinkEmail')) $('lvLinkEmail').onclick = () => accountRecovery.startLink();
 }
@@ -4134,15 +4177,35 @@ $('lvPaste').onclick = () => {
   const m = v && /[?&]g=([\w-]+)\.([a-z0-9]+)/.exec(v);
   if (m) openGift(m[1], m[2]); else if (v) toast('Это не ссылка-подарок');
 };
-$('lvStart').onclick = () => {
-  Object.assign(LV, { step: 0, a: null, b: null, src: null, srcBack: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
+let activationMatch = null;
+function startLiveWizard(activationUid = null, recognized = null) {
+  Object.assign(LV, { activationUid, recognized, step: 0, a: null, b: null, src: null, srcBack: null, hidden: false, mode: 'path', p: {}, busy: false, lock: false });
+  if (recognized) {
+    const { source, side, otherSides } = catalogActivation(recognized);
+    Object.assign(LV, { step: 2, a: { thumb: source.thumb || side.thumb || '' }, src: source,
+      srcBack: otherSides, hidden: true, mode: activationMode(source, side), lock: true });
+  }
   $('lvHomeBox').style.display = 'none'; $('lvWiz').style.display = '';
   liveRender();
+}
+function requestWebActivation() {
+  accountRecovery.requestActivation().catch(() => toast('Не удалось проверить почту. Попробуй ещё раз.'));
+}
+$('lvStart').onclick = () => {
+  if (inApp) return startLiveWizard();
+  if (buyerPreviewActive()) {
+    previewAccountForm('register');
+    $('pvForm').scrollIntoView({ block: 'start' });
+    return;
+  }
+  activationMatch = null;
+  tab('scan');
+  $('shutter').click();
 };
 $('lvShoot').onclick = () => { if (LV.busy) { cancelCapture(); return; } if (LV.step === 1) LV.hidden = false; liveCapture(LV.step === 0 ? 'A' : 'B'); };
 $('lvHidden').onclick = () => { if (LV.busy || LV.src?.shopState) return; LV.hidden = true; LV.b = null; lvQ(null); lvVerdict('ok', 'Хватит одной стороны.'); lvNav(); };
 const skipB = () => !LV.src?.shopState && LV.srcBack && LV.srcBack.length && LV.a;
-$('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; if (LV.step === 1 && skipB()) LV.step = 0; liveRender(); };
+$('lvBack').onclick = () => { if (LV.busy) return; if (LV.step === 0 || LV.recognized) { liveHome(); return; } if (LV.step === 2) liveCollect(); LV.step--; if (LV.step === 1 && skipB()) LV.step = 0; liveRender(); };
 $('lvGo').onclick = () => { if (LV.busy) return; if (LV.step === 2) { liveSave(); return; } LV.step++; if (LV.step === 1 && skipB()) { LV.hidden = true; LV.b = null; LV.step = 2; } liveRender(); };
 
 // install as an app (Chrome on Android)
@@ -4973,7 +5036,6 @@ function previewAccountForm(mode) {
     <p class="sub">Это безопасный просмотр. Поля здесь неактивны, письма не отправляются. Настоящую регистрацию проверяем на отдельном устройстве.</p>
     <label>Электронная почта</label><input type="email" disabled placeholder="name@example.com">
     ${needPassword ? '<label>Пароль (не менее 8 символов)</label><input type="password" disabled placeholder="••••••••">' : ''}
-    ${mode === 'register' ? '<label>Повтори пароль</label><input type="password" disabled placeholder="••••••••">' : ''}
     <button class="btn" id="pvFormClose" type="button">Закрыть пример</button>`;
   $('pvFormClose').onclick = () => { $('pvForm').style.display = 'none'; };
 }
@@ -5170,6 +5232,15 @@ if (JadeNfc || /Android/i.test(navigator.userAgent)) {
 const accountRecovery = initJadeKeyAccounts({
   firebaseKey: FS.key, project: FS.project, anonToken, myUid, fsReq, esc, toast, loadStones, liveHome,
   getStones: () => stones, isNative: inApp, showLiveTab: () => tab('live'),
+  resumeActivation: inApp ? null : uid => {
+    if (!$('vLive').classList.contains('on')) return false;
+    const match = activationMatch;
+    activationMatch = null;
+    if (!match) return true;
+    try { startLiveWizard(uid, match); }
+    catch (error) { toast(error.message, 6000); }
+    return true;
+  },
   setSession(result) {
     ANON.id = result.idToken;
     ANON.exp = Date.now() + (Number(result.expiresIn || 3600) - 120) * 1000;
@@ -5196,9 +5267,12 @@ $('clientsBtn').onclick = () => customerAdmin.open();
 $('supportInboxBtn').onclick = () => customerSupport.openInbox();
 loadStones().then(async () => { adminDeepLink(); dayPill(); await accountRecovery.handleEmailReturn(); });
 window.__coi.then(() => { loadModel(); liveInit(); });
-if (new URLSearchParams(location.search).has('test')) window.JKL = { memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone };
+if (new URLSearchParams(location.search).has('test')) window.JKL = { memView, dayPill, showMem, showNY, showTal, showLuna, liveExtras, drawSide2, setAddMode, showPath, showTeaser, showFortune, showLove, LV, liveRender, liveDone, showFound };
 function liveInit() {
-  if (inApp) $('lvPaste').style.display = '';
+  if (inApp) {
+    $('lvPaste').style.display = '';
+    $('lvStart').textContent = 'Оживить камень';
+  }
   // universal links: a gift link tapped in Telegram/WhatsApp opens the app directly
   const AppP = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App;
   const onUrl = u => { const m = u && /[?&]g=([\w-]+)\.([a-z0-9]+)/.exec(u); if (m) openGift(m[1], m[2]); };
